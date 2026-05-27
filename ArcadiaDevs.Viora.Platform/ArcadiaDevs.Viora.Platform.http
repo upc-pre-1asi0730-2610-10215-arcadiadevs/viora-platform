@@ -1,0 +1,6 @@
+@ArcadiaDevs.Viora.Platform_HostAddress = http://localhost:5269
+
+GET {{ArcadiaDevs.Viora.Platform_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
