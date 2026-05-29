@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Interceptors;
 
-public class AuditableEntityInterceptor : SaveChangesInterceptor
+public sealed class AuditableEntityInterceptor : SaveChangesInterceptor
 {
     /// <inheritdoc />
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
