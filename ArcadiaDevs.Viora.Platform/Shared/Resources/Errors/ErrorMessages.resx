@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <data name="GenericError" xml:space="preserve">
+    <value>An error occurred.</value>
+  </data>
+    <data name="OperationCancelled" xml:space="preserve">
+    <value>The operation was cancelled.</value>
+  </data>
+
+    <data name="ProfilesError.ProfileNotFound" xml:space="preserve">
+    <value>Profile not found.</value>
+  </data>
+    <data name="ProfilesError.EmailAlreadyRegistered" xml:space="preserve">
+    <value>Email address {0} is already registered.</value>
+  </data>
+    <data name="ProfilesError.InvalidProfileData" xml:space="preserve">
+    <value>Invalid profile data provided.</value>
+  </data>
+    <data name="ProfilesError.OperationCancelled" xml:space="preserve">
+    <value>Profile operation was cancelled.</value>
+  </data>
+    <data name="ProfilesError.DatabaseError" xml:space="preserve">
+    <value>A database error occurred during profile operation.</value>
+  </data>
+    <data name="ProfilesError.InternalServerError" xml:space="preserve">
+    <value>An unexpected internal error occurred in Profiles.</value>
+  </data>
+
+
+</root>
