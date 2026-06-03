@@ -1,4 +1,4 @@
-﻿using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
+﻿using ArcadiaDevs.Viora.Platform.Shared.Domain.Model.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
