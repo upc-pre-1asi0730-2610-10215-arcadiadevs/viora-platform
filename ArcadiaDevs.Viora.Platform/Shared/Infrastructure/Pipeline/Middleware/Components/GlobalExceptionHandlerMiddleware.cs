@@ -1,13 +1,13 @@
 using System.Net.Mime;
 using System.Text.Json;
-using Acme.Center.Platform.Resources.Errors;
-using Acme.Center.Platform.Resources.Shared;
+using ArcadiaDevs.Viora.Platform.Resources.Errors;
+using ArcadiaDevs.Viora.Platform.Resources.Shared;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 
 // For OperationCanceledException
 
-namespace Acme.Center.Platform.Shared.Infrastructure.Pipeline.Middleware.Components;
+namespace ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Pipeline.Middleware.Components;
 
 /// <summary>
 ///     Global Exception Handling Middleware
