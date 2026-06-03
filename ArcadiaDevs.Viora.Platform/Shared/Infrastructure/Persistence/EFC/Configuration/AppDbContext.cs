@@ -3,8 +3,14 @@ using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Intercept
 
 using Microsoft.EntityFrameworkCore;
 
-namespace ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions;
+namespace ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Configuration;
 
+/// <summary>
+///     Application database context for the Learning Center Platform
+/// </summary>
+/// <param name="options">
+///     The options for the database context
+/// </param>
 public class AppDbContext(DbContextOptions options) : DbContext(options)
 {
     /// <inheritdoc />
@@ -15,26 +21,20 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         base.OnConfiguring(builder);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    ///     On creating the database model
+    /// </summary>
+    /// <remarks>
+    ///     This method is used to create the database model for the application.
+    /// </remarks>
+    /// <param name="builder">
+    ///     The model builder for the database context
+    /// </param>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-
-        builder.Entity<FavoriteSource>().HasKey(f => f.Id);
-        builder.Entity<FavoriteSource>().Property(f => f.Id).IsRequired().ValueGeneratedOnAdd();
-        builder.Entity<FavoriteSource>()
-            .Property(f => f.SourceId)
-            .HasConversion(valueObject => valueObject.Value, value => new SourceId(value))
-            .IsRequired();
-
-        builder.Entity<FavoriteSource>()
-            .Property(f => f.NewsApiKey)
-            .HasConversion(valueObject => valueObject.Value, value => new NewsApiKey(value))
-            .IsRequired();
-        builder.Entity<FavoriteSource>()
-            .HasIndex(f => new { f.NewsApiKey, f.SourceId })
-            .IsUnique();
-
+        
+        // General Naming Convention for the database objects
         builder.UseSnakeCaseNamingConvention();
     }
 }
