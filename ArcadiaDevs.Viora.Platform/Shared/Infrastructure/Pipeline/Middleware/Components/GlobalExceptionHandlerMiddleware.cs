@@ -1,7 +1,7 @@
 using System.Net.Mime;
 using System.Text.Json;
-using ArcadiaDevs.Viora.Platform.Resources.Errors;
-using ArcadiaDevs.Viora.Platform.Resources.Shared;
+using ArcadiaDevs.Viora.Platform.Shared.Resources.Errors;
+using ArcadiaDevs.Viora.Platform.Shared.Resources;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 

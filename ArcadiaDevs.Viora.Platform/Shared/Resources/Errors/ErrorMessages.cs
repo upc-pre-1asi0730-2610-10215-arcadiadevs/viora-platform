@@ -1,4 +1,4 @@
-namespace ArcadiaDevs.Viora.Platform.Resources.Errors;
+namespace ArcadiaDevs.Viora.Platform.Shared.Resources.Errors;
 
 public class ErrorMessages
 {

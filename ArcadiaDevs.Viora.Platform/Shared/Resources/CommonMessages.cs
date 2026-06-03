@@ -1,4 +1,4 @@
-namespace ArcadiaDevs.Viora.Platform.Resources.Shared;
+namespace ArcadiaDevs.Viora.Platform.Shared.Resources;
 
 public class CommonMessages
 {
