@@ -1,4 +1,4 @@
-﻿namespace ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Configuration;
+﻿namespace ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 
 /// <summary>
 /// Represents the outcome of an operation that can succeed with a value or fail with an error.
