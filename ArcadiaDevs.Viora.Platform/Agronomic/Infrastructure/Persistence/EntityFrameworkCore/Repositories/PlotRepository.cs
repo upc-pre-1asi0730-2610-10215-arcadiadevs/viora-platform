@@ -1,11 +1,11 @@
-using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates.Plot;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregate;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Configuration;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Repositories;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence;
+namespace ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 
 /// <summary>
 ///     Repository implementation for Plot aggregate using Entity Framework Core.
