@@ -5,6 +5,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Transform;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using Microsoft.AspNetCore.Mvc;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest;
 
@@ -79,6 +80,38 @@ public class PlotIoTDevicesController(
 
         return result.Fold<IActionResult>(
             device => Ok(IoTDeviceResourceFromEntityAssembler.ToResourceFromEntity(device)),
+            error => error.Code == "PLOT_NOT_FOUND" || error.Code == "DEVICE_NOT_FOUND"
+                ? NotFound(error)
+                : BadRequest(error));
+    }
+
+    /// <summary>
+    ///     Deletes an existing IoT device from the specified plot.
+    /// </summary>
+    /// <param name="plotId">The plot identifier (path variable).</param>
+    /// <param name="deviceId">The device identifier (path variable).</param>
+    /// <returns>
+    ///     <c>204 NoContent</c> if deleted successfully, 
+    ///     or <c>400 Bad Request</c>/<c>404 Not Found</c> on failure.
+    /// </returns>
+    [HttpDelete("{deviceId:int}")]
+    [Tags("IoTDevice")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(Error), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Error), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteIoTDevice(
+        [FromRoute] int plotId,
+        [FromRoute] int deviceId)
+    {
+        // 1. Instanciar directamente el comando usando las variables numéricas de la ruta de la API
+        var command = new DeleteIoTDeviceCommand(plotId, deviceId);
+
+        // 2. Ejecutar el Handler correspondiente en la capa de aplicación
+        var result = await ioTDeviceCommandService.Handle(command);
+
+        // 3. Evaluar la respuesta para retornar códigos REST limpios
+        return result.Fold<IActionResult>(
+            success => NoContent(), // Las eliminaciones REST exitosas suelen responder con 204 No Content
             error => error.Code == "PLOT_NOT_FOUND" || error.Code == "DEVICE_NOT_FOUND"
                 ? NotFound(error)
                 : BadRequest(error));
