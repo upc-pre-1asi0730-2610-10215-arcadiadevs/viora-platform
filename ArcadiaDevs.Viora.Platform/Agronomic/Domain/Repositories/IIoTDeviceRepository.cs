@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 
@@ -21,5 +22,9 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories
         Task<bool> ExistsByIdAndPlotIdAsync(long id, long plotId);
 
         Task DeleteAsync(IoTDevice device);
+
+        Task<IEnumerable<IoTDevice>> FindAllByPlotIdsAsync(
+            IEnumerable<long> plotIds,
+            CancellationToken cancellationToken = default);
     }
 }

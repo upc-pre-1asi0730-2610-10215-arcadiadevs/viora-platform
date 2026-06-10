@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregate;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Configuration;
@@ -42,5 +44,16 @@ public class PlotRepository : BaseRepository<Plot>, IPlotRepository
             .AnyAsync(
                 p => p.Id == plotId && p.OwnerUserId == ownerUserId,
                 cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IEnumerable<Plot>> FindAllByOwnerUserIdAsync(
+        int ownerUserId,
+        CancellationToken cancellationToken = default)
+    {
+        return await Context.Set<Plot>()
+            .AsNoTracking()
+            .Where(p => p.OwnerUserId == ownerUserId)
+            .ToListAsync(cancellationToken);
     }
 }

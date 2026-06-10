@@ -1,5 +1,7 @@
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.CommandServices;
+using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices;
+using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
@@ -35,6 +37,9 @@ builder.Services.AddScoped<IPlotRepository, PlotRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IPlotCommandService, PlotCommandService>();
 builder.Services.AddScoped<IIoTDeviceRepository, IoTDeviceRepository>();
+builder.Services.AddScoped<IMonitoringSummaryQueryService, MonitoringSummaryQueryService>();
+builder.Services.AddScoped<IAgronomicStatisticsQueryService, AgronomicStatisticsQueryService>();
+builder.Services.AddScoped<IDynamicNutritionQueryService, DynamicNutritionQueryService>();
 
 var app = builder.Build();
 
