@@ -1,2 +1,10 @@
 .idea/
 .atl/
+.vs/
+**/bin/
+**/obj/
+**/_ReSharper.Caches/
+*.DotSettings.user
+*.suo
+*.user
+TestResults/
