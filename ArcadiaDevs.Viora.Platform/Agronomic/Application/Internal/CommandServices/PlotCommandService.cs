@@ -1,0 +1,44 @@
+using ArcadiaDevs.Viora.Platform.Agronomic.Application.CommandServices;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregate;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
+using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
+using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
+
+namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.CommandServices;
+
+/// <summary>
+///     Handles plot commands and coordinates persistence through Shared.
+/// </summary>
+public class PlotCommandService(
+    IPlotRepository plotRepository,
+    IUnitOfWork unitOfWork) : IPlotCommandService
+{
+    /// <inheritdoc />
+    public async Task<Result<Plot, Error>> Handle(
+        CreatePlotCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        var polygonResult = PolygonCoordinates.Create(command.PolygonCoordinates);
+        if (polygonResult is Result<PolygonCoordinates, Error>.Failure polygonFailure)
+            return new Result<Plot, Error>.Failure(polygonFailure.Error);
+
+        var polygon = ((Result<PolygonCoordinates, Error>.Success)polygonResult).Value;
+        var plotResult = Plot.Create(
+            command.OwnerUserId,
+            command.PlotName,
+            polygon,
+            command.AreaSize);
+
+        if (plotResult is Result<Plot, Error>.Failure plotFailure)
+            return new Result<Plot, Error>.Failure(plotFailure.Error);
+
+        var plot = ((Result<Plot, Error>.Success)plotResult).Value;
+        await plotRepository.AddAsync(plot, cancellationToken);
+        await unitOfWork.CompleteAsync(cancellationToken);
+
+        return new Result<Plot, Error>.Success(plot);
+    }
+}
