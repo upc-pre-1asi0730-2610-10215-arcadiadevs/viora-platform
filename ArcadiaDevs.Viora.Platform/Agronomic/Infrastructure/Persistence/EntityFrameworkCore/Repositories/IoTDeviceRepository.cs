@@ -1,4 +1,7 @@
-﻿using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Configuration;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Repositories;
@@ -79,5 +82,16 @@ public class IoTDeviceRepository : BaseRepository<IoTDevice>, IIoTDeviceReposito
      {
          Remove(device);
          await Context.SaveChangesAsync();
+     }
+
+     /// <inheritdoc />
+     public async Task<IEnumerable<IoTDevice>> FindAllByPlotIdsAsync(
+         IEnumerable<long> plotIds,
+         CancellationToken cancellationToken = default)
+     {
+         return await Context.Set<IoTDevice>()
+             .AsNoTracking()
+             .Where(d => plotIds.Contains(d.PlotId))
+             .ToListAsync(cancellationToken);
      }
 }
