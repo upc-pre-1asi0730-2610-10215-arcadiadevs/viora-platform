@@ -10,10 +10,9 @@
 
     <ItemGroup>
         <!-- EntityFrameworkCore Database Persistence related packages -->
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.8"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational.Design" Version="1.1.6"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.4"/>
         <!-- PostgreSQL Database Persistence related packages -->
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
         <!-- Naming convention conversion related packages -->
