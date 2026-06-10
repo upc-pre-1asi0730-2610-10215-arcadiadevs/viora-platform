@@ -14,13 +14,19 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates
         public IoTDeviceStatus Status { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
 
-        public IoTDevice(PlotId plotId, string deviceName, IoTDeviceStatus status)
+        protected IoTDevice()
         {
-            if (plotId == null)
-                throw new ArgumentNullException(nameof(plotId), "IoTDevice requires a valid PlotId");
+        }
 
+        public IoTDevice(
+            PlotId plotId,
+            string deviceName,
+            IoTDeviceStatus status)
+        {
             if (string.IsNullOrWhiteSpace(deviceName))
-                throw new ArgumentException("IoTDevice requires a valid DeviceName", nameof(deviceName));
+                throw new ArgumentException(
+                    "IoTDevice requires a valid DeviceName",
+                    nameof(deviceName));
 
             PlotId = plotId.Value;
             DeviceName = deviceName;
