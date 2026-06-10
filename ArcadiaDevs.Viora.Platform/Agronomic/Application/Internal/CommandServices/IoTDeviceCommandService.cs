@@ -71,8 +71,22 @@ public class IoTDeviceCommandService : IIoTDeviceCommandService
         DeleteIoTDeviceCommand command, 
         CancellationToken cancellationToken = default)
     {
-        // Delete is not implemented in this service (ignored per request)
-        return new Result<bool, Error>.Failure(
-            new Error("NOT_IMPLEMENTED", "Delete operation is not implemented."));
+        var plot = await _plotRepository.FindByIdAsync(command.PlotId);
+        if (plot == null || plot.IsDeleted)
+        {
+            return new Result<bool, Error>.Failure(
+                new Error("PLOT_NOT_FOUND", $"Plot {command.PlotId} not found."));
+        }
+
+        var device = await _ioTDeviceRepository.FindByIdAndPlotIdAsync(command.DeviceId, command.PlotId);
+        if (device == null)
+        {
+            return new Result<bool, Error>.Failure(
+                new Error("DEVICE_NOT_FOUND", $"IoT Device {command.DeviceId} not found."));
+        }
+
+        await _ioTDeviceRepository.DeleteAsync(device);
+
+        return new Result<bool, Error>.Success(true);
     }
 }
