@@ -34,6 +34,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IPlotRepository, PlotRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IPlotCommandService, PlotCommandService>();
+builder.Services.AddScoped<IIoTDeviceRepository, IoTDeviceRepository>();
 
 var app = builder.Build();
 
@@ -50,6 +51,7 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await dbContext.Database.EnsureCreatedAsync();
+    
 }
 
 app.Run();
