@@ -8,6 +8,7 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.CommandServices;
 public interface IIoTDeviceCommandService
 {
     Task<Result<IoTDevice, Error>> Handle(CreateIoTDeviceCommand command, CancellationToken cancellationToken = default);
-    Task<Result<IoTDevice, Error>> Handle(UpdateIoTDeviceCommand command, CancellationToken cancellationToken = default);
-    Task<Result<bool, Error>> Handle(DeleteIoTDeviceCommand command, CancellationToken cancellationToken = default);
+    Task<Result<IoTDevice, Error>> Handle(
+        UpdateIoTDeviceCommand command, 
+        CancellationToken cancellationToken = default);    Task<Result<bool, Error>> Handle(DeleteIoTDeviceCommand command, CancellationToken cancellationToken = default);
 }
