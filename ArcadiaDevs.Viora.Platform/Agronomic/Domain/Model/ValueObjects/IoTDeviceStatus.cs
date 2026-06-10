@@ -20,8 +20,7 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects
     {
         public static IoTDeviceStatus FromString(string value)
         {
-            // Enum.TryParse mapea el string al Enum de forma nativa.
-            // El parámetro 'true' hace que la búsqueda ignore mayúsculas/minúsculas (case-insensitive).
+
             if (Enum.TryParse<IoTDeviceStatus>(value, true, out var status))
             {
                 return status;
