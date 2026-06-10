@@ -1,4 +1,4 @@
-﻿using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
+﻿using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Transform;
@@ -30,6 +30,7 @@ public class PlotIoTDevicesController(IIoTDeviceQueryService ioTDeviceQueryServi
     ///     <c>403 Forbidden</c> when the user does not own the plot.
     /// </returns>
     [HttpGet]
+    [Tags("IoTDevice")]
     [ProducesResponseType(typeof(IEnumerable<IoTDeviceResource>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Error), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetIoTDevicesByPlotId(
