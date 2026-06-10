@@ -1,37 +1,52 @@
-﻿using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
+﻿using System;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 
-namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates
+namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
+
+/// <summary>
+///     IoTDevice aggregate root.
+/// </summary>
+public class IoTDevice
 {
+    // CORREGIDO: Cambiado a long para evitar el error "Cannot convert source type long to target type int"
+    public long Id { get; set; }
+    public long PlotId { get; set; }
+    public string DeviceName { get; set; }
+    public IoTDeviceStatus Status { get; set; }
+
+    // Constructor vacío requerido por Entity Framework
+    public IoTDevice() { }
+
     /// <summary>
-    /// IoTDevice aggregate root.
-    /// Represents a sensor or IoT device associated with a plot.
+    ///     Creates a new IoTDevice from a PlotId, DeviceName and IoTDeviceStatus.
     /// </summary>
-    public class IoTDevice
+    public IoTDevice(PlotId plotId, DeviceName deviceName, IoTDeviceStatus? status)
     {
-        public long Id { get; set; }
-        public long PlotId { get; set; }
-        public string DeviceName { get; set; }
-        public IoTDeviceStatus Status { get; set; }
-        public DateTimeOffset CreatedAt { get; set; }
+        if (plotId == default)
+            throw new ArgumentException("IoTDevice requires a valid PlotId", nameof(plotId));
 
-        protected IoTDevice()
-        {
-        }
+        if (status == null)
+            throw new ArgumentException("IoTDevice requires a valid Status", nameof(status));
 
-        public IoTDevice(
-            PlotId plotId,
-            string deviceName,
-            IoTDeviceStatus status)
-        {
-            if (string.IsNullOrWhiteSpace(deviceName))
-                throw new ArgumentException(
-                    "IoTDevice requires a valid DeviceName",
-                    nameof(deviceName));
+        // Mapeo seguro usando long nativos
+        this.PlotId = plotId.Value; 
+        this.DeviceName = deviceName.Value;
+        this.Status = status.Value;
+    }
 
-            PlotId = plotId.Value;
-            DeviceName = deviceName;
-            Status = status;
-            CreatedAt = DateTimeOffset.UtcNow;
-        }
+    /// <summary>
+    ///     Updates the device name and status.
+    /// </summary>
+    public void update(DeviceName newName, IoTDeviceStatus? newStatus)
+    {
+        if (newStatus == null)
+            throw new ArgumentException("Status cannot be null", nameof(newStatus));
+
+        // Asignación de valores mutables directamente en la entidad
+        this.DeviceName = newName.Value;
+        this.Status = newStatus.Value;
+
+        // NOTA: Se removieron temporalmente 'RegisterDomainEvent' e 'IoTDeviceUpdated' 
+        // para compilar limpiamente sin depender de la librería de eventos de Java.
     }
 }
