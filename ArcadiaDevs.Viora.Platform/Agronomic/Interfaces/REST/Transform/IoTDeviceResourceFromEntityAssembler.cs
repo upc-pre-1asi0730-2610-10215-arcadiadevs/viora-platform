@@ -12,16 +12,11 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Transform;
 /// </remarks>
 public static class IoTDeviceResourceFromEntityAssembler
 {
-    /// <summary>
-    ///     Maps an <see cref="IoTDevice"/> aggregate to its <see cref="IoTDeviceResource"/> representation.
-    /// </summary>
-    /// <param name="device">The domain aggregate to convert.</param>
-    /// <returns>The REST response DTO.</returns>
     public static IoTDeviceResource ToResourceFromEntity(this IoTDevice device) =>
         new(
             (int)device.Id,
             (int)device.PlotId,
             device.DeviceName,
             device.Status,
-            device.CreatedAt);
+            DateTime.UtcNow);
 }
