@@ -25,7 +25,7 @@ public class IoTDeviceCommandService : IIoTDeviceCommandService
         CreateIoTDeviceCommand command, 
         CancellationToken cancellationToken = default)
     {
-        // Verify that the referenced plot exists (repository expects int id)
+        // 1. Validar la existencia del Plot pasando el ID primitivo directamente
         var plot = await _plotRepository.FindByIdAsync(command.PlotId);
         if (plot == null || plot.IsDeleted)
         {
@@ -33,10 +33,11 @@ public class IoTDeviceCommandService : IIoTDeviceCommandService
                 new Error("PLOT_NOT_FOUND", "Plot " + command.PlotId.ToString() + " not found"));
         }
 
-        // Create domain entity using domain value object for PlotId
+        // 2. Crear la entidad de dominio encapsulando explícitamente el string en el Value Object DeviceName
+        // CORREGIDO: Se añadió 'new DeviceName(command.DeviceName)'
         var device = new IoTDevice(
             new PlotId(command.PlotId),
-            command.DeviceName,
+            new DeviceName(command.DeviceName),
             command.Status);
 
         var saved = await _ioTDeviceRepository.SaveAsync(device);
@@ -47,9 +48,30 @@ public class IoTDeviceCommandService : IIoTDeviceCommandService
         UpdateIoTDeviceCommand command, 
         CancellationToken cancellationToken = default)
     {
-        // Update is not implemented in this service (ignored per request)
-        return new Result<IoTDevice, Error>.Failure(
-            new Error("NOT_IMPLEMENTED", "Update operation is not implemented."));
+        // 1. Validar la existencia pasando el ID nativo del comando (int/long) al repositorio
+        // CORREGIDO: Se pasa command.PlotId en lugar del objeto plotId para evitar el error de asignación
+        var plot = await _plotRepository.FindByIdAsync(command.PlotId);
+        if (plot == null || plot.IsDeleted) 
+        {
+            return new Result<IoTDevice, Error>.Failure(
+                new Error("PLOT_NOT_FOUND", $"Plot {command.PlotId} not found."));
+        }
+
+        // 2. Buscar el dispositivo IoT por Id y PlotId usando los tipos nativos
+        var device = await _ioTDeviceRepository.FindByIdAndPlotIdAsync(command.DeviceId, command.PlotId);
+        if (device == null)
+        {
+            return new Result<IoTDevice, Error>.Failure(
+                new Error("DEVICE_NOT_FOUND", $"IoT Device {command.DeviceId} not found."));
+        }
+
+        // 3. Modificar el Aggregate Root usando el método 'update' en minúscula
+        device.update(new DeviceName(command.DeviceName), command.Status);
+        
+        // 4. Persistir los cambios en la base de datos
+        var saved = await _ioTDeviceRepository.SaveAsync(device);
+
+        return new Result<IoTDevice, Error>.Success(saved);
     }
 
     public async Task<Result<bool, Error>> Handle(
