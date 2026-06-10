@@ -14,6 +14,7 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest;
 /// <remarks>
 ///     (TS012TASK005) <c>GET /api/v1/plots/{plotId}/iot-devices</c> — lists all devices belonging to the specified plot.
 ///     (TS013TASK004) <c>POST /api/v1/plots/{plotId}/iot-devices</c> — registers a new IoT device under the specified plot.
+///     (TS014) <c>PATCH /api/v1/plots/{plotId}/iot-devices/{deviceId}</c> — updates device name and status.
 /// </remarks>
 [ApiController]
 [Route("api/v1/plots/{plotId:int}/iot-devices")]
@@ -27,7 +28,7 @@ public class PlotIoTDevicesController(
     /// <param name="plotId">The plot identifier (path variable).</param>
     /// <param name="resource">The request body with deviceName and optional status.</param>
     /// <returns>
-    ///     <c>21 Created</c> with the created <see cref="IoTDeviceResource"/>, 
+    ///     <c>201 Created</c> with the created <see cref="IoTDeviceResource"/>, 
     ///     or <c>400 Bad Request</c>/<c>404 Not Found</c> on domain failure.
     /// </returns>
     [HttpPost]
@@ -45,10 +46,41 @@ public class PlotIoTDevicesController(
         return result.Fold<IActionResult>(
             device => CreatedAtAction(
                 nameof(GetIoTDevicesByPlotId), 
-                new { plotId = device.PlotId, userId = command.PlotId }, // O el parámetro que requiera tu GET si es aplicable
+                new { plotId = device.PlotId, userId = command.PlotId }, 
                 IoTDeviceResourceFromEntityAssembler.ToResourceFromEntity(device)),
-            error => error.Code == "PLOT_NOT_FOUND" // Check for PLOT_NOT_FOUND or similar codes
+            error => error.Code == "PLOT_NOT_FOUND" 
                 ? NotFound(error) 
+                : BadRequest(error));
+    }
+
+    /// <summary>
+    ///     Updates an existing IoT device's metadata under the specified plot.
+    /// </summary>
+    /// <param name="plotId">The plot identifier (path variable).</param>
+    /// <param name="deviceId">The device identifier (path variable).</param>
+    /// <param name="resource">The request body with deviceName and status.</param>
+    /// <returns>
+    ///     <c>200 OK</c> with the updated <see cref="IoTDeviceResource"/>, 
+    ///     or <c>400 Bad Request</c>/<c>404 Not Found</c> on failure.
+    /// </returns>
+    [HttpPatch("{deviceId:int}")]
+    [Tags("IoTDevice")]
+    [ProducesResponseType(typeof(IoTDeviceResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Error), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Error), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateIoTDevice(
+        [FromRoute] int plotId,
+        [FromRoute] int deviceId,
+        [FromBody] UpdateIoTDeviceResource resource)
+    {
+        var command = UpdateIoTDeviceCommandFromResourceAssembler.ToCommandFromResource(resource, plotId, deviceId);
+        
+        var result = await ioTDeviceCommandService.Handle(command);
+
+        return result.Fold<IActionResult>(
+            device => Ok(IoTDeviceResourceFromEntityAssembler.ToResourceFromEntity(device)),
+            error => error.Code == "PLOT_NOT_FOUND" || error.Code == "DEVICE_NOT_FOUND"
+                ? NotFound(error)
                 : BadRequest(error));
     }
 

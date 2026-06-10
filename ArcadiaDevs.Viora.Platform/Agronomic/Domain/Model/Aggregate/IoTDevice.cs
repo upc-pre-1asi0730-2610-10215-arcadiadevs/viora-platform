@@ -27,8 +27,7 @@ public class IoTDevice
 
         if (status == null)
             throw new ArgumentException("IoTDevice requires a valid Status", nameof(status));
-
-        // Mapeo seguro usando long nativos
+        
         this.PlotId = plotId.Value; 
         this.DeviceName = deviceName.Value;
         this.Status = status.Value;
@@ -42,11 +41,8 @@ public class IoTDevice
         if (newStatus == null)
             throw new ArgumentException("Status cannot be null", nameof(newStatus));
 
-        // Asignación de valores mutables directamente en la entidad
         this.DeviceName = newName.Value;
         this.Status = newStatus.Value;
-
-        // NOTA: Se removieron temporalmente 'RegisterDomainEvent' e 'IoTDeviceUpdated' 
-        // para compilar limpiamente sin depender de la librería de eventos de Java.
+        
     }
 }
