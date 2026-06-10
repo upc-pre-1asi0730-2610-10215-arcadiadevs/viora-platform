@@ -1,6 +1,21 @@
-@ArcadiaDevs.Viora.Platform_HostAddress = http://localhost:5269
+@HostAddress = http://localhost:5269
 
-GET {{ArcadiaDevs.Viora.Platform_HostAddress}}/weatherforecast/
+GET {{HostAddress}}/swagger/v1/swagger.json
 Accept: application/json
 
 ###
+
+POST {{HostAddress}}/api/v1/plots
+Content-Type: application/json
+
+{
+  "ownerUserId": 1,
+  "plotName": "Plot Norte",
+  "polygonCoordinates": [
+    { "latitude": -12.0464, "longitude": -77.0428 },
+    { "latitude": -12.0464, "longitude": -77.0328 },
+    { "latitude": -12.0364, "longitude": -77.0328 },
+    { "latitude": -12.0464, "longitude": -77.0428 }
+  ],
+  "areaSize": 1250.50
+}
