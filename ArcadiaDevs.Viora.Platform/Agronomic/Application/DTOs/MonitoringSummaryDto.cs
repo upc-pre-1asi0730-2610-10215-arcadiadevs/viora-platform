@@ -34,4 +34,24 @@ public record MonitoringSummaryDto
 
     /// <summary>Computed from plot data (placeholder).</summary>
     public decimal YieldProjection { get; init; }
+
+    /// <summary>Computed average NDVI.</summary>
+    public decimal AverageNdvi { get; init; }
+
+    /// <summary>General health status.</summary>
+    public string GeneralHealthStatus { get; init; } = string.Empty;
+
+    /// <summary>Timestamp of last data sync.</summary>
+    public DateTimeOffset LastSynchronizationAt { get; init; }
+
+    // Weather and Risk Fields
+    public decimal CurrentTemperature { get; init; }
+    public string WeatherStatus { get; init; } = string.Empty;
+    public DateTimeOffset LastValidatedReadingAt { get; init; }
+    public string ClimateRiskLevel { get; init; } = string.Empty;
+
+    // Mitigation Recommendation Fields
+    public string MitigationActionType { get; init; } = string.Empty;
+    public string MitigationSuggestedInputs { get; init; } = string.Empty;
+    public string MitigationRecommendedWindow { get; init; } = string.Empty;
 }
