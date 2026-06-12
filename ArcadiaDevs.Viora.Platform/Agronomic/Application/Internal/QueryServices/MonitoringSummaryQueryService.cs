@@ -6,6 +6,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Services;
+using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 
@@ -18,13 +19,19 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
 {
     private readonly IPlotRepository _plotRepository;
     private readonly IIoTDeviceRepository _ioTDeviceRepository;
+    private readonly AgroMonitoringApiClient _agroMonitoringClient;
+    private readonly ILogger<MonitoringSummaryQueryService> _logger;
 
     public MonitoringSummaryQueryService(
         IPlotRepository plotRepository,
-        IIoTDeviceRepository ioTDeviceRepository)
+        IIoTDeviceRepository ioTDeviceRepository,
+        AgroMonitoringApiClient agroMonitoringClient,
+        ILogger<MonitoringSummaryQueryService> logger)
     {
         _plotRepository = plotRepository;
         _ioTDeviceRepository = ioTDeviceRepository;
+        _agroMonitoringClient = agroMonitoringClient;
+        _logger = logger;
     }
 
     public async Task<Result<MonitoringSummaryDto, Error>> Handle(
@@ -54,9 +61,11 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
             ? Math.Round((decimal)activeDevices / totalDevices * 100, 2)
             : 0m;
 
-        // Simulated values for metrics based on plots
+        // Fetch real accumulated temperature data from AgroMonitoring.
+        var chillHours = await FetchAccumulatedChillHoursAsync(plots, cancellationToken);
+
+        // Simulated values for metrics that depend on external data we don't yet consume.
         var simulatedNdvi = totalPlots > 0 ? 0.65m : 0m;
-        var simulatedChillHours = totalPlots > 0 ? 120.5m : 0m;
         var simulatedYieldProjection = totalPlots > 0 ? 4500m : 0m;
         
         var healthStatusStr = deviceHealthPercentage >= 80 ? "Good" 
@@ -74,7 +83,7 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
 
         var evaluator = new ClimateRiskEvaluator();
         var recommendation = evaluator.EvaluateRisk(
-            new AccumulatedChillHours(simulatedChillHours),
+            new AccumulatedChillHours(chillHours),
             new AverageNdvi(simulatedNdvi),
             simulatedWeather);
 
@@ -83,7 +92,7 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
             query.UserId,
             healthStatusStr,
             simulatedNdvi,
-            simulatedChillHours,
+            chillHours,
             simulatedYieldProjection,
             simulatedWeather,
             recommendation,
@@ -121,5 +130,57 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
         };
 
         return new Result<MonitoringSummaryDto, Error>.Success(dto);
+    }
+
+    /// <summary>
+    ///     Fetches accumulated chill hours from AgroMonitoring for the first plot with coordinates.
+    ///     Falls back to a simulated value if no plot has AgroMonitoring data or the API call fails.
+    /// </summary>
+    private async Task<decimal> FetchAccumulatedChillHoursAsync(
+        IReadOnlyList<Plot> plots,
+        CancellationToken cancellationToken)
+    {
+        // Chill hours use the 273.15 K threshold (0 °C).
+        const double chillThresholdKelvin = 273.15;
+
+        // Use a 30-day window for chill accumulation.
+        var end = DateTimeOffset.UtcNow;
+        var start = end.AddDays(-30);
+
+        foreach (var plot in plots)
+        {
+            if (string.IsNullOrWhiteSpace(plot.AgroMonitoringCenter))
+                continue;
+
+            // Parse center coordinates "[lon, lat]".
+            var center = plot.AgroMonitoringCenter
+                .Trim('[', ']')
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            if (center.Length < 2
+                || !decimal.TryParse(center[0], System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out var lon)
+                || !decimal.TryParse(center[1], System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out var lat))
+            {
+                continue;
+            }
+
+            var tempResult = await _agroMonitoringClient.GetAccumulatedTemperatureAsync(
+                lat, lon, start, end, chillThresholdKelvin, cancellationToken);
+
+            if (tempResult is Result<IReadOnlyList<Infrastructure.ExternalServices.AgroMonitoringTemperatureDataPoint>, Error>.Success tempSuccess
+                && tempSuccess.Value.Count > 0)
+            {
+                // Sum the accumulated counts and convert to chill hours.
+                var totalCount = tempSuccess.Value.Sum(t => t.Count);
+                return Math.Round((decimal)totalCount / 24m, 2);
+            }
+        }
+
+        // Fallback: simulated value when no plot has AgroMonitoring data.
+        _logger.LogInformation(
+            "No AgroMonitoring data available for chill hours; using simulated value");
+        return plots.Count > 0 ? 120.5m : 0m;
     }
 }
