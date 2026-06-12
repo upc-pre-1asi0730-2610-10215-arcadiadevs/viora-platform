@@ -3,6 +3,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.CommandServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Interfaces.ASP.Configuration;
@@ -62,6 +63,15 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
 
 // Shared Bounded Context Injection Configuration
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// External API Clients
+builder.Services.AddHttpClient<AgroMonitoringApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["ExternalApis:AgroMonitoring:BaseUrl"]
+        ?? "https://api.agromonitoring.com";
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 
 // Agronomic Bounded Context Injection Configuration
 builder.Services.AddScoped<IPlotRepository, PlotRepository>();

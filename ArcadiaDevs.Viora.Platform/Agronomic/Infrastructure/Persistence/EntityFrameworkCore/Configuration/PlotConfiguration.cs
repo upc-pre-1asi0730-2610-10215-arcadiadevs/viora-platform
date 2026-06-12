@@ -47,6 +47,14 @@ public class PlotConfiguration : IEntityTypeConfiguration<Plot>
             .HasColumnName("is_deleted")
             .HasDefaultValue(false);
 
+        builder.Property(p => p.AgroMonitoringPolygonId)
+            .HasColumnName("agro_monitoring_polygon_id")
+            .HasMaxLength(64);
+
+        builder.Property(p => p.AgroMonitoringCenter)
+            .HasColumnName("agro_monitoring_center")
+            .HasMaxLength(64);
+
         // Configure PolygonCoordinates as owned entity type with JSON storage
         builder.OwnsOne(p => p.PolygonCoordinates, polygonBuilder =>
         {
