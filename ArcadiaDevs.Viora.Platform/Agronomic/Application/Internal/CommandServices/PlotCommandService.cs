@@ -3,6 +3,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregate;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
@@ -14,7 +15,9 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.CommandServi
 /// </summary>
 public class PlotCommandService(
     IPlotRepository plotRepository,
-    IUnitOfWork unitOfWork) : IPlotCommandService
+    IUnitOfWork unitOfWork,
+    AgroMonitoringApiClient agroMonitoringClient,
+    ILogger<PlotCommandService> logger) : IPlotCommandService
 {
     /// <inheritdoc />
     public async Task<Result<Plot, Error>> Handle(
@@ -36,6 +39,29 @@ public class PlotCommandService(
             return new Result<Plot, Error>.Failure(plotFailure.Error);
 
         var plot = ((Result<Plot, Error>.Success)plotResult).Value;
+
+        // Register polygon with AgroMonitoring API (best-effort; failure is logged, not fatal).
+        var polygonResponse = await agroMonitoringClient.CreatePolygonAsync(
+            command.PlotName,
+            command.PolygonCoordinates,
+            cancellationToken);
+
+        if (polygonResponse is Result<AgroMonitoringPolygonResponse, Error>.Success polygonSuccess)
+        {
+            var polygonData = polygonSuccess.Value;
+            var center = polygonData.Center.Length >= 2
+                ? $"[{polygonData.Center[0]}, {polygonData.Center[1]}]"
+                : "[]";
+            plot.SetAgroMonitoringData(polygonData.Id, center);
+        }
+        else
+        {
+            logger.LogWarning(
+                "Failed to register polygon with AgroMonitoring for plot '{PlotName}'. " +
+                "NDVI and temperature data will not be available.",
+                command.PlotName);
+        }
+
         await plotRepository.AddAsync(plot, cancellationToken);
         await unitOfWork.CompleteAsync(cancellationToken);
 
