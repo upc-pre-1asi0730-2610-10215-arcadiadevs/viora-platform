@@ -5,6 +5,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Interfaces.ASP.Configuration;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Pipeline.Middleware.Extensions;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Configuration;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Repositories;
@@ -12,29 +13,58 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Add services to the container.
+
+// Configure Lower Case URLs
+builder.Services.AddRouting(options => options.LowercaseUrls = true);
+
+// Localization Configuration
 builder.Services.AddLocalization();
 
-var databaseProvider = builder.Configuration["Database:Provider"] ?? "InMemory";
-builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    if (databaseProvider.Equals("PostgreSql", StringComparison.OrdinalIgnoreCase))
-    {
-        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException(
-                "ConnectionStrings:DefaultConnection is required when Database:Provider is PostgreSql.");
+// Configure Kebab Case Route Naming Convention
+builder.Services.AddControllers(options => options.Conventions.Add(new KebabCaseRouteNamingConvention()))
+    .AddDataAnnotationsLocalization();
 
-        options.UseNpgsql(connectionString);
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options => options.EnableAnnotations());
+
+// Add Database Connection
+var useEnvironmentVariables =
+    !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("DATABASE_URL"));
+
+// Configure Database Context and route EF logs through the app logger pipeline.
+builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+{
+    if (!useEnvironmentVariables)
+    {
+        options.UseInMemoryDatabase("VioraPlatform");
         return;
     }
 
-    options.UseInMemoryDatabase("VioraPlatform");
+    var connectionStringTemplate = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (string.IsNullOrWhiteSpace(connectionStringTemplate))
+        throw new InvalidOperationException("Database connection string is not set in the configuration.");
+
+    var connectionString = Environment.ExpandEnvironmentVariables(connectionStringTemplate);
+    if (string.IsNullOrWhiteSpace(connectionString))
+        throw new InvalidOperationException("Database connection string is not set in the configuration.");
+
+    options.UseNpgsql(connectionString)
+        .UseLoggerFactory(serviceProvider.GetRequiredService<ILoggerFactory>())
+        .EnableDetailedErrors();
+
+    if (builder.Environment.IsDevelopment())
+        options.EnableSensitiveDataLogging();
 });
 
-builder.Services.AddScoped<IPlotRepository, PlotRepository>();
+// Configure Dependency Injection
+
+// Shared Bounded Context Injection Configuration
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// Agronomic Bounded Context Injection Configuration
+builder.Services.AddScoped<IPlotRepository, PlotRepository>();
 builder.Services.AddScoped<IPlotCommandService, PlotCommandService>();
 builder.Services.AddScoped<IIoTDeviceRepository, IoTDeviceRepository>();
 builder.Services.AddScoped<IMonitoringSummaryQueryService, MonitoringSummaryQueryService>();
@@ -43,20 +73,35 @@ builder.Services.AddScoped<IDynamicNutritionQueryService, DynamicNutritionQueryS
 
 var app = builder.Build();
 
+// Create the database schema on startup.
+// Viora uses EnsureCreated because the project does not have EF migrations yet.
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<AppDbContext>();
+    await context.Database.EnsureCreatedAsync();
+}
+
+// Configure the HTTP request pipeline.
 app.UseGlobalExceptionHandler();
+
+// Swagger UI is enabled in all environments for API testing.
 app.UseSwagger();
 app.UseSwaggerUI();
 
-if (!app.Environment.IsDevelopment())
-    app.UseHttpsRedirection();
+// Localization Configuration
+string[] supportedCultures = ["en", "en-US", "es", "es-PE"];
+var localizationOptions = new RequestLocalizationOptions()
+    .SetDefaultCulture(supportedCultures[0])
+    .AddSupportedCultures(supportedCultures)
+    .AddSupportedUICultures(supportedCultures);
+localizationOptions.ApplyCurrentCultureToResponseHeaders = true;
+app.UseRequestLocalization(localizationOptions);
+
+app.UseHttpsRedirection();
+
+app.UseAuthorization();
 
 app.MapControllers();
-
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await dbContext.Database.EnsureCreatedAsync();
-    
-}
 
 app.Run();
