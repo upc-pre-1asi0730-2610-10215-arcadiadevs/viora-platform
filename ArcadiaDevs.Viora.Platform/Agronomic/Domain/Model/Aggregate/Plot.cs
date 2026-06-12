@@ -51,6 +51,16 @@ public class Plot : IAuditableEntity
     public bool IsDeleted { get; private set; }
 
     /// <summary>
+    ///     Gets the AgroMonitoring polygon identifier, if registered with the external API.
+    /// </summary>
+    public string? AgroMonitoringPolygonId { get; private set; }
+
+    /// <summary>
+    ///     Gets the center coordinates reported by AgroMonitoring (format: "[lon, lat]").
+    /// </summary>
+    public string? AgroMonitoringCenter { get; private set; }
+
+    /// <summary>
     ///     EF Core constructor.
     /// </summary>
     private Plot() { }
@@ -102,5 +112,16 @@ public class Plot : IAuditableEntity
         };
 
         return new Result<Plot, Error>.Success(plot);
+    }
+
+    /// <summary>
+    ///     Stores the AgroMonitoring polygon identifier and center after external registration.
+    /// </summary>
+    /// <param name="polygonId">The polygon ID returned by AgroMonitoring.</param>
+    /// <param name="center">The center coordinates (format: "[lon, lat]").</param>
+    public void SetAgroMonitoringData(string polygonId, string center)
+    {
+        AgroMonitoringPolygonId = polygonId;
+        AgroMonitoringCenter = center;
     }
 }

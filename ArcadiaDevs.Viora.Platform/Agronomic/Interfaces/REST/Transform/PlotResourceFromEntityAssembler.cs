@@ -25,6 +25,8 @@ public static class PlotResourceFromEntityAssembler
             plot.PlotName,
             geoPointDtos,
             plot.AreaSize,
-            plot.CreatedAt ?? DateTimeOffset.UtcNow);
+            plot.CreatedAt ?? DateTimeOffset.UtcNow,
+            plot.AgroMonitoringPolygonId,
+            plot.AgroMonitoringCenter);
     }
 }
