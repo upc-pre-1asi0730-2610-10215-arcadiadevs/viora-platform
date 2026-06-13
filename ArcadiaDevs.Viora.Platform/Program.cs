@@ -78,8 +78,9 @@ builder.Services.AddScoped<IPlotRepository, PlotRepository>();
 builder.Services.AddScoped<IPlotCommandService, PlotCommandService>();
 builder.Services.AddScoped<IIoTDeviceRepository, IoTDeviceRepository>();
 builder.Services.AddScoped<IMonitoringSummaryQueryService, MonitoringSummaryQueryService>();
-builder.Services.AddScoped<IAgronomicStatisticsQueryService, AgronomicStatisticsQueryService>();
-builder.Services.AddScoped<IDynamicNutritionQueryService, DynamicNutritionQueryService>();
+
+// Register the EF Core repository for the agronomic statistics
+builder.Services.AddScoped<IAgronomicStatisticRepository, AgronomicStatisticRepository>();
 
 var app = builder.Build();
 
