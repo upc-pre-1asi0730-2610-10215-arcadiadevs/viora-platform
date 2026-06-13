@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.DTOs;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregate;
@@ -12,24 +17,24 @@ using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices;
 
-/// <summary>
-///     Implementation of monitoring summary query service.
-/// </summary>
 public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
 {
     private readonly IPlotRepository _plotRepository;
     private readonly IIoTDeviceRepository _ioTDeviceRepository;
+    private readonly IAgronomicStatisticRepository _statisticRepository;
     private readonly AgroMonitoringApiClient _agroMonitoringClient;
     private readonly ILogger<MonitoringSummaryQueryService> _logger;
 
     public MonitoringSummaryQueryService(
         IPlotRepository plotRepository,
         IIoTDeviceRepository ioTDeviceRepository,
+        IAgronomicStatisticRepository statisticRepository,
         AgroMonitoringApiClient agroMonitoringClient,
         ILogger<MonitoringSummaryQueryService> logger)
     {
         _plotRepository = plotRepository;
         _ioTDeviceRepository = ioTDeviceRepository;
+        _statisticRepository = statisticRepository;
         _agroMonitoringClient = agroMonitoringClient;
         _logger = logger;
     }
@@ -38,8 +43,7 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
         GetCurrentMonitoringSummaryQuery query,
         CancellationToken cancellationToken = default)
     {
-        // TS016TASK004: Using FindAllByOwnerUserIdAsync and FindAllByPlotIdsAsync which return AsNoTracking
-        // keeping the SQL logic optimized inside the repositories.
+        // --- Step 1: Fetch data from internal sources (DB) ---
         var plots = (await _plotRepository.FindAllByOwnerUserIdAsync(query.UserId, cancellationToken)).ToList();
         var plotIds = plots.Select(p => (long)p.Id).ToList();
         
@@ -47,56 +51,48 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
             ? (await _ioTDeviceRepository.FindAllByPlotIdsAsync(plotIds, cancellationToken)).ToList()
             : new List<IoTDevice>();
 
-        var totalPlots = plots.Count;
-        var totalDevices = devices.Count;
-        var activeDevices = devices.Count(d => d.Status == IoTDeviceStatus.Active);
-        var inactiveDevices = devices.Count(d => d.Status == IoTDeviceStatus.Inactive);
-        var maintenanceDevices = devices.Count(d => d.Status == IoTDeviceStatus.Maintenance);
-        
-        var averagePlotArea = totalPlots > 0
-            ? Math.Round(plots.Average(p => p.AreaSize), 2)
-            : 0m;
-        
-        var deviceHealthPercentage = totalDevices > 0
-            ? Math.Round((decimal)activeDevices / totalDevices * 100, 2)
-            : 0m;
+        var statistics = await _statisticRepository.FindLatestByUserIdAsync(
+            query.UserId, 
+            DateTimeOffset.UtcNow.AddDays(-30), 
+            DateTimeOffset.UtcNow, 
+            cancellationToken);
 
-        // Fetch real accumulated temperature data from AgroMonitoring.
-        var chillHours = await FetchAccumulatedChillHoursAsync(plots, cancellationToken);
+        // --- Step 2: Consolidate internal data ---
+        var consolidatedNdvi = statistics.Any() ? statistics.Average(s => s.NdviValue) : 0m;
+        var consolidatedChillHours = statistics.Any() ? statistics.Average(s => s.AccumulatedChillHours) : 0m;
+        var latestMeasurementDate = statistics.Any() ? statistics.Max(s => s.MeasurementDate) : DateTimeOffset.UtcNow;
 
-        // Simulated values for metrics that depend on external data we don't yet consume.
-        var simulatedNdvi = totalPlots > 0 ? 0.65m : 0m;
-        var simulatedYieldProjection = totalPlots > 0 ? 4500m : 0m;
-        
-        var healthStatusStr = deviceHealthPercentage >= 80 ? "Good" 
-            : deviceHealthPercentage >= 50 ? "Moderate" 
-            : "Critical";
-            
-        if (totalDevices == 0) healthStatusStr = "Moderate"; // Default when no devices
+        // --- Step 3: Determine health status based on ideal logic (NDVI) ---
+        var healthStatusStr = consolidatedNdvi switch
+        {
+            > 0.6m => "HEALTHY",
+            > 0.3m => "WARNING",
+            _ => "CRITICAL"
+        };
 
-        // TS016TASK007, TS016TASK008, TS016TASK009, TS016TASK010: Weather, Risk Evaluation and Mitigation
-        var simulatedWeather = new WeatherSnapshot(
-            22.5m, 
-            WeatherStatus.Sunny, 
-            DateTimeOffset.UtcNow.AddMinutes(-30), 
-            ClimateRiskLevel.Medium);
+        // --- Step 4: Fetch real-time external data (Weather) ---
+        var weatherSnapshot = await FetchCurrentWeatherAsync(plots, cancellationToken);
 
+        // --- Step 5: Evaluate consolidated risk ---
         var evaluator = new ClimateRiskEvaluator();
-        var recommendation = evaluator.EvaluateRisk(
-            new AccumulatedChillHours(chillHours),
-            new AverageNdvi(simulatedNdvi),
-            simulatedWeather);
+        var (consolidatedRisk, recommendation) = evaluator.EvaluateRisk(
+            new AccumulatedChillHours(consolidatedChillHours),
+            new AverageNdvi(consolidatedNdvi),
+            weatherSnapshot);
 
-        // Use the aggregate root to validate and create the summary
+        // --- Step 6: Calculate Yield Forecast ---
+        var yieldForecast = (consolidatedNdvi * 100) + (consolidatedChillHours / 10);
+
+        // --- Step 7: Create Aggregate and DTO ---
         var summaryResult = MonitoringSummary.Create(
             query.UserId,
             healthStatusStr,
-            simulatedNdvi,
-            chillHours,
-            simulatedYieldProjection,
-            simulatedWeather,
+            consolidatedNdvi,
+            consolidatedChillHours,
+            yieldForecast,
+            weatherSnapshot,
             recommendation,
-            DateTimeOffset.UtcNow
+            latestMeasurementDate
         );
 
         if (summaryResult is Result<MonitoringSummary, Error>.Failure failure)
@@ -106,81 +102,90 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
 
         var aggregate = ((Result<MonitoringSummary, Error>.Success)summaryResult).Value;
 
+        var windowStart = latestMeasurementDate;
+        var windowEnd = windowStart.AddDays(7);
+
         var dto = new MonitoringSummaryDto
         {
-            TotalPlots = totalPlots,
-            TotalDevices = totalDevices,
-            ActiveDevices = activeDevices,
-            InactiveDevices = inactiveDevices,
-            MaintenanceDevices = maintenanceDevices,
-            AveragePlotArea = averagePlotArea,
-            DeviceHealthPercentage = deviceHealthPercentage,
-            ColdAccumulationIndex = aggregate.AccumulatedChillHours.Value,
-            YieldProjection = aggregate.YieldProjection.Value,
-            AverageNdvi = aggregate.AverageNdvi.Value,
+            MonitoringSummaryId = aggregate.MonitoringSummaryId.Value,
+            UserId = aggregate.UserId.Value,
             GeneralHealthStatus = aggregate.GeneralHealthStatus.ToString(),
-            LastSynchronizationAt = aggregate.LastSynchronizationAt.Value,
-            CurrentTemperature = aggregate.WeatherSnapshot.CurrentTemperature,
-            WeatherStatus = aggregate.WeatherSnapshot.WeatherStatus.ToString(),
-            LastValidatedReadingAt = aggregate.WeatherSnapshot.LastValidatedReadingAt,
-            ClimateRiskLevel = aggregate.WeatherSnapshot.ClimateRiskLevel.ToString(),
-            MitigationActionType = aggregate.MitigationRecommendation.ActionType,
-            MitigationSuggestedInputs = aggregate.MitigationRecommendation.SuggestedInputs,
-            MitigationRecommendedWindow = aggregate.MitigationRecommendation.RecommendedApplicationWindow
+            NdviValue = aggregate.AverageNdvi.Value,
+            AccumulatedChillHours = aggregate.AccumulatedChillHours.Value,
+            YieldForecast = aggregate.YieldProjection.Value,
+            MeasurementDate = aggregate.LastSynchronizationAt.Value,
+            WeatherSnapshot = new WeatherSnapshotDto
+            {
+                WeatherStatus = aggregate.WeatherSnapshot.WeatherStatus.ToString(),
+                MeasurementDate = aggregate.WeatherSnapshot.LastValidatedReadingAt,
+                ClimateRiskLevel = aggregate.WeatherSnapshot.ClimateRiskLevel.ToString(),
+                Temperature = aggregate.WeatherSnapshot.CurrentTemperature
+            },
+            ClimateRiskLevel = consolidatedRisk.ToString(),
+            MitigationRecommendations = new List<MitigationRecommendationDto>
+            {
+                new()
+                {
+                    ActionType = aggregate.MitigationRecommendation.ActionType,
+                    NutritionInputRecommendation = aggregate.MitigationRecommendation.SuggestedInputs,
+                    ApplicationWindowStart = windowStart,
+                    ApplicationWindowEnd = windowEnd
+                }
+            }
         };
 
         return new Result<MonitoringSummaryDto, Error>.Success(dto);
     }
 
-    /// <summary>
-    ///     Fetches accumulated chill hours from AgroMonitoring for the first plot with coordinates.
-    ///     Falls back to a simulated value if no plot has AgroMonitoring data or the API call fails.
-    /// </summary>
-    private async Task<decimal> FetchAccumulatedChillHoursAsync(
-        IReadOnlyList<Plot> plots,
-        CancellationToken cancellationToken)
+    private ClimateRiskLevel DeriveWeatherRisk(WeatherStatus status, decimal temperature)
     {
-        // Chill hours use the 273.15 K threshold (0 °C).
-        const double chillThresholdKelvin = 273.15;
+        if (status is WeatherStatus.Stormy) return ClimateRiskLevel.Critical;
+        if (temperature > 38 || temperature < 2) return ClimateRiskLevel.High;
+        if (status is WeatherStatus.Rainy or WeatherStatus.Windy) return ClimateRiskLevel.Medium;
+        return ClimateRiskLevel.Low;
+    }
 
-        // Use a 30-day window for chill accumulation.
-        var end = DateTimeOffset.UtcNow;
-        var start = end.AddDays(-30);
+    private async Task<WeatherSnapshot> FetchCurrentWeatherAsync(IReadOnlyList<Plot> plots, CancellationToken cancellationToken)
+    {
+        var plotWithCoords = plots.FirstOrDefault(p => !string.IsNullOrWhiteSpace(p.AgroMonitoringCenter));
+        if (plotWithCoords == null) return WeatherSnapshot.CreateDefault();
 
-        foreach (var plot in plots)
+        var center = plotWithCoords.GetCoordinates();
+        if (center == null) return WeatherSnapshot.CreateDefault();
+
+        var weatherResult = await _agroMonitoringClient.GetCurrentWeatherAsync(center.Value.Lat, center.Value.Lon, cancellationToken);
+
+        if (weatherResult is Result<AgroMonitoringWeatherResponse, Error>.Success weatherSuccess)
         {
-            if (string.IsNullOrWhiteSpace(plot.AgroMonitoringCenter))
-                continue;
-
-            // Parse center coordinates "[lon, lat]".
-            var center = plot.AgroMonitoringCenter
-                .Trim('[', ']')
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-            if (center.Length < 2
-                || !decimal.TryParse(center[0], System.Globalization.NumberStyles.Float,
-                    System.Globalization.CultureInfo.InvariantCulture, out var lon)
-                || !decimal.TryParse(center[1], System.Globalization.NumberStyles.Float,
-                    System.Globalization.CultureInfo.InvariantCulture, out var lat))
-            {
-                continue;
-            }
-
-            var tempResult = await _agroMonitoringClient.GetAccumulatedTemperatureAsync(
-                lat, lon, start, end, chillThresholdKelvin, cancellationToken);
-
-            if (tempResult is Result<IReadOnlyList<Infrastructure.ExternalServices.AgroMonitoringTemperatureDataPoint>, Error>.Success tempSuccess
-                && tempSuccess.Value.Count > 0)
-            {
-                // Sum the accumulated counts and convert to chill hours.
-                var totalCount = tempSuccess.Value.Sum(t => t.Count);
-                return Math.Round((decimal)totalCount / 24m, 2);
-            }
+            var response = weatherSuccess.Value;
+            var tempCelsius = Math.Round((decimal)response.Main.Temperature - 273.15m, 2);
+            var status = Enum.TryParse<WeatherStatus>(response.Weather.FirstOrDefault()?.Main, true, out var weatherStatus)
+                ? weatherStatus
+                : WeatherStatus.Unknown;
+            
+            var weatherRisk = DeriveWeatherRisk(status, tempCelsius);
+            
+            return new WeatherSnapshot(tempCelsius, status, DateTimeOffset.FromUnixTimeSeconds(response.Timestamp), weatherRisk);
         }
 
-        // Fallback: simulated value when no plot has AgroMonitoring data.
-        _logger.LogInformation(
-            "No AgroMonitoring data available for chill hours; using simulated value");
-        return plots.Count > 0 ? 120.5m : 0m;
+        _logger.LogWarning("Could not fetch current weather from AgroMonitoring; returning default.");
+        return WeatherSnapshot.CreateDefault();
+    }
+}
+
+internal static class PlotExtensions
+{
+    public static (decimal Lat, decimal Lon)? GetCoordinates(this Plot plot)
+    {
+        if (string.IsNullOrWhiteSpace(plot.AgroMonitoringCenter)) return null;
+
+        var center = plot.AgroMonitoringCenter.Trim('[', ']').Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (center.Length < 2 || !decimal.TryParse(center[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var lon) || !decimal.TryParse(center[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var lat))
+        {
+            return null;
+        }
+        
+        return (lat, lon);
     }
 }
