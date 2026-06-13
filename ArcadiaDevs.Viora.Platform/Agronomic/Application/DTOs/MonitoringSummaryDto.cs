@@ -1,4 +1,29 @@
+using System;
+using System.Collections.Generic;
+
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.DTOs;
+
+/// <summary>
+///     DTO for weather snapshot data.
+/// </summary>
+public record WeatherSnapshotDto
+{
+    public string WeatherStatus { get; init; } = string.Empty;
+    public DateTimeOffset MeasurementDate { get; init; }
+    public string ClimateRiskLevel { get; init; } = string.Empty;
+    public decimal Temperature { get; init; }
+}
+
+/// <summary>
+///     DTO for mitigation recommendation data.
+/// </summary>
+public record MitigationRecommendationDto
+{
+    public string ActionType { get; init; } = string.Empty;
+    public string NutritionInputRecommendation { get; init; } = string.Empty;
+    public DateTimeOffset ApplicationWindowStart { get; init; }
+    public DateTimeOffset ApplicationWindowEnd { get; init; }
+}
 
 /// <summary>
 ///     DTO for monitoring summary KPI metrics.
@@ -8,50 +33,27 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.DTOs;
 /// </remarks>
 public record MonitoringSummaryDto
 {
-    /// <summary>Count of user's plots.</summary>
+    public long MonitoringSummaryId { get; init; }
+    public long UserId { get; init; }
+
+    // These fields are calculated in the service but not exposed in the final resource.
+    // They are kept here as they are part of the internal DTO logic.
     public int TotalPlots { get; init; }
-
-    /// <summary>Count of user's IoT devices.</summary>
     public int TotalDevices { get; init; }
-
-    /// <summary>Count of active devices.</summary>
     public int ActiveDevices { get; init; }
-
-    /// <summary>Count of inactive devices.</summary>
     public int InactiveDevices { get; init; }
-
-    /// <summary>Count of devices in maintenance.</summary>
     public int MaintenanceDevices { get; init; }
-
-    /// <summary>Average area across user's plots.</summary>
     public decimal AveragePlotArea { get; init; }
-
-    /// <summary>Percentage of active devices.</summary>
     public decimal DeviceHealthPercentage { get; init; }
 
-    /// <summary>Computed from plot data (placeholder).</summary>
-    public decimal ColdAccumulationIndex { get; init; }
-
-    /// <summary>Computed from plot data (placeholder).</summary>
-    public decimal YieldProjection { get; init; }
-
-    /// <summary>Computed average NDVI.</summary>
-    public decimal AverageNdvi { get; init; }
-
-    /// <summary>General health status.</summary>
     public string GeneralHealthStatus { get; init; } = string.Empty;
+    public decimal NdviValue { get; init; }
+    public decimal AccumulatedChillHours { get; init; }
+    public decimal YieldForecast { get; init; }
+    public DateTimeOffset MeasurementDate { get; init; }
 
-    /// <summary>Timestamp of last data sync.</summary>
-    public DateTimeOffset LastSynchronizationAt { get; init; }
-
-    // Weather and Risk Fields
-    public decimal CurrentTemperature { get; init; }
-    public string WeatherStatus { get; init; } = string.Empty;
-    public DateTimeOffset LastValidatedReadingAt { get; init; }
-    public string ClimateRiskLevel { get; init; } = string.Empty;
-
-    // Mitigation Recommendation Fields
-    public string MitigationActionType { get; init; } = string.Empty;
-    public string MitigationSuggestedInputs { get; init; } = string.Empty;
-    public string MitigationRecommendedWindow { get; init; } = string.Empty;
+    // Nested DTOs
+    public WeatherSnapshotDto WeatherSnapshot { get; init; } = new();
+    public string ClimateRiskLevel { get; init; } = string.Empty; // Top-level climate risk
+    public IReadOnlyList<MitigationRecommendationDto> MitigationRecommendations { get; init; } = new List<MitigationRecommendationDto>();
 }
