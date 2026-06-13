@@ -1,3 +1,4 @@
+using System.Linq;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.DTOs;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 
@@ -12,25 +13,28 @@ public static class MonitoringSummaryResourceFromDtoAssembler
     {
         return new MonitoringSummaryResource
         {
-            TotalPlots = dto.TotalPlots,
-            TotalDevices = dto.TotalDevices,
-            ActiveDevices = dto.ActiveDevices,
-            InactiveDevices = dto.InactiveDevices,
-            MaintenanceDevices = dto.MaintenanceDevices,
-            AveragePlotArea = dto.AveragePlotArea,
-            DeviceHealthPercentage = dto.DeviceHealthPercentage,
-            ColdAccumulationIndex = dto.ColdAccumulationIndex,
-            YieldProjection = dto.YieldProjection,
-            AverageNdvi = dto.AverageNdvi,
+            MonitoringSummaryId = dto.MonitoringSummaryId,
+            UserId = dto.UserId,
             GeneralHealthStatus = dto.GeneralHealthStatus,
-            LastSynchronizationAt = dto.LastSynchronizationAt,
-            CurrentTemperature = dto.CurrentTemperature,
-            WeatherStatus = dto.WeatherStatus,
-            LastValidatedReadingAt = dto.LastValidatedReadingAt,
+            NdviValue = dto.NdviValue,
+            AccumulatedChillHours = dto.AccumulatedChillHours,
+            YieldForecast = dto.YieldForecast,
+            MeasurementDate = dto.MeasurementDate,
+            WeatherSnapshot = new WeatherSnapshotResource
+            {
+                WeatherStatus = dto.WeatherSnapshot.WeatherStatus,
+                MeasurementDate = dto.WeatherSnapshot.MeasurementDate,
+                ClimateRiskLevel = dto.WeatherSnapshot.ClimateRiskLevel,
+                Temperature = dto.WeatherSnapshot.Temperature
+            },
             ClimateRiskLevel = dto.ClimateRiskLevel,
-            MitigationActionType = dto.MitigationActionType,
-            MitigationSuggestedInputs = dto.MitigationSuggestedInputs,
-            MitigationRecommendedWindow = dto.MitigationRecommendedWindow
+            MitigationRecommendations = dto.MitigationRecommendations.Select(r => new MitigationRecommendationResource
+            {
+                ActionType = r.ActionType,
+                NutritionInputRecommendation = r.NutritionInputRecommendation,
+                ApplicationWindowStart = r.ApplicationWindowStart,
+                ApplicationWindowEnd = r.ApplicationWindowEnd
+            }).ToList()
         };
     }
 }
