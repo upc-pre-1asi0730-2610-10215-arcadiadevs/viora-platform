@@ -7,31 +7,39 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Services;
 /// </summary>
 public class ClimateRiskEvaluator
 {
-    public MitigationRecommendation EvaluateRisk(
+    /// <summary>
+    /// Evaluates the consolidated climate risk by combining weather data, NDVI, and chill hours.
+    /// </summary>
+    /// <returns>A tuple containing the final calculated risk and a corresponding recommendation.</returns>
+    public (ClimateRiskLevel, MitigationRecommendation) EvaluateRisk(
         AccumulatedChillHours chillHours,
         AverageNdvi ndvi,
         WeatherSnapshot weather)
     {
-        // Simple logic for Olive tree (olivo)
-        if (weather.ClimateRiskLevel == ClimateRiskLevel.Critical || weather.ClimateRiskLevel == ClimateRiskLevel.High)
+        // Prioritize immediate weather-based risks
+        if (weather.ClimateRiskLevel is ClimateRiskLevel.High or ClimateRiskLevel.Critical)
         {
-            return new MitigationRecommendation(
+            var recommendation = new MitigationRecommendation(
                 "Immediate Action Required",
-                "Fungicide / Frost protection",
+                "Evaluate frost/heat protection measures",
                 "Next 24 hours",
                 weather.ClimateRiskLevel);
+            return (weather.ClimateRiskLevel, recommendation);
         }
         
+        // Evaluate agronomic factors for medium risk
         if (chillHours.Value < 200 && ndvi.Value < 0.4m)
         {
-            return new MitigationRecommendation(
+            var risk = ClimateRiskLevel.Medium;
+            var recommendation = new MitigationRecommendation(
                 "Nutrition Boost",
                 "Nitrogen fertilizer",
                 "Next 7 days",
-                ClimateRiskLevel.Medium);
+                risk);
+            return (risk, recommendation);
         }
 
-        // Return empty if low risk
-        return MitigationRecommendation.None();
+        // If no other risks are found, the risk is low.
+        return (ClimateRiskLevel.Low, MitigationRecommendation.None());
     }
 }
