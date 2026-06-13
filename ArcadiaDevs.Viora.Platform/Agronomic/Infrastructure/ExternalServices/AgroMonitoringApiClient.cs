@@ -1,10 +1,23 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices;
+
+// Response DTOs for AgroMonitoring API
+public record AgroMonitoringWeatherResponse(
+    [property: JsonPropertyName("dt")] long Timestamp,
+    [property: JsonPropertyName("weather")] IReadOnlyList<AgroMonitoringWeatherCondition> Weather,
+    [property: JsonPropertyName("main")] AgroMonitoringWeatherMain Main
+);
+
+public record AgroMonitoringWeatherCondition([property: JsonPropertyName("main")] string Main);
+
+public record AgroMonitoringWeatherMain([property: JsonPropertyName("temp")] double Temperature);
+
 
 /// <summary>
 ///     Client for the AgroMonitoring external API.
@@ -41,6 +54,56 @@ public class AgroMonitoringApiClient
                 "AgroMonitoring API key is not configured. " +
                 "Set ExternalApis:AgroMonitoring:ApiKey in appsettings.json or environment.");
     }
+    
+    /// <summary>
+    ///     Fetches the current weather for a given location.
+    /// </summary>
+    /// <param name="latitude">Latitude of the location.</param>
+    /// <param name="longitude">Longitude of the location.</param>
+    /// <returns>A Result containing the weather data or an error.</returns>
+    public async Task<Result<AgroMonitoringWeatherResponse, Error>> GetCurrentWeatherAsync(
+        decimal latitude,
+        decimal longitude,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync(
+                $"/agro/1.0/weather?lat={latitude}&lon={longitude}&appid={_apiKey}",
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning(
+                    "AgroMonitoring current weather failed ({StatusCode}): {Body}",
+                    response.StatusCode, errorBody);
+
+                return new Result<AgroMonitoringWeatherResponse, Error>.Failure(
+                    new Error(
+                        "AGROMONITORING_WEATHER_FAILED",
+                        $"Current weather failed with status {response.StatusCode}"));
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<AgroMonitoringWeatherResponse>(
+                JsonOptions, cancellationToken);
+
+            if (result is null)
+            {
+                return new Result<AgroMonitoringWeatherResponse, Error>.Failure(
+                    new Error("AGROMONITORING_NULL_RESPONSE", "Weather response was null"));
+            }
+
+            return new Result<AgroMonitoringWeatherResponse, Error>.Success(result);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Network error calling AgroMonitoring current weather");
+            return new Result<AgroMonitoringWeatherResponse, Error>.Failure(
+                new Error("AGROMONITORING_NETWORK_ERROR", $"Network error: {ex.Message}"));
+        }
+    }
+
 
     /// <summary>
     ///     Registers a polygon with AgroMonitoring and returns the assigned polygon ID.
