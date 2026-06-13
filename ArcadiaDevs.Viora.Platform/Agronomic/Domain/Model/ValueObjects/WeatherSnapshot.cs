@@ -1,14 +1,14 @@
-using System;
-
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 
 public enum WeatherStatus
 {
+    Unknown,
     Sunny,
     Rainy,
     Cloudy,
     Windy,
-    Stormy
+    Stormy,
+    Clear
 }
 
 public enum ClimateRiskLevel
@@ -38,7 +38,7 @@ public record WeatherSnapshot
         if (currentTemperature < -50 || currentTemperature > 60)
             throw new ArgumentException("Current temperature is out of valid range (-50 to 60).", nameof(currentTemperature));
 
-        if (lastValidatedReadingAt > DateTimeOffset.UtcNow)
+        if (lastValidatedReadingAt > DateTimeOffset.UtcNow.AddHours(1)) // Allow for small clock differences
             throw new ArgumentException("Last validated reading cannot be in the future.", nameof(lastValidatedReadingAt));
 
         if (!Enum.IsDefined(typeof(WeatherStatus), weatherStatus))
@@ -51,5 +51,13 @@ public record WeatherSnapshot
         WeatherStatus = weatherStatus;
         LastValidatedReadingAt = lastValidatedReadingAt;
         ClimateRiskLevel = climateRiskLevel;
+    }
+
+    /// <summary>
+    ///     Creates a default weather snapshot for when external data is unavailable.
+    /// </summary>
+    public static WeatherSnapshot CreateDefault()
+    {
+        return new WeatherSnapshot(0, WeatherStatus.Unknown, DateTimeOffset.UtcNow, ClimateRiskLevel.Medium);
     }
 }
