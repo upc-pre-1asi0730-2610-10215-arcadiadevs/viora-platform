@@ -8,4 +8,5 @@ namespace ArcadiaDevs.Viora.Platform.Surveillance.Domain.Repositories;
 /// </summary>
 public interface IAlertRepository : IBaseRepository<Alert>
 {
+    Task<IEnumerable<Alert>> FindByPlotIdInOrderByCreatedAtDescAsync(IEnumerable<long> plotIds, int limit, CancellationToken cancellationToken = default);
 }
