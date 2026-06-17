@@ -71,6 +71,26 @@ public class PlotConfiguration : IEntityTypeConfiguration<Plot>
                         c => c));
         });
 
+        builder.OwnsOne(p => p.ChillRequirementOverride, chillBuilder =>
+        {
+            chillBuilder.OwnsOne(c => c.Portions, pBuilder =>
+            {
+                pBuilder.Property(p => p.Value)
+                    .HasColumnName("chill_requirement_portions")
+                    .HasColumnType("decimal(18,6)");
+            });
+
+            chillBuilder.Property(c => c.Source)
+                .HasColumnName("chill_requirement_source")
+                .HasConversion<string>()
+                .HasMaxLength(50);
+
+            chillBuilder.Property(c => c.Model)
+                .HasColumnName("chill_requirement_model")
+                .HasConversion<string>()
+                .HasMaxLength(50);
+        });
+
         builder.Property(p => p.CreatedAt)
             .HasColumnName("created_at");
 
