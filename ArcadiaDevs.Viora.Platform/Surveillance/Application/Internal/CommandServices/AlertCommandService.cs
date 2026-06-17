@@ -5,13 +5,16 @@ using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Events;
+using Cortex.Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace ArcadiaDevs.Viora.Platform.Surveillance.Application.Internal.CommandServices;
 
 public class AlertCommandService(
     IAlertRepository alertRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IMediator mediator)
     : IAlertCommandService
 {
     public async Task<Result<Alert, Error>> Handle(CreateAlertCommand command, CancellationToken cancellationToken = default)
@@ -22,6 +25,15 @@ public class AlertCommandService(
 
             await alertRepository.AddAsync(alert, cancellationToken);
             await unitOfWork.CompleteAsync(cancellationToken);
+
+            var domainEvent = new AlertCreatedEvent(
+                alert.Id,
+                alert.PlotId.Value,
+                alert.Type.ToString(),
+                alert.Severity.ToString()
+            );
+
+            await mediator.PublishAsync(domainEvent, cancellationToken);
 
             return new Result<Alert, Error>.Success(alert);
         }
