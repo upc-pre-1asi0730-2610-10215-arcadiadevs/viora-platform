@@ -1,3 +1,4 @@
+using ArcadiaDevs.Viora.Platform.Shared.Application.Internal.EventHandlers;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Events;
