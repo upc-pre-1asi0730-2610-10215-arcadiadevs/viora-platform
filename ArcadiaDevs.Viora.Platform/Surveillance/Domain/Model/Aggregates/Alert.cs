@@ -1,3 +1,4 @@
+using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Exceptions;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Entities;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.ValueObjects;
@@ -54,5 +55,17 @@ public partial class Alert
     public void AddTimelineRecord(string tag, string title, string description)
     {
         _timeline.Add(new AlertTimelineRecord(tag, title, description));
+    }
+
+    public Alert MarkAsReviewed()
+    {
+        if (Status is "UNDER_REVIEW" or "RESOLVED" or "DISMISSED")
+        {
+            throw new AlertAlreadyReviewedException(Id);
+        }
+
+        Status = "UNDER_REVIEW";
+        AddTimelineRecord("Info", "Alert marked as reviewed", "A specialist has acknowledged and is reviewing this alert.");
+        return this;
     }
 }

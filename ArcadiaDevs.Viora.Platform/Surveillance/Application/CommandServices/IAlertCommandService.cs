@@ -17,4 +17,5 @@ public interface IAlertCommandService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A result containing the created alert or an error.</returns>
     Task<Result<Alert, Error>> Handle(CreateAlertCommand command, CancellationToken cancellationToken = default);
+    Task<Result<long, Error>> Handle(MarkAlertAsReviewedCommand command, CancellationToken cancellationToken = default);
 }

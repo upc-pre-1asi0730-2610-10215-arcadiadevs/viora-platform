@@ -41,6 +41,7 @@ public class AlertCommandService(
         {
             return new Result<Alert, Error>.Failure(new Error("OperationCancelled", "The operation was cancelled."));
         }
+
         catch (DbUpdateException ex)
         {
             return new Result<Alert, Error>.Failure(new Error("DatabaseError", $"A database error occurred: {ex.Message}"));
@@ -48,6 +49,32 @@ public class AlertCommandService(
         catch (Exception ex)
         {
             return new Result<Alert, Error>.Failure(new Error("InternalServerError", $"An unexpected error occurred: {ex.Message}"));
+        }
+    }
+
+    public async Task<Result<long, Error>> Handle(MarkAlertAsReviewedCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var alert = await alertRepository.FindByIdAsync((int)command.AlertId, cancellationToken);
+            if (alert is null)
+            {
+                return new Result<long, Error>.Failure(new Error("NotFound", $"Alert with id {command.AlertId} not found"));
+            }
+
+            alert.MarkAsReviewed();
+            alertRepository.Update(alert);
+            await unitOfWork.CompleteAsync(cancellationToken);
+
+            return new Result<long, Error>.Success(alert.Id);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            return new Result<long, Error>.Failure(new Error("InternalServerError", $"Failed to mark alert as reviewed: {ex.Message}"));
         }
     }
 }
