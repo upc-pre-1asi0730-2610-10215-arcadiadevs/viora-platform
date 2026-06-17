@@ -87,6 +87,8 @@ builder.Services.AddHttpClient<AgroMonitoringApiClient>(client =>
 });
 
 // Agronomic Bounded Context Injection Configuration
+builder.Services.AddSingleton(new ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects.ChillRequirementPolicy(50.0));
+builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.ChillRequirementResolver>();
 builder.Services.AddScoped<IPlotRepository, PlotRepository>();
 builder.Services.AddScoped<IPlotCommandService, PlotCommandService>();
 builder.Services.AddScoped<IIoTDeviceRepository, IoTDeviceRepository>();
