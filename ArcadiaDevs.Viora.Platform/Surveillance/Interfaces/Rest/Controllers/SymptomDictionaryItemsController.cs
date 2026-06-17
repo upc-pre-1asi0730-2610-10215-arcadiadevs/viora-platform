@@ -1,15 +1,21 @@
 using System.Net.Mime;
+using ArcadiaDevs.Viora.Platform.Shared.Resources.Errors;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Rest.Transform;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.Extensions.Localization;
 
 namespace ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Rest.Controllers;
 
 [ApiController]
 [Route("api/v1/symptom-dictionary-items")]
 [Produces(MediaTypeNames.Application.Json)]
-public class SymptomDictionaryItemsController(ISymptomQueryService queryService) : ControllerBase
+public class SymptomDictionaryItemsController(
+    ISymptomQueryService queryService,
+    IStringLocalizer<ErrorMessages> errorLocalizer,
+    ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetSymptoms([FromHeader(Name = "Accept-Language")] string language = "en")
@@ -17,8 +23,16 @@ public class SymptomDictionaryItemsController(ISymptomQueryService queryService)
         var query = new GetAllSymptomsQuery();
         var symptoms = await queryService.Handle(query);
 
-        var resources = symptoms.Select(entity => SymptomResourceFromEntityAssembler.ToResourceFromEntity(entity, language)).ToList();
-
-        return Ok(resources);
+        return SurveillanceActionResultAssembler.ToActionResultFromGetAllSymptomsResult(
+            this,
+            symptoms,
+            errorLocalizer,
+            problemDetailsFactory,
+            entities =>
+            {
+                var resources = entities.Select(entity => SymptomResourceFromEntityAssembler.ToResourceFromEntity(entity, language)).ToList();
+                return Ok(resources);
+            }
+        );
     }
 }
