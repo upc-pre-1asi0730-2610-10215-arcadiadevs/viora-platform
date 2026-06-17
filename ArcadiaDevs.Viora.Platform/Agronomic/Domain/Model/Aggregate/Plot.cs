@@ -30,6 +30,11 @@ public class Plot : IAuditableEntity
     public string PlotName { get; private set; } = string.Empty;
 
     /// <summary>
+    ///     Gets the crop type of the plot.
+    /// </summary>
+    public string? CropType { get; private set; }
+
+    /// <summary>
     ///     Gets the polygon coordinates defining the plot boundaries.
     /// </summary>
     public PolygonCoordinates PolygonCoordinates { get; private set; } = null!;
@@ -59,6 +64,17 @@ public class Plot : IAuditableEntity
     ///     Gets the center coordinates reported by AgroMonitoring (format: "[lon, lat]").
     /// </summary>
     public string? AgroMonitoringCenter { get; private set; }
+
+    /// <summary>
+    ///     Grower- or agronomist-declared winter-chill requirement for this plot.
+    ///     Null when no override has been configured and the crop-derived system default applies.
+    /// </summary>
+    public ChillRequirement? ChillRequirementOverride { get; private set; }
+
+    /// <summary>
+    ///     Defensive upper bound for a declared chill requirement.
+    /// </summary>
+    private const double MaxChillRequirementPortions = 200.0;
 
     /// <summary>
     ///     EF Core constructor.
@@ -123,5 +139,40 @@ public class Plot : IAuditableEntity
     {
         AgroMonitoringPolygonId = polygonId;
         AgroMonitoringCenter = center;
+    }
+
+    /// <summary>
+    ///     Declares an explicit winter-chill requirement for this plot, overriding the default.
+    /// </summary>
+    public Plot ConfigureChillRequirement(ChillPortions portions, EChillRequirementSource source)
+    {
+        ArgumentNullException.ThrowIfNull(portions);
+
+        if (source is not EChillRequirementSource.UserDeclared and not EChillRequirementSource.AgronomistValidated)
+        {
+            throw new ArgumentException("A configured chill requirement must be user-declared or agronomist-validated.", nameof(source));
+        }
+
+        if (portions.Value <= 0)
+        {
+            throw new ArgumentException("Chill requirement must be greater than zero.");
+        }
+
+        if (portions.Value > MaxChillRequirementPortions)
+        {
+            throw new ArgumentException($"Chill requirement cannot exceed {MaxChillRequirementPortions:F0} chill portions.");
+        }
+
+        ChillRequirementOverride = new ChillRequirement(portions, source, EChillMetricModel.Dynamic);
+        return this;
+    }
+
+    /// <summary>
+    ///     Clears any declared chill requirement, reverting to the crop-derived system default.
+    /// </summary>
+    public Plot ClearChillRequirement()
+    {
+        ChillRequirementOverride = null;
+        return this;
     }
 }
