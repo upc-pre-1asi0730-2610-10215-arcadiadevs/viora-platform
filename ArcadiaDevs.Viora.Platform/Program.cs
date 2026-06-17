@@ -93,6 +93,7 @@ builder.Services.AddScoped<IIoTDeviceRepository, IoTDeviceRepository>();
 builder.Services.AddScoped<IMonitoringSummaryQueryService, MonitoringSummaryQueryService>();
 builder.Services.AddScoped<IAgronomicStatisticsQueryService, AgronomicStatisticsQueryService>();
 builder.Services.AddScoped<IDynamicNutritionQueryService, DynamicNutritionQueryService>();
+builder.Services.AddScoped<IDynamicNutritionPlanCommandService, DynamicNutritionPlanCommandService>();
 
 // Surveillance Bounded Context Injection Configuration
 builder.Services.AddScoped<IPestSightingReportRepository, PestSightingReportRepository>();
@@ -103,6 +104,7 @@ builder.Services.AddScoped<IPestSightingCommandService, PestSightingCommandServi
 builder.Services.AddScoped<IAlertCommandService, AlertCommandService>();
 builder.Services.AddScoped<ISymptomCommandService, SymptomCommandService>();
 builder.Services.AddScoped<ISymptomQueryService, SymptomQueryService>();
+builder.Services.AddScoped<IAlertQueryService, AlertQueryService>();
 
 builder.Services.AddScoped<IExternalAgronomicService, ExternalAgronomicService>();
 builder.Services.AddScoped<ThreatInferenceService>();
