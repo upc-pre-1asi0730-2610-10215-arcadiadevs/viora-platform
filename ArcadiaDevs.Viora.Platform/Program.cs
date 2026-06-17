@@ -5,11 +5,24 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using ArcadiaDevs.Viora.Platform.Surveillance.Application.CommandServices;
+using ArcadiaDevs.Viora.Platform.Surveillance.Application.Internal.CommandServices;
+using ArcadiaDevs.Viora.Platform.Surveillance.Application.Internal.QueryServices;
+using ArcadiaDevs.Viora.Platform.Surveillance.Application.QueryServices;
+using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Commands;
+using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Services;
+using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Surveillance.Application.OutboundServices.Acl;
+using ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.OutboundServices.Acl;
+using ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using Cortex.Mediator;
+using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Interfaces.ASP.Configuration;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Pipeline.Middleware.Extensions;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Configuration;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Repositories;
+using Cortex.Mediator.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -81,6 +94,22 @@ builder.Services.AddScoped<IMonitoringSummaryQueryService, MonitoringSummaryQuer
 builder.Services.AddScoped<IAgronomicStatisticsQueryService, AgronomicStatisticsQueryService>();
 builder.Services.AddScoped<IDynamicNutritionQueryService, DynamicNutritionQueryService>();
 
+// Surveillance Bounded Context Injection Configuration
+builder.Services.AddScoped<IPestSightingReportRepository, PestSightingReportRepository>();
+builder.Services.AddScoped<IAlertRepository, AlertRepository>();
+builder.Services.AddScoped<ISymptomDictionaryItemRepository, SymptomDictionaryItemRepository>();
+
+builder.Services.AddScoped<IPestSightingCommandService, PestSightingCommandService>();
+builder.Services.AddScoped<IAlertCommandService, AlertCommandService>();
+builder.Services.AddScoped<ISymptomCommandService, SymptomCommandService>();
+builder.Services.AddScoped<ISymptomQueryService, SymptomQueryService>();
+
+builder.Services.AddScoped<IExternalAgronomicService, ExternalAgronomicService>();
+builder.Services.AddScoped<ThreatInferenceService>();
+
+// Cortex Mediator
+builder.Services.AddCortexMediator([typeof(Program)]);
+
 var app = builder.Build();
 
 // Create the database schema on startup.
@@ -90,6 +119,10 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<AppDbContext>();
     await context.Database.EnsureCreatedAsync();
+
+    // Seeding Surveillance
+    var symptomCommandService = services.GetRequiredService<ISymptomCommandService>();
+    await symptomCommandService.Handle(new SeedSymptomsCommand());
 }
 
 // Configure the HTTP request pipeline.
