@@ -4,13 +4,18 @@ using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.DTOs;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.OutboundServices.Acl;
+using ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Rest.Resources;
+
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 
 namespace ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.OutboundServices.Acl;
 
 /// <summary>
 /// Implementation of the external agronomic service for the anti-corruption layer.
 /// </summary>
-public class ExternalAgronomicService(IMonitoringSummaryQueryService monitoringSummaryQueryService) : IExternalAgronomicService
+public class ExternalAgronomicService(
+    IMonitoringSummaryQueryService monitoringSummaryQueryService,
+    IPlotRepository plotRepository) : IExternalAgronomicService
 {
     /// <inheritdoc/>
     public async Task<double?> FetchCurrentNdviByPlotIdAsync(long plotId, long reporterUserId, CancellationToken cancellationToken = default)
@@ -25,5 +30,23 @@ public class ExternalAgronomicService(IMonitoringSummaryQueryService monitoringS
         }
 
         return null;
+    }
+
+    /// <inheritdoc/>
+    public async Task<IDictionary<long, PlotSummaryResource>> GetPlotsForUserAsMapAsync(long userId, CancellationToken cancellationToken = default)
+    {
+        var plots = await plotRepository.FindAllByOwnerUserIdAsync((int)userId, cancellationToken);
+        var map = new Dictionary<long, PlotSummaryResource>();
+
+        foreach (var plot in plots)
+        {
+            map[plot.Id] = new PlotSummaryResource(
+                plot.PlotName,
+                plot.AgroMonitoringCenter ?? "Unknown",
+                (double)plot.AreaSize
+            );
+        }
+
+        return map;
     }
 }
