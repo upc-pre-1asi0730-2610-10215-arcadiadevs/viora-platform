@@ -1,13 +1,13 @@
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
+using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.CommandServices;
+using ArcadiaDevs.Viora.Platform.Surveillance.Application.OutboundServices.Acl;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Commands;
-using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Events;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Services;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Repositories;
-using ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.OutboundServices.Acl;
 using Cortex.Mediator;
 using Microsoft.EntityFrameworkCore;
 

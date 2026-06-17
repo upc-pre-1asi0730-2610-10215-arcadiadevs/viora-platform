@@ -39,11 +39,13 @@ public static class SurveillanceActionResultAssembler
 
         var failure = (Result<PestSightingReport, Error>.Failure)result;
         var statusCode = ToStatusCodeFromErrorCode(failure.Error.Code);
-        return problemDetailsFactory.CreateProblemDetails(
-            controller, 
+        var problemDetails = problemDetailsFactory.CreateProblemDetails(
+            controller.HttpContext, 
             statusCode, 
             failure.Error.Code, 
             errorLocalizer[failure.Error.Code].Value ?? failure.Error.Message);
+            
+        return new ObjectResult(problemDetails) { StatusCode = statusCode };
     }
 
     public static IActionResult ToActionResultFromCreateAlertResult(
@@ -58,11 +60,13 @@ public static class SurveillanceActionResultAssembler
 
         var failure = (Result<Alert, Error>.Failure)result;
         var statusCode = ToStatusCodeFromErrorCode(failure.Error.Code);
-        return problemDetailsFactory.CreateProblemDetails(
-            controller, 
+        var problemDetails = problemDetailsFactory.CreateProblemDetails(
+            controller.HttpContext, 
             statusCode, 
             failure.Error.Code, 
             errorLocalizer[failure.Error.Code].Value ?? failure.Error.Message);
+
+        return new ObjectResult(problemDetails) { StatusCode = statusCode };
     }
 
     public static IActionResult ToActionResultFromGetAllSymptomsResult(
