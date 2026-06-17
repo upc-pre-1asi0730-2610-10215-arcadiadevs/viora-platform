@@ -14,5 +14,5 @@ public record AlertResource(
     List<string> Sources,
     List<string> DataProviders,
     IDictionary<string, string> SupportingData,
-    List<AlertTimelineRecordResource> TimelineResources
+    List<AlertTimelineRecordResource> Timeline
 );
