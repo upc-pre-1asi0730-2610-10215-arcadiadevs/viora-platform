@@ -114,4 +114,22 @@ public class AlertsController(
         var resource = AlertResourceFromEntityAssembler.ToResourceFromEntity(alert);
         return Ok(resource);
     }
+
+    /// <summary>
+    ///     Get recent alerts
+    /// </summary>
+    /// <remarks>
+    ///     Retrieves the most recent alerts for the given user, combined with plot details, matching the dashboard overview.
+    /// </remarks>
+    /// <param name="userId">The ID of the user.</param>
+    /// <param name="limit">The maximum number of alerts to return.</param>
+    /// <response code="200">Recent alerts retrieved successfully</response>
+    [HttpGet("recent")]
+    [ProducesResponseType(typeof(IEnumerable<AlertSummaryResource>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetRecentAlerts([FromQuery] long userId, [FromQuery] int limit = 3)
+    {
+        var query = new GetRecentAlertsByUserIdQuery(userId, limit);
+        var summaries = await alertQueryService.Handle(query);
+        return Ok(summaries);
+    }
 }
