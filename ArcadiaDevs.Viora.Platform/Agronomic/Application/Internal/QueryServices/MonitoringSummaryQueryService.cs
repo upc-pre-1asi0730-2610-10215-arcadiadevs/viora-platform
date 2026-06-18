@@ -1,4 +1,4 @@
-using ArcadiaDevs.Viora.Platform.Agronomic.Application.DTOs;
+using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregate;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
@@ -34,7 +34,7 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
         _logger = logger;
     }
 
-    public async Task<Result<MonitoringSummaryDto, Error>> Handle(
+    public async Task<Result<MonitoringSummaryResource, Error>> Handle(
         GetCurrentMonitoringSummaryQuery query,
         CancellationToken cancellationToken = default)
     {
@@ -101,12 +101,12 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
 
         if (summaryResult is Result<MonitoringSummary, Error>.Failure failure)
         {
-            return new Result<MonitoringSummaryDto, Error>.Failure(failure.Error);
+            return new Result<MonitoringSummaryResource, Error>.Failure(failure.Error);
         }
 
         var aggregate = ((Result<MonitoringSummary, Error>.Success)summaryResult).Value;
 
-        var dto = new MonitoringSummaryDto
+        var dto = new MonitoringSummaryResource
         {
             TotalPlots = totalPlots,
             TotalDevices = totalDevices,
@@ -129,7 +129,7 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
             MitigationRecommendedWindow = aggregate.MitigationRecommendation.RecommendedApplicationWindow
         };
 
-        return new Result<MonitoringSummaryDto, Error>.Success(dto);
+        return new Result<MonitoringSummaryResource, Error>.Success(dto);
     }
 
     /// <summary>
