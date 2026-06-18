@@ -2,9 +2,12 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.CommandServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
+using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.OutboundServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EFC.Repositories;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.Internal.CommandServices;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.Internal.QueryServices;
@@ -91,6 +94,7 @@ builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Ser
 builder.Services.AddScoped<IPlotRepository, PlotRepository>();
 builder.Services.AddScoped<IAgroMonitoringPlotIntegrationRepository, AgroMonitoringPlotIntegrationRepository>();
 builder.Services.AddScoped<IAgroMonitoringImageryService, AgroMonitoringImageryServiceAdapter>();
+builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.OutboundServices.IWeatherDataService, ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices.WeatherDataServiceAdapter>();
 builder.Services.AddScoped<IPlotCommandService, PlotCommandService>();
 builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices.IGetMyPlotsOverviewQueryService, ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices.GetMyPlotsOverviewQueryService>();
 builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices.IGetPlotDetailQueryService, ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices.GetPlotDetailQueryService>();
@@ -101,7 +105,11 @@ builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.Quer
 builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices.IGetPlotNdviTileQueryService, ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices.GetPlotNdviTileQueryService>();
 builder.Services.AddScoped<IIoTDeviceRepository, IoTDeviceRepository>();
 builder.Services.AddScoped<IMonitoringSummaryQueryService, MonitoringSummaryQueryService>();
+builder.Services.AddScoped<IAgronomicStatisticRepository, AgronomicStatisticRepository>();
 builder.Services.AddScoped<IAgronomicStatisticsQueryService, AgronomicStatisticsQueryService>();
+builder.Services.AddScoped<IAgronomicStatisticSeriesQueryService, AgronomicStatisticSeriesQueryService>();
+builder.Services.AddScoped<IAgronomicStatisticIngestionService, AgronomicStatisticIngestionService>();
+builder.Services.AddScoped<ChillAccumulationCalculator>();
 builder.Services.AddScoped<IDynamicNutritionQueryService, DynamicNutritionQueryService>();
 builder.Services.AddScoped<IDynamicNutritionPlanCommandService, DynamicNutritionPlanCommandService>();
 
