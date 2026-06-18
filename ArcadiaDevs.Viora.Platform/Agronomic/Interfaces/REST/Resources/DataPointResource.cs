@@ -1,9 +1,9 @@
-namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.DTOs;
+namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 
 /// <summary>
-///     DTO for a single data point in agronomic statistics time series.
+///     Resource for a single data point in agronomic statistics time series.
 /// </summary>
-public record DataPointDto
+public record DataPointResource
 {
     /// <summary>Point in time.</summary>
     public DateTimeOffset Timestamp { get; init; }

@@ -1,9 +1,9 @@
-namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.DTOs;
+namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 
 /// <summary>
-///     DTO for nutrient details in a nutrition plan.
+///     Resource for nutrient details in a nutrition plan.
 /// </summary>
-public record NutrientDto
+public record NutrientResource
 {
     /// <summary>Name of the nutrient (Nitrogen, Phosphorus, or Potassium).</summary>
     public string Name { get; init; } = string.Empty;

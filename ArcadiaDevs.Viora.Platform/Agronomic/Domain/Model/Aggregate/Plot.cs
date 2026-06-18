@@ -35,6 +35,26 @@ public class Plot : IAuditableEntity
     public string? CropType { get; private set; }
 
     /// <summary>
+    ///     Gets the crop variety associated with the plot.
+    /// </summary>
+    public string? Variety { get; private set; }
+
+    /// <summary>
+    ///     Gets the human-readable location of the plot.
+    /// </summary>
+    public string? Location { get; private set; }
+
+    /// <summary>
+    ///     Gets the production campaign the plot is enrolled in.
+    /// </summary>
+    public string? Campaign { get; private set; }
+
+    /// <summary>
+    ///     Gets free-form grower notes about the plot.
+    /// </summary>
+    public string? Notes { get; private set; }
+
+    /// <summary>
     ///     Gets the polygon coordinates defining the plot boundaries.
     /// </summary>
     public PolygonCoordinates PolygonCoordinates { get; private set; } = null!;
@@ -49,6 +69,11 @@ public class Plot : IAuditableEntity
 
     /// <inheritdoc />
     public DateTimeOffset? UpdatedAt { get; set; }
+
+    /// <summary>
+    ///     Gets whether this plot is active.
+    /// </summary>
+    public bool IsActive { get; private set; }
 
     /// <summary>
     ///     Gets whether this plot has been soft-deleted.
@@ -88,12 +113,22 @@ public class Plot : IAuditableEntity
     /// <param name="plotName">The name of the plot.</param>
     /// <param name="polygonCoordinates">The polygon coordinates defining boundaries.</param>
     /// <param name="areaSize">The area size of the plot.</param>
+    /// <param name="cropType">The crop type.</param>
+    /// <param name="variety">The crop variety.</param>
+    /// <param name="location">The human-readable plot location.</param>
+    /// <param name="campaign">The production campaign.</param>
+    /// <param name="notes">Free-form grower notes.</param>
     /// <returns>A Result containing the Plot if valid, or an error if validation fails.</returns>
     public static Result<Plot, Error> Create(
         int ownerUserId,
         string plotName,
         PolygonCoordinates polygonCoordinates,
-        decimal areaSize)
+        decimal areaSize,
+        string? cropType = null,
+        string? variety = null,
+        string? location = null,
+        string? campaign = null,
+        string? notes = null)
     {
         // Validate owner user ID
         if (ownerUserId <= 0)
@@ -124,7 +159,13 @@ public class Plot : IAuditableEntity
             OwnerUserId = ownerUserId,
             PlotName = plotName.Trim(),
             PolygonCoordinates = polygonCoordinates,
-            AreaSize = areaSize
+            AreaSize = areaSize,
+            CropType = SanitizeText(cropType, 60),
+            Variety = SanitizeText(variety, 80),
+            Location = SanitizeText(location, 120),
+            Campaign = SanitizeText(campaign, 60),
+            Notes = SanitizeText(notes, 500),
+            IsActive = true
         };
 
         return new Result<Plot, Error>.Success(plot);
@@ -174,5 +215,58 @@ public class Plot : IAuditableEntity
     {
         ChillRequirementOverride = null;
         return this;
+    }
+
+    /// <summary>
+    ///     Updates the general information of the plot.
+    /// </summary>
+    public Result<Plot, Error> UpdateInformation(
+        string plotName,
+        string? cropType,
+        string? variety,
+        string? location,
+        string? campaign,
+        string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(plotName))
+            return new Result<Plot, Error>.Failure(new Error("PLOT_NAME_REQUIRED", "Plot name must not be empty"));
+
+        PlotName = plotName.Trim();
+        CropType = SanitizeText(cropType, 60);
+        Variety = SanitizeText(variety, 80);
+        Location = SanitizeText(location, 120);
+        Campaign = SanitizeText(campaign, 60);
+        Notes = SanitizeText(notes, 500);
+
+        return new Result<Plot, Error>.Success(this);
+    }
+
+    /// <summary>
+    ///     Updates the geographic boundary and recalculates its associated area.
+    /// </summary>
+    public Plot UpdateBoundary(PolygonCoordinates polygonCoordinates, decimal areaSize)
+    {
+        ArgumentNullException.ThrowIfNull(polygonCoordinates);
+        
+        PolygonCoordinates = polygonCoordinates;
+        AreaSize = areaSize;
+        return this;
+    }
+
+    /// <summary>
+    ///     Deactivates the plot (logical deletion).
+    /// </summary>
+    public Plot Deactivate()
+    {
+        IsActive = false;
+        IsDeleted = true;
+        return this;
+    }
+
+    private static string? SanitizeText(string? value, int maxLength)
+    {
+        var sanitized = value?.Trim();
+        if (string.IsNullOrEmpty(sanitized)) return null;
+        return sanitized.Length > maxLength ? sanitized[..maxLength] : sanitized;
     }
 }

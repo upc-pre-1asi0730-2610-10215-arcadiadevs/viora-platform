@@ -1,4 +1,4 @@
-using ArcadiaDevs.Viora.Platform.Agronomic.Application.DTOs;
+using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
@@ -16,10 +16,10 @@ public interface IAgronomicStatisticsQueryService
     /// <param name="query">The query containing user, plot, and time range filters.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>
-    ///     A <see cref="Result{TValue,TError}"/> containing a list of <see cref="AgronomicStatisticsDto"/> on success,
+    ///     A <see cref="Result{TValue,TError}"/> containing a list of <see cref="AgronomicStatisticsResource"/> on success,
     ///     or an <see cref="Error"/> describing the failure.
     /// </returns>
-    Task<Result<IEnumerable<AgronomicStatisticsDto>, Error>> Handle(
+    Task<Result<IEnumerable<AgronomicStatisticsResource>, Error>> Handle(
         GetAgronomicStatisticsQuery query,
         CancellationToken cancellationToken = default);
 }

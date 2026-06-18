@@ -1,4 +1,4 @@
-using ArcadiaDevs.Viora.Platform.Agronomic.Application.DTOs;
+using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
@@ -19,19 +19,19 @@ public class DynamicNutritionQueryService : IDynamicNutritionQueryService
         _plotRepository = plotRepository;
     }
 
-    public async Task<Result<DynamicNutritionPlanDto, Error>> Handle(
+    public async Task<Result<DynamicNutritionPlanResource, Error>> Handle(
         GetDynamicNutritionPlanQuery query,
         CancellationToken cancellationToken = default)
     {
         var plot = await _plotRepository.FindByIdAsync(query.PlotId, cancellationToken);
         if (plot == null)
         {
-            return new Result<DynamicNutritionPlanDto, Error>.Failure(
+            return new Result<DynamicNutritionPlanResource, Error>.Failure(
                 new Error("PLOT_NOT_FOUND", $"Plot {query.PlotId} not found."));
         }
 
         // Placeholder implementation: return active plan with NPK nutrients
-        var dto = new DynamicNutritionPlanDto
+        var dto = new DynamicNutritionPlanResource
         {
             PlotId = plot.Id,
             PlotName = plot.PlotName,
@@ -40,23 +40,23 @@ public class DynamicNutritionQueryService : IDynamicNutritionQueryService
             Status = "active",
             StartDate = DateTimeOffset.UtcNow.AddDays(-30),
             EndDate = DateTimeOffset.UtcNow.AddDays(30),
-            Nutrients = new List<NutrientDto>
+            Nutrients = new List<NutrientResource>
             {
-                new NutrientDto
+                new NutrientResource
                 {
                     Name = "Nitrogen",
                     RequiredAmount = 100m,
                     CurrentAmount = 80m,
                     Unit = "kg/ha"
                 },
-                new NutrientDto
+                new NutrientResource
                 {
                     Name = "Phosphorus",
                     RequiredAmount = 50m,
                     CurrentAmount = 45m,
                     Unit = "kg/ha"
                 },
-                new NutrientDto
+                new NutrientResource
                 {
                     Name = "Potassium",
                     RequiredAmount = 80m,
@@ -66,6 +66,6 @@ public class DynamicNutritionQueryService : IDynamicNutritionQueryService
             }
         };
 
-        return new Result<DynamicNutritionPlanDto, Error>.Success(dto);
+        return new Result<DynamicNutritionPlanResource, Error>.Success(dto);
     }
 }

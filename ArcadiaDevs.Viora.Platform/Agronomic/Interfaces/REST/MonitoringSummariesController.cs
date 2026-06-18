@@ -1,8 +1,6 @@
-using ArcadiaDevs.Viora.Platform.Agronomic.Application.DTOs;
+using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
-using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
-using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Transform;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using Microsoft.AspNetCore.Mvc;
 
@@ -33,7 +31,7 @@ public class MonitoringSummariesController(IMonitoringSummaryQueryService monito
         var result = await monitoringSummaryQueryService.Handle(query, cancellationToken);
 
         return result.Fold<IActionResult>(
-            summary => Ok(MonitoringSummaryResourceFromDtoAssembler.ToResourceFromDto(summary)),
+            summary => Ok(summary),
             error => BadRequest(error));
     }
 }

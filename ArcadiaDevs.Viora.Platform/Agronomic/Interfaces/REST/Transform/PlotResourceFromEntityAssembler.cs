@@ -1,32 +1,59 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregate;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Transform;
 
-/// <summary>
-///     Assembles a REST resource from a plot aggregate.
-/// </summary>
 public static class PlotResourceFromEntityAssembler
 {
-    /// <summary>
-    ///     Maps a Plot aggregate to a PlotResource.
-    /// </summary>
-    /// <param name="plot">The plot aggregate.</param>
-    /// <returns>The mapped response DTO.</returns>
     public static PlotResource ToResource(this Plot plot)
     {
-        var geoPointDtos = plot.PolygonCoordinates.Points
-            .Select(p => new GeoPointResource(p.Latitude, p.Longitude))
+        var polygon = plot.PolygonCoordinates.Points
+            .Select(p => (IEnumerable<double>)new double[] { (double)p.Longitude, (double)p.Latitude })
             .ToList();
 
         return new PlotResource(
             plot.Id,
             plot.OwnerUserId,
             plot.PlotName,
-            geoPointDtos,
+            polygon,
             plot.AreaSize,
             plot.CreatedAt ?? DateTimeOffset.UtcNow,
-            plot.AgroMonitoringPolygonId,
-            plot.AgroMonitoringCenter);
+            plot.CropType,
+            plot.Variety,
+            plot.Location,
+            plot.Campaign,
+            plot.Notes,
+            plot.IsActive ? "active" : "inactive",
+            "Good",
+            "Low",
+            null
+        );
+    }
+
+    public static CreatedPlotResource ToCreatedResource(this Plot plot)
+    {
+        var polygon = plot.PolygonCoordinates.Points
+            .Select(p => (IEnumerable<double>)new double[] { (double)p.Longitude, (double)p.Latitude })
+            .ToList();
+
+        return new CreatedPlotResource(
+            plot.Id,
+            plot.OwnerUserId,
+            plot.PlotName,
+            polygon,
+            plot.AreaSize,
+            plot.CropType,
+            plot.Variety,
+            plot.Location,
+            plot.Campaign,
+            plot.Notes,
+            plot.IsActive ? "active" : "inactive",
+            "https://climate.viora.local/plot/" + plot.Id,
+            "https://satellite.viora.local/ndvi/" + plot.Id,
+            "0 devices"
+        );
     }
 }

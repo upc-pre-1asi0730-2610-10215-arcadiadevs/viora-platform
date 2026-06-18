@@ -1,14 +1,14 @@
 using System.Collections.Generic;
 
-namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.DTOs;
+namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 
 /// <summary>
-///     DTO for active nutrition plan per plot.
+///     Resource for active nutrition plan per plot.
 /// </summary>
 /// <remarks>
 ///     Returned by GET /api/v1/plots/{plotId}/dynamic-nutrition/active-plan.
 /// </remarks>
-public record DynamicNutritionPlanDto
+public record DynamicNutritionPlanResource
 {
     /// <summary>Identifier of the plot.</summary>
     public int PlotId { get; init; }
@@ -32,5 +32,5 @@ public record DynamicNutritionPlanDto
     public DateTimeOffset EndDate { get; init; }
 
     /// <summary>Nutrient details.</summary>
-    public IReadOnlyList<NutrientDto> Nutrients { get; init; } = Array.Empty<NutrientDto>();
+    public IReadOnlyList<NutrientResource> Nutrients { get; init; } = Array.Empty<NutrientResource>();
 }

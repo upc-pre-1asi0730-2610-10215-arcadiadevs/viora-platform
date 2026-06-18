@@ -26,9 +26,23 @@ public interface IPlotCommandService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    ///     Resets the chill requirement for a plot.
+    ///     Handles the ResetChillRequirement command.
     /// </summary>
     Task<Result<ChillRequirement, Error>> Handle(
         ResetChillRequirementCommand command,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Handles the UpdatePlot command.
+    /// </summary>
+    Task<Result<Plot, Error>> Handle(
+        UpdatePlotCommand command,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Handles the DeletePlot command.
+    /// </summary>
+    Task<Result<string, Error>> Handle(
+        DeletePlotCommand command,
         CancellationToken cancellationToken = default);
 }
