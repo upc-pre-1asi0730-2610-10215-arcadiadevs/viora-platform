@@ -45,4 +45,28 @@ public interface IPlotRepository : IBaseRepository<Plot>
     Task<IEnumerable<Plot>> FindAllByOwnerUserIdAsync(
         int ownerUserId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Checks if a plot with the given name already exists for the user.
+    /// </summary>
+    Task<bool> ExistsByNameAndOwnerUserIdAsync(
+        string plotName,
+        int ownerUserId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Checks if a plot with the given name already exists for the user, excluding a specific ID.
+    /// </summary>
+    Task<bool> ExistsByNameAndOwnerUserIdAndIdIsNotAsync(
+        string plotName,
+        int ownerUserId,
+        int excludePlotId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Checks if the plot has related operational records (e.g., IoT devices, nutrition plans).
+    /// </summary>
+    Task<bool> HasRelatedOperationalRecordsAsync(
+        int plotId,
+        CancellationToken cancellationToken = default);
 }
