@@ -38,7 +38,7 @@ public class AgronomicStatisticsController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<AgronomicStatisticResource>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AgronomicStatisticResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Error), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Error), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAgronomicStatistics(
@@ -60,14 +60,21 @@ public class AgronomicStatisticsController : ControllerBase
         var result = await _agronomicStatisticsQueryService.Handle(query, cancellationToken);
 
         return result.Fold<IActionResult>(
-            statistics => Ok(statistics.Select(s => new AgronomicStatisticResource(
-                s.UserId,
-                s.PlotId,
-                s.MeasurementDate,
-                s.NdviValue,
-                s.ChillPortions,
-                s.ChillHours
-            ))),
+            statistics => 
+            {
+                var latest = statistics.OrderByDescending(s => s.MeasurementDate).FirstOrDefault();
+                if (latest == null)
+                {
+                    return Ok("");
+                }
+                
+                return Ok(new AgronomicStatisticResource(
+                    latest.MeasurementDate.ToString("yyyy-MM-dd"),
+                    latest.NdviValue,
+                    latest.ChillPortions,
+                    latest.ChillHours
+                ));
+            },
             error => error.Code switch
             {
                 "PLOT_OWNERSHIP" or "AGRONOMIC_STATISTICS_ACCESS" => StatusCode(StatusCodes.Status403Forbidden, error),
@@ -98,7 +105,14 @@ public class AgronomicStatisticsController : ControllerBase
         var result = await _agronomicStatisticSeriesQueryService.Handle(query, cancellationToken);
 
         return result.Fold<IActionResult>(
-            Ok,
+            series =>
+            {
+                if (series.Labels == null || series.Labels.Count == 0)
+                {
+                    return Ok("");
+                }
+                return Ok(series);
+            },
             error => error.Code switch
             {
                 "PLOT_OWNERSHIP" or "AGRONOMIC_STATISTICS_ACCESS" => StatusCode(StatusCodes.Status403Forbidden, error),
