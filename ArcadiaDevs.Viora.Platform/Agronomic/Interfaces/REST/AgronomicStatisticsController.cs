@@ -1,4 +1,4 @@
-using ArcadiaDevs.Viora.Platform.Agronomic.Application.DTOs;
+using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
@@ -22,7 +22,7 @@ public class AgronomicStatisticsController(IAgronomicStatisticsQueryService agro
     /// <param name="cancellationToken">The request cancellation token.</param>
     /// <returns>200 OK with list of agronomic statistics, 403 Forbidden if plot access denied, or 400 Bad Request with error details.</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<AgronomicStatisticsDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<AgronomicStatisticsResource>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Error), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Error), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetStatistics(
