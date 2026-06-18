@@ -1,8 +1,14 @@
-using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregate;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
-using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices;
+using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 
@@ -13,120 +19,58 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryService
 /// </summary>
 public class AgronomicStatisticsQueryService : IAgronomicStatisticsQueryService
 {
+    private readonly IAgronomicStatisticRepository _agronomicStatisticRepository;
     private readonly IPlotRepository _plotRepository;
-    private readonly AgroMonitoringApiClient _agroMonitoringClient;
-    private readonly ILogger<AgronomicStatisticsQueryService> _logger;
-    private readonly Random _random = new();
 
     public AgronomicStatisticsQueryService(
-        IPlotRepository plotRepository,
-        AgroMonitoringApiClient agroMonitoringClient,
-        ILogger<AgronomicStatisticsQueryService> logger)
+        IAgronomicStatisticRepository agronomicStatisticRepository,
+        IPlotRepository plotRepository)
     {
+        _agronomicStatisticRepository = agronomicStatisticRepository;
         _plotRepository = plotRepository;
-        _agroMonitoringClient = agroMonitoringClient;
-        _logger = logger;
     }
 
-    public async Task<Result<IEnumerable<AgronomicStatisticsResource>, Error>> Handle(
+    public async Task<Result<IEnumerable<AgronomicStatistic>, Error>> Handle(
         GetAgronomicStatisticsQuery query,
         CancellationToken cancellationToken = default)
     {
-        var plots = new List<Domain.Model.Aggregate.Plot>();
-
-        if (query.PlotId.HasValue)
+        if (query.UserId != query.AuthenticatedUserId)
         {
-            var plot = await _plotRepository.FindByIdAndOwnerUserIdAsync(
-                query.PlotId.Value, query.UserId, cancellationToken);
-            if (plot == null)
-            {
-                return new Result<IEnumerable<AgronomicStatisticsResource>, Error>.Failure(
-                    new Error("PLOT_ACCESS_DENIED", $"Plot {query.PlotId.Value} does not belong to user {query.UserId}."));
-            }
-            plots.Add(plot);
-        }
-        else
-        {
-            plots = (await _plotRepository.FindAllByOwnerUserIdAsync(query.UserId, cancellationToken)).ToList();
+            return new Result<IEnumerable<AgronomicStatistic>, Error>.Failure(
+                new Error("AGRONOMIC_STATISTICS_ACCESS", "Authenticated user cannot access statistics from another user.")
+            );
         }
 
-        var statisticsList = new List<AgronomicStatisticsResource>();
-        foreach (var plot in plots)
+        var today = DateTimeOffset.UtcNow;
+        var dateRange = query.TimeRange.ToDateRange(today);
+
+        if (!query.PlotId.HasValue)
         {
-            var dataPoints = await FetchDataPointsAsync(plot, query.TimeRange, cancellationToken);
-            statisticsList.Add(new AgronomicStatisticsResource
-            {
-                PlotId = plot.Id,
-                PlotName = plot.PlotName,
-                TimeRange = query.TimeRange,
-                DataPoints = dataPoints
-            });
+            var statistics = await _agronomicStatisticRepository.FindAllByUserIdAndDateBetweenAsync(
+                query.UserId, dateRange.StartDate, dateRange.EndDate, cancellationToken);
+            return new Result<IEnumerable<AgronomicStatistic>, Error>.Success(statistics);
         }
 
-        return new Result<IEnumerable<AgronomicStatisticsResource>, Error>.Success(statisticsList);
-    }
+        var plotIdInt = (int)query.PlotId.Value;
+        var plot = await _plotRepository.FindByIdAsync(plotIdInt, cancellationToken);
 
-    private async Task<IReadOnlyList<DataPointResource>> FetchDataPointsAsync(
-        Domain.Model.Aggregate.Plot plot,
-        string timeRange,
-        CancellationToken cancellationToken)
-    {
-        var now = DateTimeOffset.UtcNow;
-        var startDate = timeRange.ToLowerInvariant() switch
+        if (plot == null || plot.IsDeleted)
         {
-            "week" => now.AddDays(-7),
-            "month" => now.AddMonths(-1),
-            "quarter" => now.AddMonths(-3),
-            "year" => now.AddYears(-1),
-            _ => now.AddDays(-7)
-        };
-
-        // If the plot has an AgroMonitoring polygon ID, try to fetch real NDVI data.
-        if (!string.IsNullOrWhiteSpace(plot.AgroMonitoringPolygonId))
-        {
-            var ndviResult = await _agroMonitoringClient.GetNdviHistoryAsync(
-                plot.AgroMonitoringPolygonId, startDate, now, cancellationToken);
-
-            if (ndviResult is Result<IReadOnlyList<AgroMonitoringNdviDataPoint>, Error>.Success ndviSuccess
-                && ndviSuccess.Value.Count > 0)
-            {
-                return ndviSuccess.Value
-                    .Select(dp => new DataPointResource
-                    {
-                        Timestamp = DateTimeOffset.FromUnixTimeSeconds(dp.Dt),
-                        Ndvi = Math.Round((decimal)dp.Data.Mean, 4),
-                        ColdPortion = 0m // Cold portion not available from NDVI endpoint
-                    })
-                    .ToList();
-            }
-
-            _logger.LogInformation(
-                "NDVI history unavailable for plot '{PlotName}' (polygon {PolygonId}); falling back to simulated data",
-                plot.PlotName, plot.AgroMonitoringPolygonId);
+            return new Result<IEnumerable<AgronomicStatistic>, Error>.Failure(
+                new Error("PLOT_NOT_FOUND", "The selected plot does not exist or is inactive.")
+            );
         }
 
-        // Fallback: simulated data when AgroMonitoring is not configured or call fails.
-        return GenerateSimulatedDataPoints(plot.Id, startDate, now);
-    }
-
-    private IReadOnlyList<DataPointResource> GenerateSimulatedDataPoints(
-        int plotId,
-        DateTimeOffset startDate,
-        DateTimeOffset now)
-    {
-        var dataPoints = new List<DataPointResource>();
-        var current = startDate;
-        while (current <= now)
+        if (plot.OwnerUserId != query.UserId)
         {
-            dataPoints.Add(new DataPointResource
-            {
-                Timestamp = current,
-                Ndvi = Math.Round((decimal)(_random.NextDouble() * 0.5 + 0.3), 2),
-                ColdPortion = Math.Round((decimal)(_random.NextDouble() * 100), 2)
-            });
-            current = current.AddDays(1);
+            return new Result<IEnumerable<AgronomicStatistic>, Error>.Failure(
+                new Error("PLOT_OWNERSHIP", $"User {query.UserId} does not own plot {query.PlotId}.")
+            );
         }
 
-        return dataPoints;
+        var plotStatistics = await _agronomicStatisticRepository.FindAllByUserIdAndPlotIdAndDateBetweenAsync(
+            query.UserId, query.PlotId.Value, dateRange.StartDate, dateRange.EndDate, cancellationToken);
+
+        return new Result<IEnumerable<AgronomicStatistic>, Error>.Success(plotStatistics);
     }
 }
