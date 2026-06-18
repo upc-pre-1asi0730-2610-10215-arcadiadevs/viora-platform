@@ -1,14 +1,14 @@
 using System.Collections.Generic;
 
-namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.DTOs;
+namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 
 /// <summary>
-///     DTO for agronomic statistics time series per plot.
+///     Resource for agronomic statistics time series per plot.
 /// </summary>
 /// <remarks>
 ///     Returned by GET /api/v1/agronomic-statistics.
 /// </remarks>
-public record AgronomicStatisticsDto
+public record AgronomicStatisticsResource
 {
     /// <summary>Identifier of the plot.</summary>
     public int PlotId { get; init; }
@@ -20,5 +20,5 @@ public record AgronomicStatisticsDto
     public string TimeRange { get; init; } = string.Empty;
 
     /// <summary>Ordered by timestamp ascending.</summary>
-    public IReadOnlyList<DataPointDto> DataPoints { get; init; } = Array.Empty<DataPointDto>();
+    public IReadOnlyList<DataPointResource> DataPoints { get; init; } = Array.Empty<DataPointResource>();
 }

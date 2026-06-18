@@ -1,29 +1,25 @@
+using System.Linq;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands;
-using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Transform;
 
-/// <summary>
-///     Assembles a create plot command from its REST resource.
-/// </summary>
 public static class CreatePlotCommandFromResourceAssembler
 {
-    /// <summary>
-    ///     Maps a CreatePlotResource to a CreatePlotCommand.
-    /// </summary>
-    /// <param name="resource">The request resource.</param>
-    /// <returns>The mapped command.</returns>
     public static CreatePlotCommand ToCommand(this CreatePlotResource resource)
     {
-        var geoPoints = resource.PolygonCoordinates
-            .Select(point => new GeoPoint { Latitude = point.Latitude, Longitude = point.Longitude })
-            .ToList();
+        var geoPoints = resource.PolygonCoordinates.Select(p => 
+        {
+            var coords = p.ToList();
+            return new GeoPoint { Latitude = (decimal)coords[1], Longitude = (decimal)coords[0] };
+        }).ToList();
 
         return new CreatePlotCommand(
-            resource.OwnerUserId,
-            resource.PlotName,
+            (int)resource.UserId,
+            resource.Name,
             geoPoints,
-            resource.AreaSize);
+            0m
+        );
     }
 }
