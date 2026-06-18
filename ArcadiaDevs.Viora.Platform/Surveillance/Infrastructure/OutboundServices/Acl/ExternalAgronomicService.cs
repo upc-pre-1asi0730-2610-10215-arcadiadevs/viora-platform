@@ -2,7 +2,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
-using ArcadiaDevs.Viora.Platform.Agronomic.Application.DTOs;
+using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.OutboundServices.Acl;
 using ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Rest.Resources;
 
@@ -24,7 +24,7 @@ public class ExternalAgronomicService(
         var result = await monitoringSummaryQueryService.Handle(query, cancellationToken);
         
         // As a simplification, if the result is successful, return its NDVI
-        if (result is Result<MonitoringSummaryDto, Error>.Success success)
+        if (result is Result<MonitoringSummaryResource, Error>.Success success)
         {
             return (double)success.Value.AverageNdvi;
         }
