@@ -218,4 +218,88 @@ public class AgroMonitoringApiClient
                 new Error("AGROMONITORING_NETWORK_ERROR", $"Network error: {ex.Message}"));
         }
     }
+
+    /// <summary>
+    ///     Fetches the satellite imagery available for a polygon.
+    /// </summary>
+    public async Task<Result<IReadOnlyList<AgroMonitoringImageResponse>, Error>> GetImagesAsync(
+        string polygonId,
+        DateTimeOffset start,
+        DateTimeOffset end,
+        CancellationToken cancellationToken = default)
+    {
+        var startUnix = new DateTimeOffset(start.UtcDateTime, TimeSpan.Zero).ToUnixTimeSeconds();
+        var endUnix = new DateTimeOffset(end.UtcDateTime, TimeSpan.Zero).ToUnixTimeSeconds();
+
+        try
+        {
+            var response = await _httpClient.GetAsync(
+                $"/agro/1.0/image/search?start={startUnix}&end={endUnix}&polyid={polygonId}&appid={_apiKey}",
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning(
+                    "AgroMonitoring image search failed ({StatusCode}): {Body}",
+                    response.StatusCode, errorBody);
+
+                return new Result<IReadOnlyList<AgroMonitoringImageResponse>, Error>.Failure(
+                    new Error(
+                        "AGROMONITORING_IMAGE_FAILED",
+                        $"Image search failed with status {response.StatusCode}"));
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<List<AgroMonitoringImageResponse>>(
+                JsonOptions, cancellationToken);
+
+            return new Result<IReadOnlyList<AgroMonitoringImageResponse>, Error>.Success(
+                result?.AsReadOnly() ?? (IReadOnlyList<AgroMonitoringImageResponse>)Array.Empty<AgroMonitoringImageResponse>());
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Network error calling AgroMonitoring image search");
+            return new Result<IReadOnlyList<AgroMonitoringImageResponse>, Error>.Failure(
+                new Error("AGROMONITORING_NETWORK_ERROR", $"Network error: {ex.Message}"));
+        }
+    }
+
+    /// <summary>
+    ///     Downloads a raw tile PNG.
+    /// </summary>
+    public async Task<Result<byte[], Error>> GetTileAsync(
+        string tileUrl,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var uri = new UriBuilder(tileUrl);
+            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            query["appid"] = _apiKey;
+            uri.Query = query.ToString();
+
+            var response = await _httpClient.GetAsync(uri.Uri, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "AgroMonitoring tile download failed ({StatusCode})",
+                    response.StatusCode);
+
+                return new Result<byte[], Error>.Failure(
+                    new Error(
+                        "AGROMONITORING_TILE_FAILED",
+                        $"Tile download failed with status {response.StatusCode}"));
+            }
+
+            var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+            return new Result<byte[], Error>.Success(bytes);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Network error downloading AgroMonitoring tile");
+            return new Result<byte[], Error>.Failure(
+                new Error("AGROMONITORING_NETWORK_ERROR", $"Network error: {ex.Message}"));
+        }
+    }
 }
