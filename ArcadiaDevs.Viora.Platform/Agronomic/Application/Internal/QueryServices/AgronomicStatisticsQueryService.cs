@@ -1,4 +1,4 @@
-using ArcadiaDevs.Viora.Platform.Agronomic.Application.DTOs;
+using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
@@ -28,7 +28,7 @@ public class AgronomicStatisticsQueryService : IAgronomicStatisticsQueryService
         _logger = logger;
     }
 
-    public async Task<Result<IEnumerable<AgronomicStatisticsDto>, Error>> Handle(
+    public async Task<Result<IEnumerable<AgronomicStatisticsResource>, Error>> Handle(
         GetAgronomicStatisticsQuery query,
         CancellationToken cancellationToken = default)
     {
@@ -40,7 +40,7 @@ public class AgronomicStatisticsQueryService : IAgronomicStatisticsQueryService
                 query.PlotId.Value, query.UserId, cancellationToken);
             if (plot == null)
             {
-                return new Result<IEnumerable<AgronomicStatisticsDto>, Error>.Failure(
+                return new Result<IEnumerable<AgronomicStatisticsResource>, Error>.Failure(
                     new Error("PLOT_ACCESS_DENIED", $"Plot {query.PlotId.Value} does not belong to user {query.UserId}."));
             }
             plots.Add(plot);
@@ -50,11 +50,11 @@ public class AgronomicStatisticsQueryService : IAgronomicStatisticsQueryService
             plots = (await _plotRepository.FindAllByOwnerUserIdAsync(query.UserId, cancellationToken)).ToList();
         }
 
-        var statisticsList = new List<AgronomicStatisticsDto>();
+        var statisticsList = new List<AgronomicStatisticsResource>();
         foreach (var plot in plots)
         {
             var dataPoints = await FetchDataPointsAsync(plot, query.TimeRange, cancellationToken);
-            statisticsList.Add(new AgronomicStatisticsDto
+            statisticsList.Add(new AgronomicStatisticsResource
             {
                 PlotId = plot.Id,
                 PlotName = plot.PlotName,
@@ -63,10 +63,10 @@ public class AgronomicStatisticsQueryService : IAgronomicStatisticsQueryService
             });
         }
 
-        return new Result<IEnumerable<AgronomicStatisticsDto>, Error>.Success(statisticsList);
+        return new Result<IEnumerable<AgronomicStatisticsResource>, Error>.Success(statisticsList);
     }
 
-    private async Task<IReadOnlyList<DataPointDto>> FetchDataPointsAsync(
+    private async Task<IReadOnlyList<DataPointResource>> FetchDataPointsAsync(
         Domain.Model.Aggregate.Plot plot,
         string timeRange,
         CancellationToken cancellationToken)
@@ -91,7 +91,7 @@ public class AgronomicStatisticsQueryService : IAgronomicStatisticsQueryService
                 && ndviSuccess.Value.Count > 0)
             {
                 return ndviSuccess.Value
-                    .Select(dp => new DataPointDto
+                    .Select(dp => new DataPointResource
                     {
                         Timestamp = DateTimeOffset.FromUnixTimeSeconds(dp.Dt),
                         Ndvi = Math.Round((decimal)dp.Data.Mean, 4),
@@ -109,16 +109,16 @@ public class AgronomicStatisticsQueryService : IAgronomicStatisticsQueryService
         return GenerateSimulatedDataPoints(plot.Id, startDate, now);
     }
 
-    private IReadOnlyList<DataPointDto> GenerateSimulatedDataPoints(
+    private IReadOnlyList<DataPointResource> GenerateSimulatedDataPoints(
         int plotId,
         DateTimeOffset startDate,
         DateTimeOffset now)
     {
-        var dataPoints = new List<DataPointDto>();
+        var dataPoints = new List<DataPointResource>();
         var current = startDate;
         while (current <= now)
         {
-            dataPoints.Add(new DataPointDto
+            dataPoints.Add(new DataPointResource
             {
                 Timestamp = current,
                 Ndvi = Math.Round((decimal)(_random.NextDouble() * 0.5 + 0.3), 2),
