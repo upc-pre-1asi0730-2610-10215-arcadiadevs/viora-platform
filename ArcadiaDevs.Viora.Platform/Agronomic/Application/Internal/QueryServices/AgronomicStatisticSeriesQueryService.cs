@@ -76,16 +76,38 @@ public class AgronomicStatisticSeriesQueryService : IAgronomicStatisticSeriesQue
         var currentStatistics = Within(statistics, currentWindow.StartDate, currentWindow.EndDate);
         var previousStatistics = Within(statistics, previousStart, previousEnd);
 
+        var points = AggregatePoints(currentStatistics);
+        var labels = points.Select(p => p.Date.ToString("yyyy-MM-dd")).ToList();
+        var ndviSeries = points.Select(p => p.Ndvi).ToList();
+        var cpSeries = points.Select(p => p.ChillPortions).ToList();
+        var chillHoursSeries = points.Select(p => p.ChillHours).ToList();
+
+        var ndviTrend = Trend(currentStatistics, previousStatistics, s => s.NdviValue, NdviStabilityEpsilon);
+        var chillPortionsTrend = Trend(currentStatistics, previousStatistics, s => s.ChillPortions, ChillStabilityEpsilon);
+        var chillHoursTrend = Trend(currentStatistics, previousStatistics, s => s.ChillHours, ChillStabilityEpsilon);
+
+        var chillUnit = chillRequirement.Model == EChillMetricModel.Dynamic ? "Porciones de frío" : "Horas frío";
+        var trend = chillPortionsTrend.Direction.ToString();
+        var statusLabel = (chillPortionsTrend.CurrentValue ?? 0) >= chillRequirement.Portions.Value ? "Alcanzado" : "En Progreso";
+        var observation = "Análisis basado en la ventana temporal seleccionada.";
+
         var series = new AgronomicStatisticSeriesResource(
             query.PlotId,
-            query.TimeRange,
-            AggregatePoints(currentStatistics),
-            Trend(currentStatistics, previousStatistics, s => s.NdviValue, NdviStabilityEpsilon),
-            Trend(currentStatistics, previousStatistics, s => s.ChillPortions, ChillStabilityEpsilon),
-            Trend(currentStatistics, previousStatistics, s => s.ChillHours, ChillStabilityEpsilon),
+            query.TimeRange.ToString(),
+            labels,
+            ndviSeries,
+            cpSeries,
+            chillHoursSeries,
             chillRequirement.Portions.Value,
-            chillRequirement.Source,
-            chillRequirement.Model
+            chillRequirement.Source.ToString(),
+            chillRequirement.Model.ToString(),
+            chillUnit,
+            trend,
+            statusLabel,
+            observation,
+            ndviTrend,
+            chillPortionsTrend,
+            chillHoursTrend
         );
 
         return new Result<AgronomicStatisticSeriesResource, Error>.Success(series);
@@ -102,12 +124,14 @@ public class AgronomicStatisticSeriesQueryService : IAgronomicStatisticSeriesQue
         }).ToList();
     }
 
-    private IReadOnlyList<AgronomicStatisticSeriesResource.PointResource> AggregatePoints(List<AgronomicStatistic> statistics)
+    private record PointData(DateTimeOffset Date, double Ndvi, double ChillPortions, double ChillHours);
+
+    private IReadOnlyList<PointData> AggregatePoints(List<AgronomicStatistic> statistics)
     {
         return statistics
             .GroupBy(s => s.MeasurementDate.Date)
             .OrderBy(g => g.Key)
-            .Select(g => new AgronomicStatisticSeriesResource.PointResource(
+            .Select(g => new PointData(
                 g.Key,
                 Math.Round(g.Average(s => s.NdviValue), 3),
                 Math.Round(g.Average(s => s.ChillPortions), 3),

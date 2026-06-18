@@ -11,42 +11,58 @@ public record AgronomicStatisticSeriesResource
 {
     public AgronomicStatisticSeriesResource(
         long? plotId,
-        ETimeRange timeRange,
-        IReadOnlyList<PointResource> points,
+        string timeRange,
+        IReadOnlyList<string> labels,
+        IReadOnlyList<double> ndviSeries,
+        IReadOnlyList<double> cpSeries,
+        IReadOnlyList<double> chillHoursSeries,
+        double threshold,
+        string chillRequirementSource,
+        string chillMetricModel,
+        string chillUnit,
+        string trend,
+        string statusLabel,
+        string observation,
         MetricTrendResource ndviTrend,
         MetricTrendResource chillPortionsTrend,
-        MetricTrendResource chillHoursTrend,
-        double chillPortionsThreshold,
-        EChillRequirementSource chillRequirementSource,
-        EChillMetricModel chillMetricModel)
+        MetricTrendResource chillHoursTrend)
     {
         ArgumentNullException.ThrowIfNull(ndviTrend);
         ArgumentNullException.ThrowIfNull(chillPortionsTrend);
         ArgumentNullException.ThrowIfNull(chillHoursTrend);
 
-        PlotId = plotId;
+        PlotId = plotId ?? 0; // Defaulting to 0 if null as seen in Java example
         TimeRange = timeRange;
-        Points = points ?? Array.Empty<PointResource>();
+        Labels = labels ?? Array.Empty<string>();
+        NdviSeries = ndviSeries ?? Array.Empty<double>();
+        CpSeries = cpSeries ?? Array.Empty<double>();
+        ChillHoursSeries = chillHoursSeries ?? Array.Empty<double>();
+        Threshold = threshold;
+        ChillRequirementSource = chillRequirementSource;
+        ChillMetricModel = chillMetricModel;
+        ChillUnit = chillUnit;
+        Trend = trend;
+        StatusLabel = statusLabel;
+        Observation = observation;
         NdviTrend = ndviTrend;
         ChillPortionsTrend = chillPortionsTrend;
         ChillHoursTrend = chillHoursTrend;
-        ChillPortionsThreshold = chillPortionsThreshold;
-        ChillRequirementSource = chillRequirementSource;
-        ChillMetricModel = chillMetricModel;
     }
 
-    public long? PlotId { get; init; }
-    public ETimeRange TimeRange { get; init; }
-    public IReadOnlyList<PointResource> Points { get; init; }
+    public long PlotId { get; init; }
+    public string TimeRange { get; init; }
+    public IReadOnlyList<string> Labels { get; init; }
+    public IReadOnlyList<double> NdviSeries { get; init; }
+    public IReadOnlyList<double> CpSeries { get; init; }
+    public IReadOnlyList<double> ChillHoursSeries { get; init; }
+    public double Threshold { get; init; }
+    public string ChillRequirementSource { get; init; }
+    public string ChillMetricModel { get; init; }
+    public string ChillUnit { get; init; }
+    public string Trend { get; init; }
+    public string StatusLabel { get; init; }
+    public string Observation { get; init; }
     public MetricTrendResource NdviTrend { get; init; }
     public MetricTrendResource ChillPortionsTrend { get; init; }
     public MetricTrendResource ChillHoursTrend { get; init; }
-    public double ChillPortionsThreshold { get; init; }
-    public EChillRequirementSource ChillRequirementSource { get; init; }
-    public EChillMetricModel ChillMetricModel { get; init; }
-
-    /// <summary>
-    ///     A single charted point.
-    /// </summary>
-    public record PointResource(DateTimeOffset Date, double Ndvi, double ChillPortions, double ChillHours);
 }
