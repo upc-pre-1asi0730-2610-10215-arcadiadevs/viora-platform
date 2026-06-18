@@ -71,14 +71,14 @@ public class AgronomicStatisticSeriesQueryService : IAgronomicStatisticSeriesQue
         var previousStart = previousEnd.AddDays(-(windowDays - 1));
 
         var statistics = (await _statisticRepository.FindAllByUserIdAndPlotIdAndDateBetweenAsync(
-            query.UserId, query.PlotId, previousStart, currentWindow.EndDate, cancellationToken)).ToList();
+            query.UserId, query.PlotId.Value, previousStart, currentWindow.EndDate, cancellationToken)).ToList();
 
         var currentStatistics = Within(statistics, currentWindow.StartDate, currentWindow.EndDate);
         var previousStatistics = Within(statistics, previousStart, previousEnd);
 
         var series = new AgronomicStatisticSeriesResource(
-            query.PlotId.Value,
-            query.TimeRange.ToString(),
+            query.PlotId,
+            query.TimeRange,
             AggregatePoints(currentStatistics),
             Trend(currentStatistics, previousStatistics, s => s.NdviValue, NdviStabilityEpsilon),
             Trend(currentStatistics, previousStatistics, s => s.ChillPortions, ChillStabilityEpsilon),
