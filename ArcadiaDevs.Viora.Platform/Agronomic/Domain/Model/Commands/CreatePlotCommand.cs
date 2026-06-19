@@ -13,4 +13,9 @@ public record CreatePlotCommand(
     int OwnerUserId,
     string PlotName,
     IReadOnlyList<GeoPoint> PolygonCoordinates,
-    decimal AreaSize);
+    decimal AreaSize,
+    string? CropType,
+    string? Variety,
+    string? Location,
+    string? Campaign,
+    string? Notes);
