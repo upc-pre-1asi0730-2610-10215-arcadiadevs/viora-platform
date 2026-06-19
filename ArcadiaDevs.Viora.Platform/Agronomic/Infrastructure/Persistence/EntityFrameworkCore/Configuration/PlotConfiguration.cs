@@ -58,6 +58,7 @@ public class PlotConfiguration : IEntityTypeConfiguration<Plot>
         // Configure PolygonCoordinates as owned entity type with JSON storage
         builder.OwnsOne(p => p.PolygonCoordinates, polygonBuilder =>
         {
+            polygonBuilder.Property<int>("PlotId").HasColumnName("id");
             polygonBuilder.Property(p => p.Points)
                 .HasColumnName("polygon_coordinates")
                 .HasColumnType("jsonb")
@@ -73,8 +74,12 @@ public class PlotConfiguration : IEntityTypeConfiguration<Plot>
 
         builder.OwnsOne(p => p.ChillRequirementOverride, chillBuilder =>
         {
+            chillBuilder.Property<int>("PlotId").HasColumnName("id");
+            
             chillBuilder.OwnsOne(c => c.Portions, pBuilder =>
             {
+                pBuilder.Property<int>("ChillRequirementPlotId").HasColumnName("id");
+                
                 pBuilder.Property(p => p.Value)
                     .HasColumnName("chill_requirement_portions")
                     .HasColumnType("decimal(18,6)");

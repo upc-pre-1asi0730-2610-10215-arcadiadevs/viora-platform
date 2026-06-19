@@ -22,12 +22,14 @@ public class DynamicNutritionPlanConfiguration : IEntityTypeConfiguration<Dynami
 
         builder.OwnsOne(p => p.ApplicationWindow, a =>
         {
+            a.Property<int>("DynamicNutritionPlanId").HasColumnName("id");
             a.Property(aw => aw.StartDate).HasColumnName("ApplicationWindowStart").IsRequired();
             a.Property(aw => aw.EndDate).HasColumnName("ApplicationWindowEnd").IsRequired();
         });
 
         builder.OwnsOne(p => p.Rationale, r =>
         {
+            r.Property<int>("DynamicNutritionPlanId").HasColumnName("id");
             r.Property(pr => pr.Summary).HasColumnName("RationaleSummary").IsRequired().HasMaxLength(500);
             r.Property(pr => pr.TriggeringRiskLevel).HasColumnName("TriggeringRiskLevel").HasConversion<string>().IsRequired().HasMaxLength(50);
             r.Property(pr => pr.NdviValue)
@@ -40,14 +42,22 @@ public class DynamicNutritionPlanConfiguration : IEntityTypeConfiguration<Dynami
 
         builder.OwnsOne(p => p.Application, a =>
         {
+            a.Property<int>("DynamicNutritionPlanId").HasColumnName("id"); // Fix table splitting key mismatch
+            
             a.Property(ap => ap.ApplicationDate).HasColumnName("ApplicationDate");
             a.Property(ap => ap.ApplicationTime).HasColumnName("ApplicationTime");
             
+            var comparer = new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<IReadOnlyCollection<string>>(
+                (c1, c2) => c1.SequenceEqual(c2),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => (IReadOnlyCollection<string>)c.ToList().AsReadOnly());
+
             a.Property(ap => ap.AppliedInputs)
                 .HasColumnName("AppliedInputs")
                 .HasConversion(
                     v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null!),
-                    v => JsonSerializer.Deserialize<IReadOnlyCollection<string>>(v, (JsonSerializerOptions)null!) ?? new List<string>().AsReadOnly());
+                    v => JsonSerializer.Deserialize<IReadOnlyCollection<string>>(v, (JsonSerializerOptions)null!) ?? new List<string>().AsReadOnly())
+                .Metadata.SetValueComparer(comparer);
             
             a.Property(ap => ap.DoseConfirmation).HasColumnName("DoseConfirmation").HasConversion<string>().HasMaxLength(50);
             a.Property(ap => ap.FieldOperator).HasColumnName("FieldOperator").HasMaxLength(100);
