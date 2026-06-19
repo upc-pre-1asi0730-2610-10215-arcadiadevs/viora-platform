@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.EventHandlers;
 
 public class AlertCreatedEventHandler(
-    IDynamicNutritionPlanCommandService dynamicNutritionPlanCommandService,
+    IRecommendDynamicNutritionPlanCommandService recommendDynamicNutritionPlanCommandService,
     IPlotRepository plotRepository,
     ILogger<AlertCreatedEventHandler> logger)
     : IEventHandler<AlertCreatedEvent>
@@ -23,8 +23,8 @@ public class AlertCreatedEventHandler(
 
             if (plot != null)
             {
-                var command = new RecommendDynamicNutritionCommand(plot.OwnerUserId, plot.Id, domainEvent.AlertId);
-                var result = await dynamicNutritionPlanCommandService.Handle(command, cancellationToken);
+                var command = new RecommendDynamicNutritionCommand(plot.OwnerUserId, plot.Id);
+                var result = await recommendDynamicNutritionPlanCommandService.Handle(command, cancellationToken);
 
                 if (result.IsSuccess)
                 {

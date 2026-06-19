@@ -22,6 +22,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// </summary>
     public DbSet<AgroMonitoringPlotIntegration> AgroMonitoringPlotIntegrations => Set<AgroMonitoringPlotIntegration>();
 
+    /// <summary>
+    ///     Gets the dynamic nutrition plans set.
+    /// </summary>
+    public DbSet<DynamicNutritionPlan> DynamicNutritionPlans => Set<DynamicNutritionPlan>();
+
     /// <inheritdoc />
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
