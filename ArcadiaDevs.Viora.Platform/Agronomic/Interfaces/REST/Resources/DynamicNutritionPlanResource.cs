@@ -1,36 +1,23 @@
+using System;
 using System.Collections.Generic;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 
-/// <summary>
-///     Resource for active nutrition plan per plot.
-/// </summary>
-/// <remarks>
-///     Returned by GET /api/v1/plots/{plotId}/dynamic-nutrition/active-plan.
-/// </remarks>
+public record NutritionInputRecommendationResource(string Value, string Purpose, double Dosage, string DosageUnit, string Status);
+public record NutritionApplicationWindowResource(string StartDate, string EndDate);
+public record PlanRationaleResource(string Summary, string TriggeringRiskLevel, double NdviValue, double TemperatureAnomaly);
+public record NutritionApplicationResource(IReadOnlyCollection<string> AppliedInputs, DateOnly ApplicationDate, TimeOnly ApplicationTime, string DoseConfirmation, string FieldOperator, string? FieldNotes);
+
 public record DynamicNutritionPlanResource
 {
-    /// <summary>Identifier of the plot.</summary>
+    public int DynamicNutritionPlanId { get; init; }
+    public int UserId { get; init; }
     public int PlotId { get; init; }
-
-    /// <summary>Display name of the plot.</summary>
-    public string PlotName { get; init; } = string.Empty;
-
-    /// <summary>Placeholder plan identifier.</summary>
-    public int PlanId { get; init; }
-
-    /// <summary>Placeholder plan name.</summary>
-    public string PlanName { get; init; } = string.Empty;
-
-    /// <summary>Status: "active", "pending", or "completed".</summary>
     public string Status { get; init; } = string.Empty;
-
-    /// <summary>Plan start date.</summary>
-    public DateTimeOffset StartDate { get; init; }
-
-    /// <summary>Plan end date.</summary>
-    public DateTimeOffset EndDate { get; init; }
-
-    /// <summary>Nutrient details.</summary>
-    public IReadOnlyList<NutrientResource> Nutrients { get; init; } = Array.Empty<NutrientResource>();
+    public string CertificationStatus { get; init; } = string.Empty;
+    public IReadOnlyList<NutritionInputRecommendationResource> InputRecommendations { get; init; } = Array.Empty<NutritionInputRecommendationResource>();
+    public NutritionApplicationWindowResource ApplicationWindow { get; init; } = null!;
+    public PlanRationaleResource Rationale { get; init; } = null!;
+    public string GeneratedDate { get; init; } = string.Empty;
+    public NutritionApplicationResource? Application { get; init; }
 }
