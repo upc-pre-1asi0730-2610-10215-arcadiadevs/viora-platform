@@ -38,7 +38,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-        builder.HasDefaultSchema("public");
+        // On shared hosts (e.g. Filess.io) the user has no rights on the "public"
+        // schema, so the schema is taken from DATABASE_SCHEMA when present and falls
+        // back to "public" for local development.
+        var schema = Environment.GetEnvironmentVariable("DATABASE_SCHEMA");
+        builder.HasDefaultSchema(string.IsNullOrWhiteSpace(schema) ? "public" : schema);
         builder.ApplyConfigurationsFromAssembly(typeof(PlotConfiguration).Assembly);
         builder.UseSnakeCaseNamingConvention();
     }
