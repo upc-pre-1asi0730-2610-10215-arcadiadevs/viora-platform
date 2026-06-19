@@ -18,6 +18,7 @@ public partial class Alert
         DataProviders = new List<string>();
         SupportingData = new Dictionary<string, string>();
         _timeline = new List<AlertTimelineRecord>();
+        PlotId = null!;
     }
 
     public Alert(CreateAlertCommand command) : this()
