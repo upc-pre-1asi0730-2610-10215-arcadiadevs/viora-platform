@@ -111,8 +111,8 @@ builder.Services.AddScoped<IAgronomicStatisticSeriesQueryService, AgronomicStati
 builder.Services.AddScoped<IAgronomicStatisticIngestionService, AgronomicStatisticIngestionService>();
 builder.Services.AddScoped<ChillAccumulationCalculator>();
 builder.Services.AddScoped<IDynamicNutritionQueryService, DynamicNutritionQueryService>();
-builder.Services.AddScoped<IDynamicNutritionPlanCommandService, DynamicNutritionPlanCommandService>();
-
+builder.Services.AddScoped<IRecommendDynamicNutritionPlanCommandService, RecommendDynamicNutritionPlanCommandService>();
+builder.Services.AddScoped<ICertifyNutritionApplicationCommandService, CertifyNutritionApplicationCommandService>();
 // Surveillance Bounded Context Injection Configuration
 builder.Services.AddScoped<IPestSightingReportRepository, PestSightingReportRepository>();
 builder.Services.AddScoped<IAlertRepository, AlertRepository>();
@@ -126,6 +126,10 @@ builder.Services.AddScoped<IAlertQueryService, AlertQueryService>();
 
 builder.Services.AddScoped<IExternalAgronomicService, ExternalAgronomicService>();
 builder.Services.AddScoped<ThreatInferenceService>();
+builder.Services.AddScoped<IDynamicNutritionPlanRepository, DynamicNutritionPlanRepository>();
+
+// Health Checks
+builder.Services.AddHealthChecks();
 
 // Cortex Mediator
 builder.Services.AddCortexMediator([typeof(Program)]);
@@ -164,6 +168,8 @@ app.UseRequestLocalization(localizationOptions);
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.MapHealthChecks("/healthz");
 
 app.MapControllers();
 
