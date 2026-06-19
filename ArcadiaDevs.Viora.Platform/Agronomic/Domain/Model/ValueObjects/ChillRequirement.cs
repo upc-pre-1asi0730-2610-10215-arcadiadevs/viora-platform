@@ -26,5 +26,8 @@ public record ChillRequirement
     /// <summary>
     /// For EF Core mapping
     /// </summary>
-    protected ChillRequirement() { }
+    protected ChillRequirement()
+    {
+        Portions = null!;
+    }
 }
