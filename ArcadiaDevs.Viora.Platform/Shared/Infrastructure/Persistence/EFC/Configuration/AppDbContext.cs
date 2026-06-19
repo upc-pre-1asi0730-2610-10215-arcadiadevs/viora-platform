@@ -38,6 +38,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        builder.HasDefaultSchema("public");
         builder.ApplyConfigurationsFromAssembly(typeof(PlotConfiguration).Assembly);
         builder.UseSnakeCaseNamingConvention();
     }
