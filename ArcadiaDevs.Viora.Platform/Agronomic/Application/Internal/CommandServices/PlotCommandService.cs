@@ -36,7 +36,12 @@ public class PlotCommandService(
             command.OwnerUserId,
             command.PlotName,
             polygon,
-            command.AreaSize);
+            command.AreaSize,
+            command.CropType,
+            command.Variety,
+            command.Location,
+            command.Campaign,
+            command.Notes);
 
         if (plotResult is Result<Plot, Error>.Failure plotFailure)
             return new Result<Plot, Error>.Failure(plotFailure.Error);
