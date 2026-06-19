@@ -15,11 +15,13 @@ public class PestSightingReportConfiguration : IEntityTypeConfiguration<PestSigh
         
         builder.OwnsOne(p => p.PlotId, pi =>
         {
+            pi.Property<long>("PestSightingReportId").HasColumnName("id");
             pi.Property(p => p.Value).HasColumnName("PlotId");
         });
 
         builder.OwnsOne(p => p.ReporterUserId, ru =>
         {
+            ru.Property<long>("PestSightingReportId").HasColumnName("id");
             ru.Property(p => p.Value).HasColumnName("ReporterUserId");
         });
 
