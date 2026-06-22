@@ -152,13 +152,15 @@ builder.Services.AddCortexMediator([typeof(Program)]);
 
 var app = builder.Build();
 
-// Create the database schema on startup.
-// Viora uses EnsureCreated because the project does not have EF migrations yet.
+// Apply pending EF Core migrations and seed data on startup.
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<AppDbContext>();
-    await context.Database.EnsureCreatedAsync();
+
+    // Migrations only apply to relational providers; InMemory provider is used for dev/tests.
+    if (!context.Database.IsInMemory())
+        await context.Database.MigrateAsync();
 
     // Seeding Surveillance
     var symptomCommandService = services.GetRequiredService<ISymptomCommandService>();
