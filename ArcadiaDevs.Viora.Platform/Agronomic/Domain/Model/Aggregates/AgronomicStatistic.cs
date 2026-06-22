@@ -7,7 +7,7 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 ///     AgronomicStatistic aggregate root.
 ///     Represents the consolidated agronomic measurements of a plot for a specific date.
 /// </summary>
-public class AgronomicStatistic
+public partial class AgronomicStatistic
 {
     public long Id { get; private set; }
     public long UserId { get; private set; }

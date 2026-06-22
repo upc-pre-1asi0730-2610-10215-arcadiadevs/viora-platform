@@ -2,14 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
-using ArcadiaDevs.Viora.Platform.Shared.Domain.Model.Entities;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 
 /// <summary>
 ///     Dynamic Nutrition Plan aggregate root.
 /// </summary>
-public class DynamicNutritionPlan : IAuditableEntity
+public partial class DynamicNutritionPlan
 {
     private readonly List<NutritionInputRecommendation> _inputRecommendations = new();
 
@@ -21,9 +20,6 @@ public class DynamicNutritionPlan : IAuditableEntity
     public PlanRationale Rationale { get; private set; } = null!;
     public DateTimeOffset GeneratedDate { get; private set; }
     public NutritionApplication? Application { get; private set; }
-
-    public DateTimeOffset? CreatedAt { get; set; }
-    public DateTimeOffset? UpdatedAt { get; set; }
 
     public IReadOnlyCollection<NutritionInputRecommendation> InputRecommendations => _inputRecommendations.AsReadOnly();
 

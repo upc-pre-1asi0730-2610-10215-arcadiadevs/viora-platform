@@ -1,7 +1,6 @@
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
-using ArcadiaDevs.Viora.Platform.Shared.Domain.Model.Entities;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 
@@ -12,7 +11,7 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 ///     This is the aggregate root for plot management. Use the <see cref="Create"/> factory method
 ///     to enforce invariants and validate input.
 /// </remarks>
-public class Plot : IAuditableEntity
+public partial class Plot
 {
     /// <summary>
     ///     Gets the unique identifier for the plot.
@@ -63,12 +62,6 @@ public class Plot : IAuditableEntity
     ///     Gets the area size of the plot (in square meters or other unit).
     /// </summary>
     public decimal AreaSize { get; private set; }
-
-    /// <inheritdoc />
-    public DateTimeOffset? CreatedAt { get; set; }
-
-    /// <inheritdoc />
-    public DateTimeOffset? UpdatedAt { get; set; }
 
     /// <summary>
     ///     Gets whether this plot is active.

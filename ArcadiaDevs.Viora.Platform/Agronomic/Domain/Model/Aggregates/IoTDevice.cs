@@ -6,7 +6,7 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 /// <summary>
 ///     IoTDevice aggregate root.
 /// </summary>
-public class IoTDevice
+public partial class IoTDevice
 {
     // CORREGIDO: Cambiado a long para evitar el error "Cannot convert source type long to target type int"
     public long Id { get; set; }

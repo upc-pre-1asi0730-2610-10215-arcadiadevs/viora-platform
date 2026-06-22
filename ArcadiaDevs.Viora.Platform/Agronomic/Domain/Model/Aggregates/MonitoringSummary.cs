@@ -1,7 +1,6 @@
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
-using ArcadiaDevs.Viora.Platform.Shared.Domain.Model.Entities;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 
@@ -12,7 +11,7 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 ///     This is the aggregate root for monitoring summaries. Use the <see cref="Create"/> factory method
 ///     to enforce invariants and validate input.
 /// </remarks>
-public class MonitoringSummary : IAuditableEntity
+public partial class MonitoringSummary
 {
     /// <summary>
     ///     Gets the unique identifier for the monitoring summary.
@@ -58,12 +57,6 @@ public class MonitoringSummary : IAuditableEntity
     ///     Gets the timestamp of the last data synchronization.
     /// </summary>
     public LastSynchronizationAt LastSynchronizationAt { get; init; }
-
-    /// <inheritdoc />
-    public DateTimeOffset? CreatedAt { get; set; }
-
-    /// <inheritdoc />
-    public DateTimeOffset? UpdatedAt { get; set; }
 
     /// <summary>
     ///     EF Core constructor.
