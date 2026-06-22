@@ -1,8 +1,10 @@
+using ArcadiaDevs.Viora.Platform.Agronomic.Application.Acl;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.CommandServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.OutboundServices;
+using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices;
@@ -105,6 +107,7 @@ builder.Services.AddHttpClient<AgroMonitoringApiClient>(client =>
 builder.Services.AddSingleton(new ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects.ChillRequirementPolicy(50.0));
 builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.ChillRequirementResolver>();
 builder.Services.AddScoped<IPlotRepository, PlotRepository>();
+builder.Services.AddScoped<IAgronomicContextFacade, AgronomicContextFacade>();
 builder.Services.AddScoped<IAgroMonitoringPlotIntegrationRepository, AgroMonitoringPlotIntegrationRepository>();
 builder.Services.AddScoped<IAgroMonitoringImageryService, AgroMonitoringImageryServiceAdapter>();
 builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.OutboundServices.IWeatherDataService, ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices.WeatherDataServiceAdapter>();
