@@ -10,6 +10,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Errors;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices;
 
@@ -21,7 +22,7 @@ public class GetPlotDetailQueryService(
     {
         var plot = await plotRepository.FindByIdAsync(query.PlotId, cancellationToken);
         if (plot is null || plot.IsDeleted)
-            return new Result<PlotDetailResource, Error>.Failure(new Error("PLOT_NOT_FOUND", "Plot not found."));
+            return new Result<PlotDetailResource, Error>.Failure(AgronomicErrors.PlotNotFound);
 
         var devices = await ioTDeviceRepository.FindAllByPlotIdsAsync(new[] { (long)plot.Id }, cancellationToken);
         var onlineDevices = devices.Count(d => d.Status == ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects.IoTDeviceStatus.Active);

@@ -11,6 +11,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Errors;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices;
 
@@ -37,7 +38,7 @@ public class AgronomicStatisticsQueryService : IAgronomicStatisticsQueryService
         if (query.UserId != query.AuthenticatedUserId)
         {
             return new Result<IEnumerable<AgronomicStatistic>, Error>.Failure(
-                new Error("AGRONOMIC_STATISTICS_ACCESS", "Authenticated user cannot access statistics from another user.")
+                AgronomicErrors.AgronomicStatisticsAccess
             );
         }
 
@@ -57,14 +58,14 @@ public class AgronomicStatisticsQueryService : IAgronomicStatisticsQueryService
         if (plot == null || plot.IsDeleted)
         {
             return new Result<IEnumerable<AgronomicStatistic>, Error>.Failure(
-                new Error("PLOT_NOT_FOUND", "The selected plot does not exist or is inactive.")
+                AgronomicErrors.PlotNotFound
             );
         }
 
         if (plot.OwnerUserId != query.UserId)
         {
             return new Result<IEnumerable<AgronomicStatistic>, Error>.Failure(
-                new Error("PLOT_OWNERSHIP", $"User {query.UserId} does not own plot {query.PlotId}.")
+                AgronomicErrors.PlotOwnership with { Message = $"User {query.UserId} does not own plot {query.PlotId}." }
             );
         }
 

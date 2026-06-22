@@ -1,14 +1,15 @@
-using System.Threading;
-using System.Threading.Tasks;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
-using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Transform;
+using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
+using ArcadiaDevs.Viora.Platform.Shared.Resources.Errors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.Extensions.Localization;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Controllers;
 
@@ -20,14 +21,16 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Controllers;
 public class DynamicNutritionPlansController(
     IRecommendDynamicNutritionPlanCommandService recommendDynamicNutritionPlanCommandService,
     ICertifyNutritionApplicationCommandService certifyNutritionApplicationCommandService,
-    IDynamicNutritionQueryService dynamicNutritionQueryService) : ControllerBase
+    IDynamicNutritionQueryService dynamicNutritionQueryService,
+    IStringLocalizer<ErrorMessages> errorLocalizer,
+    ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
     /// <summary>
     ///     Recommends and generates a dynamic nutrition plan.
     /// </summary>
     [HttpPost]
     [ProducesResponseType(typeof(DynamicNutritionPlanResource), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(Error), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RecommendDynamicNutritionPlan(
         [FromQuery] int userId,
         [FromQuery] int plotId,
@@ -36,9 +39,12 @@ public class DynamicNutritionPlansController(
         var command = new RecommendDynamicNutritionCommand(userId, plotId);
         var result = await recommendDynamicNutritionPlanCommandService.Handle(command, cancellationToken);
 
-        return result.Fold<IActionResult>(
-            plan => StatusCode(StatusCodes.Status201Created, DynamicNutritionPlanResourceFromEntityAssembler.ToResourceFromEntity(plan)),
-            error => BadRequest(error));
+        return AgronomicActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            plan => StatusCode(StatusCodes.Status201Created, DynamicNutritionPlanResourceFromEntityAssembler.ToResourceFromEntity(plan)));
     }
 
     /// <summary>
@@ -46,7 +52,7 @@ public class DynamicNutritionPlansController(
     /// </summary>
     [HttpPost("{planId}/certification")]
     [ProducesResponseType(typeof(DynamicNutritionPlanResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(Error), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CertifyDynamicNutritionPlan(
         [FromQuery] int userId,
         long planId,
@@ -64,9 +70,12 @@ public class DynamicNutritionPlansController(
             resource.FieldNotes);
         var result = await certifyNutritionApplicationCommandService.Handle(command, cancellationToken);
 
-        return result.Fold<IActionResult>(
-            plan => Ok(DynamicNutritionPlanResourceFromEntityAssembler.ToResourceFromEntity(plan)),
-            error => BadRequest(error));
+        return AgronomicActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            plan => Ok(DynamicNutritionPlanResourceFromEntityAssembler.ToResourceFromEntity(plan)));
     }
 
     /// <summary>
@@ -74,8 +83,8 @@ public class DynamicNutritionPlansController(
     /// </summary>
     [HttpGet("active")]
     [ProducesResponseType(typeof(DynamicNutritionPlanResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(Error), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(Error), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetActiveDynamicNutritionPlan(
         [FromQuery] int userId,
         [FromQuery] int plotId,
@@ -84,8 +93,11 @@ public class DynamicNutritionPlansController(
         var query = new GetDynamicNutritionPlanQuery(plotId);
         var result = await dynamicNutritionQueryService.Handle(query, cancellationToken);
 
-        return result.Fold<IActionResult>(
-            plan => Ok(plan),
-            error => error.Code == "PLAN_NOT_FOUND" ? NotFound(error) : BadRequest(error));
+        return AgronomicActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            plan => Ok(plan));
     }
 }

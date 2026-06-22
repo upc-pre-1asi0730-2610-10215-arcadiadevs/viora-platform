@@ -8,6 +8,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Errors;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices;
 
@@ -21,7 +22,7 @@ public class DynamicNutritionQueryService(
             var plan = await dynamicNutritionPlanRepository.FindActiveByPlotIdAsync(query.PlotId, cancellationToken);
             if (plan == null)
             {
-                return new Result<DynamicNutritionPlanResource, Error>.Failure(new Error("PLAN_NOT_FOUND", "No active nutrition plan found for this plot."));
+                return new Result<DynamicNutritionPlanResource, Error>.Failure(AgronomicErrors.PlanNotFound with { Message = "No active nutrition plan found for this plot." });
             }
 
             var resource = ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Transform.DynamicNutritionPlanResourceFromEntityAssembler.ToResourceFromEntity(plan);
@@ -30,7 +31,7 @@ public class DynamicNutritionQueryService(
         }
         catch (Exception ex)
         {
-            return new Result<DynamicNutritionPlanResource, Error>.Failure(new Error("QUERY_ERROR", $"Failed to fetch dynamic nutrition plan: {ex.Message}"));
+            return new Result<DynamicNutritionPlanResource, Error>.Failure(AgronomicErrors.QueryError with { Message = $"Failed to fetch dynamic nutrition plan: {ex.Message}" });
         }
     }
 }

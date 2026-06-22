@@ -4,7 +4,12 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Transform;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
+using ArcadiaDevs.Viora.Platform.Shared.Resources.Errors;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.Extensions.Localization;
+
+namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Controllers;
 
 /// <summary>
 ///     REST controller for plot operations.
@@ -20,14 +25,16 @@ public class PlotsController(
     IGetPlotWeatherForecastQueryService getPlotWeatherForecastQueryService,
     IGetPlotsByUserIdQueryService getPlotsByUserIdQueryService,
     IGetPlotByIdQueryService getPlotByIdQueryService,
-    IGetPlotNdviTileQueryService getPlotNdviTileQueryService) : ControllerBase
+    IGetPlotNdviTileQueryService getPlotNdviTileQueryService,
+    IStringLocalizer<ErrorMessages> errorLocalizer,
+    ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
     /// <summary>
     ///     Creates a new plot with geospatial polygon coordinates.
     /// </summary>
     [HttpPost]
     [ProducesResponseType(typeof(CreatedPlotResource), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(
         [FromBody] CreatePlotResource resource,
         CancellationToken cancellationToken)
@@ -35,9 +42,12 @@ public class PlotsController(
         var command = resource.ToCommand();
         var result = await plotCommandService.Handle(command, cancellationToken);
 
-        return result.Fold<IActionResult>(
-            plot => Created($"/api/v1/plots/{plot.Id}", plot.ToCreatedResource()),
-            error => BadRequest(new { }));
+        return AgronomicActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            plot => Created($"/api/v1/plots/{plot.Id}", plot.ToCreatedResource()));
     }
 
     /// <summary>
@@ -45,9 +55,9 @@ public class PlotsController(
     /// </summary>
     [HttpPut("{plotId:int}/chill-requirement")]
     [ProducesResponseType(typeof(ChillRequirementResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ConfigureChillRequirement(
         [FromRoute] int plotId,
         [FromQuery] int userId,
@@ -57,14 +67,12 @@ public class PlotsController(
         var command = resource.ToCommand(plotId, userId);
         var result = await plotCommandService.Handle(command, cancellationToken);
 
-        return result.Fold<IActionResult>(
-            chillRequirement => Ok(chillRequirement.ToResource()),
-            error => error.Code switch
-            {
-                "PLOT_NOT_FOUND" => NotFound(new { }),
-                "UNAUTHORIZED_ACCESS" => StatusCode(403, new { }),
-                _ => BadRequest(new { })
-            });
+        return AgronomicActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            chillRequirement => Ok(chillRequirement.ToResource()));
     }
 
     /// <summary>
@@ -72,9 +80,9 @@ public class PlotsController(
     /// </summary>
     [HttpDelete("{plotId:int}/chill-requirement")]
     [ProducesResponseType(typeof(ChillRequirementResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ResetChillRequirement(
         [FromRoute] int plotId,
         [FromQuery] int userId,
@@ -83,14 +91,12 @@ public class PlotsController(
         var command = new ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands.ResetChillRequirementCommand(plotId, userId);
         var result = await plotCommandService.Handle(command, cancellationToken);
 
-        return result.Fold<IActionResult>(
-            chillRequirement => Ok(chillRequirement.ToResource()),
-            error => error.Code switch
-            {
-                "PLOT_NOT_FOUND" => NotFound(new { }),
-                "UNAUTHORIZED_ACCESS" => StatusCode(403, new { }),
-                _ => BadRequest(new { })
-            });
+        return AgronomicActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            chillRequirement => Ok(chillRequirement.ToResource()));
     }
 
     /// <summary>
@@ -98,8 +104,8 @@ public class PlotsController(
     /// </summary>
     [HttpPatch("{plotId:int}")]
     [ProducesResponseType(typeof(PlotResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdatePlot(
         [FromRoute] int plotId,
         [FromBody] UpdatePlotResource resource,
@@ -108,13 +114,12 @@ public class PlotsController(
         var command = resource.ToCommandFromResource(plotId);
         var result = await plotCommandService.Handle(command, cancellationToken);
 
-        return result.Fold<IActionResult>(
-            plot => Ok(plot.ToResource()),
-            error => error.Code switch
-            {
-                "PLOT_NOT_FOUND" => NotFound(new { }),
-                _ => BadRequest(new { })
-            });
+        return AgronomicActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            plot => Ok(plot.ToResource()));
     }
 
     /// <summary>
@@ -122,8 +127,8 @@ public class PlotsController(
     /// </summary>
     [HttpDelete("{plotId:int}")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeletePlot(
         [FromRoute] int plotId,
         CancellationToken cancellationToken)
@@ -131,13 +136,12 @@ public class PlotsController(
         var command = new ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands.DeletePlotCommand(plotId);
         var result = await plotCommandService.Handle(command, cancellationToken);
 
-        return result.Fold<IActionResult>(
-            message => Ok(message),
-            error => error.Code switch
-            {
-                "PLOT_NOT_FOUND" => NotFound(new { }),
-                _ => BadRequest(new { })
-            });
+        return AgronomicActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            message => Ok(message));
     }
 
     /// <summary>
@@ -145,14 +149,20 @@ public class PlotsController(
     /// </summary>
     [HttpGet("overview")]
     [ProducesResponseType(typeof(MyPlotsOverviewResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetOverview(
         [FromQuery] int userId,
         CancellationToken cancellationToken)
     {
         var query = new GetMyPlotsOverviewQuery(userId);
         var result = await getMyPlotsOverviewQueryService.Handle(query, cancellationToken);
-        return result.Fold<IActionResult>(Ok, _ => BadRequest(new { }));
+
+        return AgronomicActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            overview => Ok(overview));
     }
 
     /// <summary>
@@ -160,14 +170,20 @@ public class PlotsController(
     /// </summary>
     [HttpGet("{plotId:int}/detail")]
     [ProducesResponseType(typeof(PlotDetailResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetDetail(
         [FromRoute] int plotId,
         CancellationToken cancellationToken)
     {
         var query = new GetPlotDetailQuery(plotId);
         var result = await getPlotDetailQueryService.Handle(query, cancellationToken);
-        return result.Fold<IActionResult>(Ok, _ => NotFound(new { }));
+
+        return AgronomicActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            detail => Ok(detail));
     }
 
     /// <summary>
@@ -175,7 +191,7 @@ public class PlotsController(
     /// </summary>
     [HttpGet("{plotId:int}/monitoring-summary")]
     [ProducesResponseType(typeof(PlotMonitoringSummaryResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetMonitoringSummary(
         [FromRoute] int plotId,
         [FromQuery] int userId,
@@ -183,7 +199,13 @@ public class PlotsController(
     {
         var query = new GetPlotMonitoringSummaryQuery(plotId, userId);
         var result = await getPlotMonitoringSummaryQueryService.Handle(query, cancellationToken);
-        return result.Fold<IActionResult>(Ok, _ => NotFound(new { }));
+
+        return AgronomicActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            summary => Ok(summary));
     }
 
     /// <summary>
@@ -191,14 +213,20 @@ public class PlotsController(
     /// </summary>
     [HttpGet("{plotId:int}/weather-forecast")]
     [ProducesResponseType(typeof(PlotWeatherForecastResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetWeatherForecast(
         [FromRoute] int plotId,
         CancellationToken cancellationToken)
     {
         var query = new GetPlotWeatherForecastQuery(plotId);
         var result = await getPlotWeatherForecastQueryService.Handle(query, cancellationToken);
-        return result.Fold<IActionResult>(Ok, _ => NotFound(new { }));
+
+        return AgronomicActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            forecast => Ok(forecast));
     }
 
     /// <summary>
@@ -206,7 +234,7 @@ public class PlotsController(
     /// </summary>
     [HttpGet("{plotId:int}/imagery/tile/{zoom:int}/{x:int}/{y:int}")]
     [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK, "image/png")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetImageryTile(
         [FromRoute] int plotId,
         [FromQuery] int userId,
@@ -217,11 +245,13 @@ public class PlotsController(
     {
         var query = new GetPlotNdviTileQuery(userId, plotId, zoom, x, y);
         var result = await getPlotNdviTileQueryService.HandleAsync(query, cancellationToken);
-        
-        return result.Fold<IActionResult>(
-            bytes => File(bytes, "image/png"),
-            _ => NotFound(new { })
-        );
+
+        return AgronomicActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            bytes => File(bytes, "image/png"));
     }
 
     /// <summary>
@@ -229,6 +259,7 @@ public class PlotsController(
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<PlotResource>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetUserPlots(
         [FromQuery] int userId,
         [FromQuery] bool includeCurrentImagery = false,
@@ -236,7 +267,13 @@ public class PlotsController(
     {
         var query = new GetPlotsByUserIdQuery(userId, includeCurrentImagery);
         var result = await getPlotsByUserIdQueryService.Handle(query, cancellationToken);
-        return result.Fold<IActionResult>(Ok, _ => BadRequest(new { }));
+
+        return AgronomicActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            plots => Ok(plots));
     }
 
     /// <summary>
@@ -244,13 +281,19 @@ public class PlotsController(
     /// </summary>
     [HttpGet("{plotId:int}")]
     [ProducesResponseType(typeof(PlotResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPlotById(
         [FromRoute] int plotId,
         CancellationToken cancellationToken)
     {
         var query = new GetPlotByIdQuery(plotId);
         var result = await getPlotByIdQueryService.Handle(query, cancellationToken);
-        return result.Fold<IActionResult>(Ok, _ => NotFound(new { }));
+
+        return AgronomicActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            plot => Ok(plot));
     }
 }

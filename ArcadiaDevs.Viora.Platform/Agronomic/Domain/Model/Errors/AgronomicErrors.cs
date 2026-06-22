@@ -50,4 +50,13 @@ public static class AgronomicErrors
 
     public static readonly Error QueryError =
         new("Agronomic.QueryError", "An error occurred while executing the agronomic query.");
+
+    public static readonly Error TileNotFound =
+        new("Agronomic.TileNotFound", "The requested NDVI tile could not be fetched.");
+
+    public static readonly Error PlotNotLinked =
+        new("Agronomic.PlotNotLinked", "The plot is not linked to AgroMonitoring.");
+
+    public static readonly Error InternalServerError =
+        new("Agronomic.InternalServerError", "An unexpected internal error occurred in Agronomic.");
 }

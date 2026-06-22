@@ -198,8 +198,10 @@ public class PlotCommandService(
         if (!_plotDeletionPolicy.CanDelete(plot))
         {
             return new Result<string, Error>.Failure(
-                new Error(AgronomicErrors.DeleteActivePlot.Code,
-                          _plotDeletionPolicy.ExplainDeletionRejection(plot)));
+                AgronomicErrors.DeleteActivePlot with
+                {
+                    Message = _plotDeletionPolicy.ExplainDeletionRejection(plot)
+                });
         }
 
         var hasRelatedOperationalRecords = await plotRepository.HasRelatedOperationalRecordsAsync(plot.Id, cancellationToken);

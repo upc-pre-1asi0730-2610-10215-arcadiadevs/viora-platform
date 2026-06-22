@@ -26,5 +26,56 @@
     <value>An unexpected internal error occurred in Profiles.</value>
   </data>
 
+    <data name="Agronomic.PlotNotFound" xml:space="preserve">
+    <value>The specified plot was not found.</value>
+  </data>
+    <data name="Agronomic.UnauthorizedAccess" xml:space="preserve">
+    <value>The authenticated user does not own the requested plot.</value>
+  </data>
+    <data name="Agronomic.PlotInactive" xml:space="preserve">
+    <value>Only active plots can be modified.</value>
+  </data>
+    <data name="Agronomic.PlotConflict" xml:space="preserve">
+    <value>A plot with the same name already exists for this user.</value>
+  </data>
+    <data name="Agronomic.DeleteActivePlot" xml:space="preserve">
+    <value>The plot cannot be deleted under the current deletion policy.</value>
+  </data>
+    <data name="Agronomic.DeviceNotFound" xml:space="preserve">
+    <value>The specified IoT device was not found.</value>
+  </data>
+    <data name="Agronomic.PlanNotFound" xml:space="preserve">
+    <value>The specified dynamic nutrition plan was not found.</value>
+  </data>
+    <data name="Agronomic.InvalidState" xml:space="preserve">
+    <value>The operation is invalid for the current state of the aggregate.</value>
+  </data>
+    <data name="Agronomic.InvalidInput" xml:space="preserve">
+    <value>The provided input was invalid.</value>
+  </data>
+    <data name="Agronomic.CertificationError" xml:space="preserve">
+    <value>Failed to certify the dynamic nutrition plan.</value>
+  </data>
+    <data name="Agronomic.GenerationError" xml:space="preserve">
+    <value>Failed to generate the dynamic nutrition plan.</value>
+  </data>
+    <data name="Agronomic.AgronomicStatisticsAccess" xml:space="preserve">
+    <value>The authenticated user cannot access statistics from another user.</value>
+  </data>
+    <data name="Agronomic.PlotOwnership" xml:space="preserve">
+    <value>The authenticated user does not own the requested plot.</value>
+  </data>
+    <data name="Agronomic.QueryError" xml:space="preserve">
+    <value>An error occurred while executing the agronomic query.</value>
+  </data>
+    <data name="Agronomic.TileNotFound" xml:space="preserve">
+    <value>The requested NDVI tile could not be fetched.</value>
+  </data>
+    <data name="Agronomic.PlotNotLinked" xml:space="preserve">
+    <value>The plot is not linked to AgroMonitoring.</value>
+  </data>
+    <data name="Agronomic.InternalServerError" xml:space="preserve">
+    <value>An unexpected internal error occurred in Agronomic.</value>
+  </data>
 
 </root>
