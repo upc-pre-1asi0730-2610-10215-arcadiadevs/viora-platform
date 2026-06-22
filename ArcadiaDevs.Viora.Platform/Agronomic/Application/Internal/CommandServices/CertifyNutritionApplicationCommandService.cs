@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Events;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
@@ -28,7 +29,7 @@ public class CertifyNutritionApplicationCommandService(
             var plan = await dynamicNutritionPlanRepository.FindByIdAsync((int)command.PlanId, cancellationToken);
             if (plan == null)
             {
-                return new Result<DynamicNutritionPlan, Error>.Failure(new Error("PLAN_NOT_FOUND", $"Plan {command.PlanId} not found."));
+                return new Result<DynamicNutritionPlan, Error>.Failure(AgronomicErrors.PlanNotFound);
             }
 
             var application = new NutritionApplication(
@@ -58,16 +59,16 @@ public class CertifyNutritionApplicationCommandService(
         }
         catch (InvalidOperationException ex)
         {
-            return new Result<DynamicNutritionPlan, Error>.Failure(new Error("INVALID_STATE", ex.Message));
+            return new Result<DynamicNutritionPlan, Error>.Failure(AgronomicErrors.InvalidState);
         }
         catch (ArgumentException ex)
         {
-            return new Result<DynamicNutritionPlan, Error>.Failure(new Error("INVALID_INPUT", ex.Message));
+            return new Result<DynamicNutritionPlan, Error>.Failure(AgronomicErrors.InvalidInput);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error certifying Dynamic Nutrition Plan {PlanId}", command.PlanId);
-            return new Result<DynamicNutritionPlan, Error>.Failure(new Error("CERTIFICATION_ERROR", "Failed to certify dynamic nutrition plan."));
+            return new Result<DynamicNutritionPlan, Error>.Failure(AgronomicErrors.CertificationError);
         }
     }
 }

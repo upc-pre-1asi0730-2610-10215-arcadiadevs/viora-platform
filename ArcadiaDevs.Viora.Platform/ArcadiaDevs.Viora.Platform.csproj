@@ -30,4 +30,13 @@
         <PackageReference Include="Cortex.Mediator" Version="3.1.2"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <EmbeddedResource Update="Agronomic\Resources\AgronomicMessages.es.resx">
+            <DependentUpon>AgronomicMessages.cs</DependentUpon>
+        </EmbeddedResource>
+        <EmbeddedResource Update="Surveillance\Resources\SurveillanceMessages.es.resx">
+            <DependentUpon>SurveillanceMessages.cs</DependentUpon>
+        </EmbeddedResource>
+    </ItemGroup>
+
 </Project>

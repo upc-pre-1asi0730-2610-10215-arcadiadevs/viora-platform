@@ -5,6 +5,7 @@ using ArcadiaDevs.Viora.Platform.Surveillance.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.OutboundServices.Acl;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Commands;
+using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Events;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Services;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Repositories;
@@ -51,15 +52,15 @@ public class PestSightingCommandService(
         }
         catch (OperationCanceledException)
         {
-            return new Result<PestSightingReport, Error>.Failure(new Error("OperationCancelled", "The operation was cancelled."));
+            return new Result<PestSightingReport, Error>.Failure(SurveillanceErrors.OperationCancelled);
         }
         catch (DbUpdateException ex)
         {
-            return new Result<PestSightingReport, Error>.Failure(new Error("DatabaseError", $"A database error occurred: {ex.Message}"));
+            return new Result<PestSightingReport, Error>.Failure(SurveillanceErrors.DatabaseError);
         }
         catch (Exception ex)
         {
-            return new Result<PestSightingReport, Error>.Failure(new Error("InternalServerError", $"An unexpected error occurred: {ex.Message}"));
+            return new Result<PestSightingReport, Error>.Failure(SurveillanceErrors.InternalServerError);
         }
     }
 }

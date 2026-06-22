@@ -6,6 +6,7 @@ using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Events;
+using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Errors;
 using Cortex.Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,16 +40,16 @@ public class AlertCommandService(
         }
         catch (OperationCanceledException)
         {
-            return new Result<Alert, Error>.Failure(new Error("OperationCancelled", "The operation was cancelled."));
+            return new Result<Alert, Error>.Failure(SurveillanceErrors.OperationCancelled);
         }
 
         catch (DbUpdateException ex)
         {
-            return new Result<Alert, Error>.Failure(new Error("DatabaseError", $"A database error occurred: {ex.Message}"));
+            return new Result<Alert, Error>.Failure(SurveillanceErrors.DatabaseError);
         }
         catch (Exception ex)
         {
-            return new Result<Alert, Error>.Failure(new Error("InternalServerError", $"An unexpected error occurred: {ex.Message}"));
+            return new Result<Alert, Error>.Failure(SurveillanceErrors.InternalServerError);
         }
     }
 
@@ -59,7 +60,7 @@ public class AlertCommandService(
             var alert = await alertRepository.FindByIdAsync((int)command.AlertId, cancellationToken);
             if (alert is null)
             {
-                return new Result<long, Error>.Failure(new Error("NotFound", $"Alert with id {command.AlertId} not found"));
+                return new Result<long, Error>.Failure(SurveillanceErrors.NotFound);
             }
 
             alert.MarkAsReviewed();
@@ -74,7 +75,7 @@ public class AlertCommandService(
         }
         catch (Exception ex)
         {
-            return new Result<long, Error>.Failure(new Error("InternalServerError", $"Failed to mark alert as reviewed: {ex.Message}"));
+            return new Result<long, Error>.Failure(SurveillanceErrors.InternalServerError);
         }
     }
 }
