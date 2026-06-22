@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
-using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregate;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
-using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Configuration;
-using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Repositories;
+using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 
 using Microsoft.EntityFrameworkCore;
 

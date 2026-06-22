@@ -1,5 +1,5 @@
-using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Configuration;
-using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Repositories;
+using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Entities;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;

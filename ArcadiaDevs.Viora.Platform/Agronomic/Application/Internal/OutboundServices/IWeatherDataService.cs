@@ -1,6 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
-using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregate;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.OutboundServices;

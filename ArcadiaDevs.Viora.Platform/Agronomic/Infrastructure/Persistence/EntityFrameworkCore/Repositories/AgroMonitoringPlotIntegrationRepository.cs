@@ -1,7 +1,7 @@
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Entities;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
-using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Configuration;
-using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Repositories;
+using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFrameworkCore.Repositories;

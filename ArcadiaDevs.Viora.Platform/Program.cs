@@ -7,7 +7,6 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
-using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EFC.Repositories;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.Internal.CommandServices;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.Internal.QueryServices;
@@ -20,10 +19,10 @@ using ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.OutboundServices.Ac
 using ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Cortex.Mediator;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
-using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Interfaces.ASP.Configuration;
+using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Pipeline.Middleware.Extensions;
-using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Configuration;
-using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Repositories;
+using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Cortex.Mediator.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 

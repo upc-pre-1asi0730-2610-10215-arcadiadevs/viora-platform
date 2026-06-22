@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregate;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
