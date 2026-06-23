@@ -1,13 +1,14 @@
+using ArcadiaDevs.Viora.Platform.Agronomic.Application.Acl;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.CommandServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.OutboundServices;
+using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
-using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EFC.Repositories;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.Internal.CommandServices;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.Internal.QueryServices;
@@ -20,10 +21,10 @@ using ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.OutboundServices.Ac
 using ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Cortex.Mediator;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
-using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Interfaces.ASP.Configuration;
+using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Pipeline.Middleware.Extensions;
-using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Configuration;
-using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EFC.Repositories;
+using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Cortex.Mediator.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 
@@ -106,6 +107,7 @@ builder.Services.AddHttpClient<AgroMonitoringApiClient>(client =>
 builder.Services.AddSingleton(new ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects.ChillRequirementPolicy(50.0));
 builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.ChillRequirementResolver>();
 builder.Services.AddScoped<IPlotRepository, PlotRepository>();
+builder.Services.AddScoped<IAgronomicContextFacade, AgronomicContextFacade>();
 builder.Services.AddScoped<IAgroMonitoringPlotIntegrationRepository, AgroMonitoringPlotIntegrationRepository>();
 builder.Services.AddScoped<IAgroMonitoringImageryService, AgroMonitoringImageryServiceAdapter>();
 builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.OutboundServices.IWeatherDataService, ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices.WeatherDataServiceAdapter>();
@@ -150,13 +152,15 @@ builder.Services.AddCortexMediator([typeof(Program)]);
 
 var app = builder.Build();
 
-// Create the database schema on startup.
-// Viora uses EnsureCreated because the project does not have EF migrations yet.
+// Apply pending EF Core migrations and seed data on startup.
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<AppDbContext>();
-    await context.Database.EnsureCreatedAsync();
+
+    // Migrations only apply to relational providers; InMemory provider is used for dev/tests.
+    if (!context.Database.IsInMemory())
+        await context.Database.MigrateAsync();
 
     // Seeding Surveillance
     var symptomCommandService = services.GetRequiredService<ISymptomCommandService>();

@@ -1,6 +1,7 @@
 ﻿using ArcadiaDevs.Viora.Platform.Agronomic.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
@@ -29,7 +30,7 @@ public class IoTDeviceCommandService : IIoTDeviceCommandService
         if (plot == null || plot.IsDeleted)
         {
             return new Result<IoTDevice, Error>.Failure(
-                new Error("PLOT_NOT_FOUND", "Plot " + command.PlotId.ToString() + " not found"));
+                AgronomicErrors.PlotNotFound);
         }
         
         var device = new IoTDevice(
@@ -50,14 +51,14 @@ public class IoTDeviceCommandService : IIoTDeviceCommandService
         if (plot == null || plot.IsDeleted) 
         {
             return new Result<IoTDevice, Error>.Failure(
-                new Error("PLOT_NOT_FOUND", $"Plot {command.PlotId} not found."));
+                AgronomicErrors.PlotNotFound);
         }
         
         var device = await _ioTDeviceRepository.FindByIdAndPlotIdAsync(command.DeviceId, command.PlotId);
         if (device == null)
         {
             return new Result<IoTDevice, Error>.Failure(
-                new Error("DEVICE_NOT_FOUND", $"IoT Device {command.DeviceId} not found."));
+                AgronomicErrors.DeviceNotFound);
         }
         
         device.update(new DeviceName(command.DeviceName), command.Status);
@@ -75,14 +76,14 @@ public class IoTDeviceCommandService : IIoTDeviceCommandService
         if (plot == null || plot.IsDeleted)
         {
             return new Result<bool, Error>.Failure(
-                new Error("PLOT_NOT_FOUND", $"Plot {command.PlotId} not found."));
+                AgronomicErrors.PlotNotFound);
         }
 
         var device = await _ioTDeviceRepository.FindByIdAndPlotIdAsync(command.DeviceId, command.PlotId);
         if (device == null)
         {
             return new Result<bool, Error>.Failure(
-                new Error("DEVICE_NOT_FOUND", $"IoT Device {command.DeviceId} not found."));
+                AgronomicErrors.DeviceNotFound);
         }
 
         await _ioTDeviceRepository.DeleteAsync(device);

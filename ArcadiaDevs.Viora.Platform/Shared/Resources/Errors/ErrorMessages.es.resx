@@ -25,5 +25,56 @@
     <data name="ProfilesError.InternalServerError" xml:space="preserve">
     <value>Ocurrió un error interno inesperado en Perfiles.</value>
   </data>
-  
+    <data name="Agronomic.PlotNotFound" xml:space="preserve">
+    <value>La parcela especificada no fue encontrada.</value>
+  </data>
+    <data name="Agronomic.UnauthorizedAccess" xml:space="preserve">
+    <value>El usuario autenticado no es propietario de la parcela solicitada.</value>
+  </data>
+    <data name="Agronomic.PlotInactive" xml:space="preserve">
+    <value>Solo las parcelas activas pueden modificarse.</value>
+  </data>
+    <data name="Agronomic.PlotConflict" xml:space="preserve">
+    <value>Ya existe una parcela con el mismo nombre para este usuario.</value>
+  </data>
+    <data name="Agronomic.DeleteActivePlot" xml:space="preserve">
+    <value>La parcela no puede eliminarse según la política de eliminación actual.</value>
+  </data>
+    <data name="Agronomic.DeviceNotFound" xml:space="preserve">
+    <value>El dispositivo IoT especificado no fue encontrado.</value>
+  </data>
+    <data name="Agronomic.PlanNotFound" xml:space="preserve">
+    <value>El plan de nutrición dinámico especificado no fue encontrado.</value>
+  </data>
+    <data name="Agronomic.InvalidState" xml:space="preserve">
+    <value>La operación no es válida para el estado actual del agregado.</value>
+  </data>
+    <data name="Agronomic.InvalidInput" xml:space="preserve">
+    <value>La entrada proporcionada no es válida.</value>
+  </data>
+    <data name="Agronomic.CertificationError" xml:space="preserve">
+    <value>No se pudo certificar el plan de nutrición dinámico.</value>
+  </data>
+    <data name="Agronomic.GenerationError" xml:space="preserve">
+    <value>No se pudo generar el plan de nutrición dinámico.</value>
+  </data>
+    <data name="Agronomic.AgronomicStatisticsAccess" xml:space="preserve">
+    <value>El usuario autenticado no puede acceder a estadísticas de otro usuario.</value>
+  </data>
+    <data name="Agronomic.PlotOwnership" xml:space="preserve">
+    <value>El usuario autenticado no es propietario de la parcela solicitada.</value>
+  </data>
+    <data name="Agronomic.QueryError" xml:space="preserve">
+    <value>Ocurrió un error al ejecutar la consulta agronómica.</value>
+  </data>
+    <data name="Agronomic.TileNotFound" xml:space="preserve">
+    <value>No se pudo obtener la tesela NDVI solicitada.</value>
+  </data>
+    <data name="Agronomic.PlotNotLinked" xml:space="preserve">
+    <value>La parcela no está vinculada a AgroMonitoring.</value>
+  </data>
+    <data name="Agronomic.InternalServerError" xml:space="preserve">
+    <value>Ocurrió un error interno inesperado en Agronómico.</value>
+  </data>
+
 </root>

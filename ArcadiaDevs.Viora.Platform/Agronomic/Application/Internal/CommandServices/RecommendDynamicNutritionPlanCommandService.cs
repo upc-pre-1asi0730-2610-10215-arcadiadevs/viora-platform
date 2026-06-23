@@ -2,8 +2,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.CommandServices;
-using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregate;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Events;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
@@ -61,7 +62,7 @@ public class RecommendDynamicNutritionPlanCommandService(
         catch (Exception ex)
         {
             logger.LogError(ex, "Error generating automated Dynamic Nutrition Plan for plot {PlotId}", command.PlotId);
-            return new Result<DynamicNutritionPlan, Error>.Failure(new Error("GENERATION_ERROR", "Failed to generate dynamic nutrition plan."));
+            return new Result<DynamicNutritionPlan, Error>.Failure(AgronomicErrors.GenerationError);
         }
     }
 }

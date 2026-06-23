@@ -1,4 +1,4 @@
-using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregate;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices;
 

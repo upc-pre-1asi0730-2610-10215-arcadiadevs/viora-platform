@@ -1,4 +1,4 @@
-using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregate;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;

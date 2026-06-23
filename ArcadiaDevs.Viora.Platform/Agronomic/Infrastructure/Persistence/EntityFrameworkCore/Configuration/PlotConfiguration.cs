@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregate;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 
 using Microsoft.EntityFrameworkCore;

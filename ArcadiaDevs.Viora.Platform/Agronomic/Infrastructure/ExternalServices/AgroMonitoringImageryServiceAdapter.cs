@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
-using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregate;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Entities;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;

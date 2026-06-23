@@ -1,6 +1,7 @@
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.CommandServices;
-using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregate;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
@@ -84,12 +85,12 @@ public class PlotCommandService(
         var plot = await plotRepository.FindByIdAsync(command.PlotId, cancellationToken);
         if (plot is null || plot.IsDeleted)
         {
-            return new Result<ChillRequirement, Error>.Failure(new Error("PLOT_NOT_FOUND", "Plot not found."));
+            return new Result<ChillRequirement, Error>.Failure(AgronomicErrors.PlotNotFound);
         }
 
         if (plot.OwnerUserId != command.UserId)
         {
-            return new Result<ChillRequirement, Error>.Failure(new Error("UNAUTHORIZED_ACCESS", "User does not own the plot."));
+            return new Result<ChillRequirement, Error>.Failure(AgronomicErrors.UnauthorizedAccess);
         }
 
         var portions = new ChillPortions(command.ChillRequirementPortions);
@@ -109,12 +110,12 @@ public class PlotCommandService(
         var plot = await plotRepository.FindByIdAsync(command.PlotId, cancellationToken);
         if (plot is null || plot.IsDeleted)
         {
-            return new Result<ChillRequirement, Error>.Failure(new Error("PLOT_NOT_FOUND", "Plot not found."));
+            return new Result<ChillRequirement, Error>.Failure(AgronomicErrors.PlotNotFound);
         }
 
         if (plot.OwnerUserId != command.UserId)
         {
-            return new Result<ChillRequirement, Error>.Failure(new Error("UNAUTHORIZED_ACCESS", "User does not own the plot."));
+            return new Result<ChillRequirement, Error>.Failure(AgronomicErrors.UnauthorizedAccess);
         }
 
         plot.ClearChillRequirement();
@@ -133,18 +134,18 @@ public class PlotCommandService(
         var plot = await plotRepository.FindByIdAsync(command.PlotId, cancellationToken);
         if (plot is null)
         {
-            return new Result<Plot, Error>.Failure(new Error("PLOT_NOT_FOUND", $"Plot {command.PlotId} not found."));
+            return new Result<Plot, Error>.Failure(AgronomicErrors.PlotNotFound);
         }
 
         if (!plot.IsActive)
         {
-            return new Result<Plot, Error>.Failure(new Error("PLOT_INACTIVE", "Only active plots can be updated."));
+            return new Result<Plot, Error>.Failure(AgronomicErrors.PlotInactive);
         }
 
         if (!string.IsNullOrWhiteSpace(command.Name) && 
             await plotRepository.ExistsByNameAndOwnerUserIdAndIdIsNotAsync(command.Name, plot.OwnerUserId, plot.Id, cancellationToken))
         {
-            return new Result<Plot, Error>.Failure(new Error("PLOT_CONFLICT", "A plot with the same name already exists for this user."));
+            return new Result<Plot, Error>.Failure(AgronomicErrors.PlotConflict);
         }
 
         var updatedName = command.Name ?? plot.PlotName;
@@ -191,13 +192,16 @@ public class PlotCommandService(
         var plot = await plotRepository.FindByIdAsync(command.PlotId, cancellationToken);
         if (plot is null)
         {
-            return new Result<string, Error>.Failure(new Error("PLOT_NOT_FOUND", $"Plot {command.PlotId} not found."));
+            return new Result<string, Error>.Failure(AgronomicErrors.PlotNotFound);
         }
 
         if (!_plotDeletionPolicy.CanDelete(plot))
         {
             return new Result<string, Error>.Failure(
-                new Error("DELETE_ACTIVE_PLOT", _plotDeletionPolicy.ExplainDeletionRejection(plot)));
+                AgronomicErrors.DeleteActivePlot with
+                {
+                    Message = _plotDeletionPolicy.ExplainDeletionRejection(plot)
+                });
         }
 
         var hasRelatedOperationalRecords = await plotRepository.HasRelatedOperationalRecordsAsync(plot.Id, cancellationToken);

@@ -9,6 +9,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Errors;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices;
 
@@ -19,8 +20,11 @@ public class GetPlotMonitoringSummaryQueryService(
     public async Task<Result<PlotMonitoringSummaryResource, Error>> Handle(GetPlotMonitoringSummaryQuery query, CancellationToken cancellationToken = default)
     {
         var plot = await plotRepository.FindByIdAsync(query.PlotId, cancellationToken);
-        if (plot is null || plot.IsDeleted || plot.OwnerUserId != query.UserId)
-            return new Result<PlotMonitoringSummaryResource, Error>.Failure(new Error("PLOT_NOT_FOUND", "Plot not found."));
+        if (plot is null || plot.IsDeleted)
+            return new Result<PlotMonitoringSummaryResource, Error>.Failure(AgronomicErrors.PlotNotFound);
+
+        if (plot.OwnerUserId != query.UserId)
+            return new Result<PlotMonitoringSummaryResource, Error>.Failure(AgronomicErrors.PlotOwnership);
 
         // Trigger synchronization with external AgroMonitoring API cache
         await imageryService.FindCurrentImageryAsync(plot, cancellationToken);
