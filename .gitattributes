@@ -16,6 +16,11 @@ Dockerfile text eol=lf
 .gitignore text eol=lf
 .gitattributes text eol=lf
 
+# Scripts
+*.ps1      text eol=lf
+*.cmd      text eol=crlf
+*.bat      text eol=crlf
+
 # Binary files (never normalize)
 *.png      binary
 *.jpg      binary
