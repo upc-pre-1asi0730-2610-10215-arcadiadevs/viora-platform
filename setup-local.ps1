@@ -62,16 +62,12 @@ Write-Host "Using dotnet from: $DotnetRoot" -ForegroundColor Cyan
 # ---------------------------------------------------------------------------
 # Verify / install dotnet-ef global tool
 # ---------------------------------------------------------------------------
-$efVersion = $null
-try {
-    $efVersion = & dotnet ef --version 2>$null
-} catch {}
-
-if (-not $efVersion) {
-    Write-Host "dotnet-ef not found or incompatible. Installing latest preview..." -ForegroundColor Yellow
+$efInstalled = (& dotnet tool list --global 2>$null) -match "dotnet-ef"
+if (-not $efInstalled) {
+    Write-Host "dotnet-ef not found. Installing latest preview..." -ForegroundColor Yellow
     & dotnet tool install --global dotnet-ef --prerelease
 } else {
-    Write-Host "dotnet-ef version: $efVersion" -ForegroundColor Cyan
+    Write-Host "dotnet-ef already installed." -ForegroundColor Cyan
 }
 
 # ---------------------------------------------------------------------------
@@ -92,13 +88,57 @@ if ($pgService.Status -ne 'Running') {
 }
 
 # ---------------------------------------------------------------------------
-# Create database if it does not exist
+# Locate psql.exe (auto-detect version and path)
 # ---------------------------------------------------------------------------
-$psqlPath = "C:\Program Files\PostgreSQL\$PostgresVersion\bin\psql.exe"
-if (-not (Test-Path $psqlPath)) {
-    Write-Error "psql.exe not found at $psqlPath. Verify PostgresVersion parameter."
+$psqlPath = $null
+
+# 1. Try the version specified by the user
+$candidate = "C:\Program Files\PostgreSQL\$PostgresVersion\bin\psql.exe"
+if (Test-Path $candidate) { $psqlPath = $candidate }
+
+# 2. Search all versions under "Program Files\PostgreSQL"
+if (-not $psqlPath) {
+    $pgRoot = "C:\Program Files\PostgreSQL"
+    if (Test-Path $pgRoot) {
+        $found = Get-ChildItem -Path $pgRoot -Directory | Sort-Object Name -Descending |
+            ForEach-Object { Join-Path $_.FullName "bin\psql.exe" } |
+            Where-Object { Test-Path $_ } | Select-Object -First 1
+        if ($found) { $psqlPath = $found }
+    }
+}
+
+# 3. Try Program Files (x86)
+if (-not $psqlPath) {
+    $pgRoot86 = "C:\Program Files (x86)\PostgreSQL"
+    if (Test-Path $pgRoot86) {
+        $found = Get-ChildItem -Path $pgRoot86 -Directory | Sort-Object Name -Descending |
+            ForEach-Object { Join-Path $_.FullName "bin\psql.exe" } |
+            Where-Object { Test-Path $_ } | Select-Object -First 1
+        if ($found) { $psqlPath = $found }
+    }
+}
+
+# 4. Search PATH
+if (-not $psqlPath) {
+    $cmd = Get-Command psql -ErrorAction SilentlyContinue
+    if ($cmd) { $psqlPath = $cmd.Source }
+}
+
+if (-not $psqlPath) {
+    Write-Error @"
+psql.exe not found. Tried:
+  - C:\Program Files\PostgreSQL\$PostgresVersion\bin\psql.exe
+  - All versions under C:\Program Files\PostgreSQL\*\bin\
+  - All versions under C:\Program Files (x86)\PostgreSQL\*\bin\
+  - System PATH
+
+Please install PostgreSQL or pass the correct -PostgresVersion parameter,
+or add psql.exe to your PATH.
+"@
     exit 1
 }
+
+Write-Host "Using psql at: $psqlPath" -ForegroundColor Cyan
 
 $env:PGPASSWORD = $PostgresPassword
 
