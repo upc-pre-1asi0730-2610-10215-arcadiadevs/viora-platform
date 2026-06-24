@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Commands;
+using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 
@@ -124,7 +125,7 @@ public class AlertsController(
 
         if (result is Result<long, Error>.Failure failure)
         {
-            if (failure.Error?.Code == "NotFound")
+            if (failure.Error?.Code == SurveillanceErrors.NotFound.Code)
             {
                 return NotFound(new EmptyResource());
             }
