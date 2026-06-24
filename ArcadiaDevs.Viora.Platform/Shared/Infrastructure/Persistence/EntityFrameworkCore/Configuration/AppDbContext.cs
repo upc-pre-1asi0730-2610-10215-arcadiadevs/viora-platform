@@ -38,11 +38,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-        // On shared hosts (e.g. Filess.io) the user has no rights on the "public"
-        // schema, so the schema is taken from DATABASE_SCHEMA when present and falls
-        // back to "public" for local development.
-        var schema = Environment.GetEnvironmentVariable("DATABASE_SCHEMA")?.Trim();
-        builder.HasDefaultSchema(string.IsNullOrWhiteSpace(schema) ? "public" : schema);
+        // The model is intentionally schema-agnostic: no default schema is baked
+        // into the model (and therefore into migrations/snapshot). The target
+        // schema is selected per-environment through the connection's `Search Path`
+        // (= DATABASE_SCHEMA), so unqualified tables are created and queried in the
+        // right schema on shared hosts (e.g. Filess.io, where the user has no rights
+        // on "public") and in "public" for local development. Baking the env-driven
+        // schema via HasDefaultSchema made the runtime model diverge from the
+        // migration snapshot whenever DATABASE_SCHEMA != "public", which tripped
+        // EF Core's PendingModelChangesWarning and aborted startup.
         builder.ApplyConfigurationsFromAssembly(typeof(PlotConfiguration).Assembly);
         builder.UseSnakeCaseNamingConvention();
     }
