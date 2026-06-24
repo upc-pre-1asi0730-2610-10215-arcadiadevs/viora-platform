@@ -22,4 +22,12 @@ public class AlertRepository(AppDbContext context)
             .Take(limit)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IEnumerable<Alert>> FindActiveByPlotIdInAsync(IEnumerable<long> plotIds, CancellationToken cancellationToken = default)
+    {
+        var plotIdsList = plotIds.ToList();
+        return await Context.Set<Alert>()
+            .Where(a => plotIdsList.Contains(a.PlotId.Value) && a.Status == "ACTIVE")
+            .ToListAsync(cancellationToken);
+    }
 }
