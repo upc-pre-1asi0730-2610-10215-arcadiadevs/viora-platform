@@ -1,3 +1,4 @@
+using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Rest.Resources;
 
 namespace ArcadiaDevs.Viora.Platform.Surveillance.Application.OutboundServices.Acl;
@@ -21,4 +22,24 @@ public interface IExternalAgronomicService
     /// This map is useful for efficiently assembling Alert resources.
     /// </summary>
     Task<IDictionary<long, PlotSummaryResource>> GetPlotsForUserAsMapAsync(long userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Resolves the display name of a plot.
+    /// </summary>
+    /// <param name="plotId">The plot identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The plot name if it exists; otherwise, null.</returns>
+    Task<string?> GetPlotNameAsync(long plotId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Finds anonymized neighbor plots within a radius of the reference plot.
+    /// </summary>
+    /// <param name="referencePlotId">The plot at the center of the search radius.</param>
+    /// <param name="radiusKm">The search radius in kilometers.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The neighbor plots (id + distance) within the radius.</returns>
+    Task<IReadOnlyList<NeighborPlot>> FindNeighborPlotsWithinRadiusAsync(
+        long referencePlotId,
+        double radiusKm,
+        CancellationToken cancellationToken = default);
 }

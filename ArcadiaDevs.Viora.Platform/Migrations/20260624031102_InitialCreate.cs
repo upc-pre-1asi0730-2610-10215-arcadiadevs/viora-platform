@@ -12,12 +12,8 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.EnsureSchema(
-                name: "public");
-
             migrationBuilder.CreateTable(
                 name: "agronomic_agro_monitoring_plot_integrations",
-                schema: "public",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
@@ -39,7 +35,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
 
             migrationBuilder.CreateTable(
                 name: "alerts",
-                schema: "public",
                 columns: table => new
                 {
                     id = table.Column<long>(type: "bigint", nullable: false)
@@ -63,7 +58,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
 
             migrationBuilder.CreateTable(
                 name: "dynamic_nutrition_plans",
-                schema: "public",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
@@ -94,7 +88,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
 
             migrationBuilder.CreateTable(
                 name: "iot_devices",
-                schema: "public",
                 columns: table => new
                 {
                     id = table.Column<long>(type: "bigint", nullable: false)
@@ -112,7 +105,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
 
             migrationBuilder.CreateTable(
                 name: "pest_sighting_reports",
-                schema: "public",
                 columns: table => new
                 {
                     id = table.Column<long>(type: "bigint", nullable: false)
@@ -138,7 +130,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
 
             migrationBuilder.CreateTable(
                 name: "plots",
-                schema: "public",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
@@ -169,7 +160,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
 
             migrationBuilder.CreateTable(
                 name: "symptom_dictionary_items",
-                schema: "public",
                 columns: table => new
                 {
                     id = table.Column<string>(type: "text", nullable: false),
@@ -183,7 +173,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
 
             migrationBuilder.CreateTable(
                 name: "alert_timeline_records",
-                schema: "public",
                 columns: table => new
                 {
                     id = table.Column<long>(type: "bigint", nullable: false)
@@ -200,7 +189,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                     table.ForeignKey(
                         name: "f_k_alert_timeline_records_alerts_alert_id",
                         column: x => x.alert_id,
-                        principalSchema: "public",
                         principalTable: "alerts",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -208,7 +196,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
 
             migrationBuilder.CreateTable(
                 name: "dynamic_nutrition_plan_inputs",
-                schema: "public",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
@@ -226,7 +213,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                     table.ForeignKey(
                         name: "f_k_dynamic_nutrition_plan_inputs_dynamic_nutrition_plans_dynam~",
                         column: x => x.dynamic_nutrition_plan_id,
-                        principalSchema: "public",
                         principalTable: "dynamic_nutrition_plans",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -234,32 +220,27 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "i_x_agronomic_agro_monitoring_plot_integrations_plot_id",
-                schema: "public",
                 table: "agronomic_agro_monitoring_plot_integrations",
                 column: "plot_id",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "i_x_alert_timeline_records_alert_id",
-                schema: "public",
                 table: "alert_timeline_records",
                 column: "alert_id");
 
             migrationBuilder.CreateIndex(
                 name: "i_x_dynamic_nutrition_plan_inputs_dynamic_nutrition_plan_id",
-                schema: "public",
                 table: "dynamic_nutrition_plan_inputs",
                 column: "dynamic_nutrition_plan_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_iot_devices_id_plot_id",
-                schema: "public",
                 table: "iot_devices",
                 columns: new[] { "id", "plot_id" });
 
             migrationBuilder.CreateIndex(
                 name: "ix_iot_devices_plot_id",
-                schema: "public",
                 table: "iot_devices",
                 column: "plot_id");
         }
@@ -268,40 +249,31 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "agronomic_agro_monitoring_plot_integrations",
-                schema: "public");
+                name: "agronomic_agro_monitoring_plot_integrations");
 
             migrationBuilder.DropTable(
-                name: "alert_timeline_records",
-                schema: "public");
+                name: "alert_timeline_records");
 
             migrationBuilder.DropTable(
-                name: "dynamic_nutrition_plan_inputs",
-                schema: "public");
+                name: "dynamic_nutrition_plan_inputs");
 
             migrationBuilder.DropTable(
-                name: "iot_devices",
-                schema: "public");
+                name: "iot_devices");
 
             migrationBuilder.DropTable(
-                name: "pest_sighting_reports",
-                schema: "public");
+                name: "pest_sighting_reports");
 
             migrationBuilder.DropTable(
-                name: "plots",
-                schema: "public");
+                name: "plots");
 
             migrationBuilder.DropTable(
-                name: "symptom_dictionary_items",
-                schema: "public");
+                name: "symptom_dictionary_items");
 
             migrationBuilder.DropTable(
-                name: "alerts",
-                schema: "public");
+                name: "alerts");
 
             migrationBuilder.DropTable(
-                name: "dynamic_nutrition_plans",
-                schema: "public");
+                name: "dynamic_nutrition_plans");
         }
     }
 }
