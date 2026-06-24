@@ -40,6 +40,8 @@ public class AlertQueryService(
                 entity.Severity.ToString(),
                 entity.CreatedAt?.ToString("O") ?? string.Empty,
                 entity.Status,
+                entity.Sources.ToList(),
+                entity.PlotId.Value,
                 plotSummary!
             );
         });
