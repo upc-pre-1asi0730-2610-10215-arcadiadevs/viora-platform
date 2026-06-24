@@ -7,5 +7,7 @@ public record AlertSummaryResource(
     string Severity,
     string Date,
     string Status,
+    List<string> Sources,
+    long PlotId,
     PlotSummaryResource Plot
 );
