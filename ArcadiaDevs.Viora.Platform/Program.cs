@@ -139,6 +139,7 @@ builder.Services.AddScoped<IAlertCommandService, AlertCommandService>();
 builder.Services.AddScoped<ISymptomCommandService, SymptomCommandService>();
 builder.Services.AddScoped<ISymptomQueryService, SymptomQueryService>();
 builder.Services.AddScoped<IAlertQueryService, AlertQueryService>();
+builder.Services.AddScoped<ICommunityRiskQueryService, CommunityRiskQueryService>();
 
 builder.Services.AddScoped<IExternalAgronomicService, ExternalAgronomicService>();
 builder.Services.AddScoped<ThreatInferenceService>();

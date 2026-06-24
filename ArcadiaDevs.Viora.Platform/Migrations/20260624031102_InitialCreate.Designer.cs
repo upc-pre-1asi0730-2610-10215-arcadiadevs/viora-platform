@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ArcadiaDevs.Viora.Platform.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260622234344_InitialCreate")]
+    [Migration("20260624031102_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -20,7 +20,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasDefaultSchema("public")
                 .HasAnnotation("ProductVersion", "9.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -64,7 +63,7 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                     b.HasKey("Id")
                         .HasName("p_k_dynamic_nutrition_plans");
 
-                    b.ToTable("dynamic_nutrition_plans", "public");
+                    b.ToTable("dynamic_nutrition_plans", (string)null);
                 });
 
             modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates.IoTDevice", b =>
@@ -108,7 +107,7 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                     b.HasIndex("Id", "PlotId")
                         .HasDatabaseName("ix_iot_devices_id_plot_id");
 
-                    b.ToTable("iot_devices", "public");
+                    b.ToTable("iot_devices", (string)null);
                 });
 
             modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates.Plot", b =>
@@ -185,7 +184,7 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                     b.HasKey("Id")
                         .HasName("p_k_plots");
 
-                    b.ToTable("plots", "public");
+                    b.ToTable("plots", (string)null);
                 });
 
             modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Entities.AgroMonitoringPlotIntegration", b =>
@@ -246,7 +245,7 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                         .IsUnique()
                         .HasDatabaseName("i_x_agronomic_agro_monitoring_plot_integrations_plot_id");
 
-                    b.ToTable("agronomic_agro_monitoring_plot_integrations", "public");
+                    b.ToTable("agronomic_agro_monitoring_plot_integrations", (string)null);
                 });
 
             modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Aggregates.Alert", b =>
@@ -309,7 +308,7 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                     b.HasKey("Id")
                         .HasName("p_k_alerts");
 
-                    b.ToTable("alerts", "public");
+                    b.ToTable("alerts");
                 });
 
             modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Aggregates.PestSightingReport", b =>
@@ -375,7 +374,7 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                     b.HasKey("Id")
                         .HasName("p_k_pest_sighting_reports");
 
-                    b.ToTable("pest_sighting_reports", "public");
+                    b.ToTable("pest_sighting_reports");
                 });
 
             modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Entities.AlertTimelineRecord", b =>
@@ -416,7 +415,7 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                     b.HasIndex("AlertId")
                         .HasDatabaseName("i_x_alert_timeline_records_alert_id");
 
-                    b.ToTable("alert_timeline_records", "public");
+                    b.ToTable("alert_timeline_records");
                 });
 
             modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Entities.SymptomDictionaryItem", b =>
@@ -438,7 +437,7 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                     b.HasKey("Id")
                         .HasName("p_k_symptom_dictionary_items");
 
-                    b.ToTable("symptom_dictionary_items", "public");
+                    b.ToTable("symptom_dictionary_items");
                 });
 
             modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates.DynamicNutritionPlan", b =>
@@ -482,7 +481,7 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                             b1.HasKey("DynamicNutritionPlanId")
                                 .HasName("p_k_dynamic_nutrition_plans");
 
-                            b1.ToTable("dynamic_nutrition_plans", "public");
+                            b1.ToTable("dynamic_nutrition_plans");
 
                             b1.WithOwner()
                                 .HasForeignKey("DynamicNutritionPlanId")
@@ -506,7 +505,7 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                             b1.HasKey("DynamicNutritionPlanId")
                                 .HasName("p_k_dynamic_nutrition_plans");
 
-                            b1.ToTable("dynamic_nutrition_plans", "public");
+                            b1.ToTable("dynamic_nutrition_plans");
 
                             b1.WithOwner()
                                 .HasForeignKey("DynamicNutritionPlanId")
@@ -560,7 +559,7 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                             b1.HasIndex("DynamicNutritionPlanId")
                                 .HasDatabaseName("i_x_dynamic_nutrition_plan_inputs_dynamic_nutrition_plan_id");
 
-                            b1.ToTable("dynamic_nutrition_plan_inputs", "public");
+                            b1.ToTable("dynamic_nutrition_plan_inputs", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("DynamicNutritionPlanId")
@@ -596,7 +595,7 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                             b1.HasKey("DynamicNutritionPlanId")
                                 .HasName("p_k_dynamic_nutrition_plans");
 
-                            b1.ToTable("dynamic_nutrition_plans", "public");
+                            b1.ToTable("dynamic_nutrition_plans");
 
                             b1.WithOwner()
                                 .HasForeignKey("DynamicNutritionPlanId")
@@ -637,7 +636,7 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                             b1.HasKey("PlotId")
                                 .HasName("p_k_plots");
 
-                            b1.ToTable("plots", "public");
+                            b1.ToTable("plots");
 
                             b1.WithOwner()
                                 .HasForeignKey("PlotId")
@@ -656,7 +655,7 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                                     b2.HasKey("ChillRequirementPlotId")
                                         .HasName("p_k_plots");
 
-                                    b2.ToTable("plots", "public");
+                                    b2.ToTable("plots");
 
                                     b2.WithOwner()
                                         .HasForeignKey("ChillRequirementPlotId")
@@ -681,7 +680,7 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                             b1.HasKey("PlotId")
                                 .HasName("p_k_plots");
 
-                            b1.ToTable("plots", "public");
+                            b1.ToTable("plots");
 
                             b1.WithOwner()
                                 .HasForeignKey("PlotId")
@@ -709,7 +708,7 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                             b1.HasKey("AlertId")
                                 .HasName("p_k_alerts");
 
-                            b1.ToTable("alerts", "public");
+                            b1.ToTable("alerts");
 
                             b1.WithOwner()
                                 .HasForeignKey("AlertId")
@@ -735,7 +734,7 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                             b1.HasKey("PestSightingReportId")
                                 .HasName("p_k_pest_sighting_reports");
 
-                            b1.ToTable("pest_sighting_reports", "public");
+                            b1.ToTable("pest_sighting_reports");
 
                             b1.WithOwner()
                                 .HasForeignKey("PestSightingReportId")
@@ -755,7 +754,7 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                             b1.HasKey("PestSightingReportId")
                                 .HasName("p_k_pest_sighting_reports");
 
-                            b1.ToTable("pest_sighting_reports", "public");
+                            b1.ToTable("pest_sighting_reports");
 
                             b1.WithOwner()
                                 .HasForeignKey("PestSightingReportId")

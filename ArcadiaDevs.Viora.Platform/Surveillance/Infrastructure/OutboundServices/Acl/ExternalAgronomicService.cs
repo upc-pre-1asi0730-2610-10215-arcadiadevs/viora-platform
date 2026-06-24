@@ -31,4 +31,20 @@ public class ExternalAgronomicService(IAgronomicContextFacade agronomicContextFa
 
         return map;
     }
+
+    /// <inheritdoc/>
+    public async Task<string?> GetPlotNameAsync(long plotId, CancellationToken cancellationToken = default)
+    {
+        return await agronomicContextFacade.GetPlotNameAsync(plotId, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<NeighborPlot>> FindNeighborPlotsWithinRadiusAsync(
+        long referencePlotId,
+        double radiusKm,
+        CancellationToken cancellationToken = default)
+    {
+        return await agronomicContextFacade.FindNeighborPlotsWithinRadiusAsync(
+            referencePlotId, radiusKm, cancellationToken);
+    }
 }
