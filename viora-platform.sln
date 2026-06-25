@@ -5,6 +5,10 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArcadiaDevs.Viora.Platform", "ArcadiaDevs.Viora.Platform\ArcadiaDevs.Viora.Platform.csproj", "{5744FA2F-5472-4107-8504-76CF70B6082E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{B810A85D-6971-4C03-A451-47D8C15296DD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArcadiaDevs.Viora.Platform.Tests", "tests\ArcadiaDevs.Viora.Platform.Tests\ArcadiaDevs.Viora.Platform.Tests.csproj", "{05C3E8F3-EEF4-4F9F-9F41-4BB32B75858E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,8 +31,23 @@ Global
 		{5744FA2F-5472-4107-8504-76CF70B6082E}.Release|x64.Build.0 = Release|Any CPU
 		{5744FA2F-5472-4107-8504-76CF70B6082E}.Release|x86.ActiveCfg = Release|Any CPU
 		{5744FA2F-5472-4107-8504-76CF70B6082E}.Release|x86.Build.0 = Release|Any CPU
+		{05C3E8F3-EEF4-4F9F-9F41-4BB32B75858E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05C3E8F3-EEF4-4F9F-9F41-4BB32B75858E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05C3E8F3-EEF4-4F9F-9F41-4BB32B75858E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{05C3E8F3-EEF4-4F9F-9F41-4BB32B75858E}.Debug|x64.Build.0 = Debug|Any CPU
+		{05C3E8F3-EEF4-4F9F-9F41-4BB32B75858E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{05C3E8F3-EEF4-4F9F-9F41-4BB32B75858E}.Debug|x86.Build.0 = Debug|Any CPU
+		{05C3E8F3-EEF4-4F9F-9F41-4BB32B75858E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05C3E8F3-EEF4-4F9F-9F41-4BB32B75858E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05C3E8F3-EEF4-4F9F-9F41-4BB32B75858E}.Release|x64.ActiveCfg = Release|Any CPU
+		{05C3E8F3-EEF4-4F9F-9F41-4BB32B75858E}.Release|x64.Build.0 = Release|Any CPU
+		{05C3E8F3-EEF4-4F9F-9F41-4BB32B75858E}.Release|x86.ActiveCfg = Release|Any CPU
+		{05C3E8F3-EEF4-4F9F-9F41-4BB32B75858E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{05C3E8F3-EEF4-4F9F-9F41-4BB32B75858E} = {B810A85D-6971-4C03-A451-47D8C15296DD}
 	EndGlobalSection
 EndGlobal
