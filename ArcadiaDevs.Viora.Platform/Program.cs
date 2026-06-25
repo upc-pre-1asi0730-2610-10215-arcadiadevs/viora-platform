@@ -38,6 +38,8 @@ using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Persistence.EntityFrameworkC
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Pipeline.Middleware.Extensions;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Tokens.Jwt.Configuration;
+using ArcadiaDevs.Viora.Platform.Iam.Application.Acl;
+using ArcadiaDevs.Viora.Platform.Iam.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Tokens.Jwt.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -168,6 +170,7 @@ builder.Services.AddScoped<IUserQueryService, UserQueryService>();
 builder.Services.AddScoped<IUserCommandService, UserCommandService>();
 builder.Services.AddScoped<IHashingService, HashingService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IIamContextFacade, IamContextFacade>();
 
 // Startup guard: fail fast in Production if the JWT secret is the placeholder
 var jwtSecret = builder.Configuration["Jwt:Secret"] ?? string.Empty;

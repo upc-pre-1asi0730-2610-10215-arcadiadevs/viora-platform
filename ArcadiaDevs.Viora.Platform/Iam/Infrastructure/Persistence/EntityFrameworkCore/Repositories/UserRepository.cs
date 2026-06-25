@@ -43,4 +43,21 @@ public class UserRepository(AppDbContext context) : BaseRepository<User>(context
     {
         return await Context.Set<User>().AnyAsync(user => user.Username.Equals(username), cancellationToken);
     }
+
+    /**
+     * <summary>
+     *     Get the role names for a user by their id
+     * </summary>
+     * <param name="userId">The user id</param>
+     * <param name="cancellationToken">The cancellation token</param>
+     * <returns>The list of role names (empty if user not found)</returns>
+     */
+    public async Task<IReadOnlyList<string>> GetRolesByUserIdAsync(int userId, CancellationToken cancellationToken)
+    {
+        var user = await Context.Set<User>()
+            .Include(u => u.Roles)
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        return user?.Roles.Select(r => r.Name).ToList() ?? [];
+    }
 }
