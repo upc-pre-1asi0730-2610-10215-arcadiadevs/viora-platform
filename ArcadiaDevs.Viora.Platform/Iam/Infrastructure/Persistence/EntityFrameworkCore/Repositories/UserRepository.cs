@@ -26,7 +26,9 @@ public class UserRepository(AppDbContext context) : BaseRepository<User>(context
      */
     public async Task<User?> FindByUsernameAsync(string username, CancellationToken cancellationToken)
     {
-        return await Context.Set<User>().FirstOrDefaultAsync(user => user.Username.Equals(username), cancellationToken);
+        return await Context.Set<User>()
+            .Include(u => u.Roles)
+            .FirstOrDefaultAsync(user => user.Username.Equals(username), cancellationToken);
     }
 
     /**

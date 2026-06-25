@@ -32,13 +32,22 @@ public class TokenService(IOptions<TokenSettings> tokenSettings) : ITokenService
     {
         var secret = _tokenSettings.Secret;
         var key = Encoding.ASCII.GetBytes(secret);
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.Sid, user.Id.ToString()),
+            new(ClaimTypes.Name, user.Username),
+        };
+
+        // Add one role claim per assigned role
+        foreach (var role in user.Roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role.Name));
+        }
+
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.Sid, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Username),
-            }),
+            Subject = new ClaimsIdentity(claims),
             Expires = DateTime.UtcNow.AddDays(7),
             SigningCredentials =
                 new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
