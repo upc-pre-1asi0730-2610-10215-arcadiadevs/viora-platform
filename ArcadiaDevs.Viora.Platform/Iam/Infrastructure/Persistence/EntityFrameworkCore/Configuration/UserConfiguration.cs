@@ -40,5 +40,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(u => u.UpdatedAt)
             .HasColumnName("updated_at");
+
+        // Skip-navigation: EF Core generates the user_roles join table automatically.
+        builder.HasMany(u => u.Roles)
+            .WithMany(r => r.Users)
+            .UsingEntity(j => j.ToTable("user_roles"));
     }
 }
