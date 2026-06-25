@@ -34,6 +34,7 @@ using ArcadiaDevs.Viora.Platform.Iam.Application.Internal.QueryServices;
 using ArcadiaDevs.Viora.Platform.Iam.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Hashing.BCrypt.Services;
+using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Pipeline.Middleware.Extensions;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Tokens.Jwt.Configuration;
@@ -195,6 +196,9 @@ using (var scope = app.Services.CreateScope())
     // Seeding Surveillance
     var symptomCommandService = services.GetRequiredService<ISymptomCommandService>();
     await symptomCommandService.Handle(new SeedSymptomsCommand());
+
+    // Seeding Iam roles (idempotent — safe to run on every startup)
+    await IamDataSeeder.SeedAsync(context);
 }
 
 // Configure the HTTP request pipeline.
