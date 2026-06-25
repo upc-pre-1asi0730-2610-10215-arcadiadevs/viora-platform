@@ -9,6 +9,7 @@ using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Resources.Errors;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
 namespace ArcadiaDevs.Viora.Platform.Iam.Application.Internal.CommandServices;
@@ -23,6 +24,7 @@ public class UserCommandService(
     IUnitOfWork unitOfWork,
     ITokenService tokenService,
     IHashingService hashingService,
+    IRoleRepository roleRepository,
     IStringLocalizer<ErrorMessages> errorLocalizer) : IUserCommandService
 {
     /// <inheritdoc />
@@ -78,5 +80,28 @@ public class UserCommandService(
 
         return new Result<AuthenticatedUser, Error>.Success(
             new AuthenticatedUser(user.Id, user.Username, token));
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<User?, Error>> Handle(
+        AssignRoleCommand command,
+        CancellationToken cancellationToken)
+    {
+        // Load user by id
+        var user = await userRepository.FindByIdAsync(command.UserId, cancellationToken);
+        if (user == null)
+            return new Result<User?, Error>.Failure(IamErrors.UserNotFound);
+
+        // Find role by name
+        var role = await roleRepository.FindByNameAsync(command.RoleName, cancellationToken);
+        if (role == null)
+            return new Result<User?, Error>.Failure(IamErrors.InvalidRoleName);
+
+        // Add role to user's navigation collection
+        user.Roles.Add(role);
+
+        await unitOfWork.CompleteAsync(cancellationToken);
+
+        return new Result<User?, Error>.Success(user);
     }
 }
