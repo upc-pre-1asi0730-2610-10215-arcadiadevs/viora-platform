@@ -32,4 +32,14 @@ public interface IUserRepository : IBaseRepository<User>
      * <returns>True if the user exists, false otherwise</returns>
      */
     Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken);
+
+    /**
+     * <summary>
+     *     Get the role names for a user by their id
+     * </summary>
+     * <param name="userId">The user id</param>
+     * <param name="cancellationToken">The cancellation token</param>
+     * <returns>The list of role names (empty if user not found)</returns>
+     */
+    Task<IReadOnlyList<string>> GetRolesByUserIdAsync(int userId, CancellationToken cancellationToken);
 }
