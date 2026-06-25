@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <data name="Iam.UsernameAlreadyTaken" xml:space="preserve">
+    <value>El nombre de usuario ya está en uso.</value>
+  </data>
+    <data name="Iam.WeakPassword" xml:space="preserve">
+    <value>La contraseña debe tener al menos 8 caracteres.</value>
+  </data>
+    <data name="Iam.InvalidRoleName" xml:space="preserve">
+    <value>El rol especificado no existe.</value>
+  </data>
+    <data name="Iam.UserNotFound" xml:space="preserve">
+    <value>El usuario no fue encontrado.</value>
+  </data>
+    <data name="Iam.InvalidCredentials" xml:space="preserve">
+    <value>Usuario o contraseña inválidos.</value>
+  </data>
+    <data name="Iam.UserDisabled" xml:space="preserve">
+    <value>La cuenta de usuario está deshabilitada.</value>
+  </data>
+    <data name="Iam.SignUpRequiresAdmin" xml:space="preserve">
+    <value>Solo los administradores pueden crear nuevas cuentas.</value>
+  </data>
+    <data name="Iam.InsufficientRole" xml:space="preserve">
+    <value>No tienes el rol requerido.</value>
+  </data>
+    <data name="Iam.TokenRequired" xml:space="preserve">
+    <value>Se requiere un token de portador válido para acceder a este recurso.</value>
+  </data>
+    <data name="Iam.TokenMalformed" xml:space="preserve">
+    <value>El token de autorización está mal formado.</value>
+  </data>
+    <data name="Iam.TokenInvalid" xml:space="preserve">
+    <value>El token de autorización es inválido.</value>
+  </data>
+    <data name="Iam.TokenExpired" xml:space="preserve">
+    <value>El token de autorización ha expirado.</value>
+  </data>
+</root>

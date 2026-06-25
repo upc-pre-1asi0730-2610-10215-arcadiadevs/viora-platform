@@ -27,6 +27,20 @@ using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFramewo
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Cortex.Mediator.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
+using ArcadiaDevs.Viora.Platform.Iam.Application.CommandServices;
+using ArcadiaDevs.Viora.Platform.Iam.Application.Internal.CommandServices;
+using ArcadiaDevs.Viora.Platform.Iam.Application.Internal.OutboundServices;
+using ArcadiaDevs.Viora.Platform.Iam.Application.Internal.QueryServices;
+using ArcadiaDevs.Viora.Platform.Iam.Application.QueryServices;
+using ArcadiaDevs.Viora.Platform.Iam.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Hashing.BCrypt.Services;
+using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Pipeline.Middleware.Extensions;
+using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Tokens.Jwt.Configuration;
+using ArcadiaDevs.Viora.Platform.Iam.Application.Acl;
+using ArcadiaDevs.Viora.Platform.Iam.Interfaces.Acl;
+using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Tokens.Jwt.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -148,6 +162,26 @@ builder.Services.AddScoped<IDynamicNutritionPlanRepository, DynamicNutritionPlan
 // Health Checks
 builder.Services.AddHealthChecks();
 
+// Iam Bounded Context Injection Configuration
+builder.Services.Configure<TokenSettings>(builder.Configuration.GetSection("Jwt"));
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<IUserQueryService, UserQueryService>();
+builder.Services.AddScoped<IUserCommandService, UserCommandService>();
+builder.Services.AddScoped<IHashingService, HashingService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IIamContextFacade, IamContextFacade>();
+
+// Startup guard: fail fast in Production if the JWT secret is the placeholder
+var jwtSecret = builder.Configuration["Jwt:Secret"] ?? string.Empty;
+if (builder.Environment.IsProduction() &&
+    jwtSecret == "DEV-ONLY-PLEASE-CHANGE-ME")
+{
+    throw new InvalidOperationException(
+        "JWT secret is set to the placeholder value in Production. " +
+        "Set a real secret via appsettings.Production.json or the Jwt__Secret environment variable.");
+}
+
 // Cortex Mediator
 builder.Services.AddCortexMediator([typeof(Program)]);
 
@@ -166,6 +200,9 @@ using (var scope = app.Services.CreateScope())
     // Seeding Surveillance
     var symptomCommandService = services.GetRequiredService<ISymptomCommandService>();
     await symptomCommandService.Handle(new SeedSymptomsCommand());
+
+    // Seeding Iam roles (idempotent — safe to run on every startup)
+    await IamDataSeeder.SeedAsync(context);
 }
 
 // Configure the HTTP request pipeline.
@@ -189,6 +226,8 @@ app.UseHttpsRedirection();
 app.UseCors("VioraWebApp");
 
 app.UseAuthorization();
+
+app.UseRequestAuthorization();
 
 app.MapHealthChecks("/healthz");
 
