@@ -1,6 +1,7 @@
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Entities;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     ///     Gets the dynamic nutrition plans set.
     /// </summary>
     public DbSet<DynamicNutritionPlan> DynamicNutritionPlans => Set<DynamicNutritionPlan>();
+
+    /// <summary>
+    ///     Gets the users set.
+    /// </summary>
+    public DbSet<User> Users => Set<User>();
+
+    /// <summary>
+    ///     Gets the roles set.
+    /// </summary>
+    public DbSet<Role> Roles => Set<Role>();
 
     /// <inheritdoc />
     protected override void OnConfiguring(DbContextOptionsBuilder builder)

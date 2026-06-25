@@ -1,0 +1,55 @@
+using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Aggregates;
+using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
+
+namespace ArcadiaDevs.Viora.Platform.Iam.Domain.Repositories;
+
+/**
+ * <summary>
+ *     The user repository
+ * </summary>
+ * <remarks>
+ *     This repository is used to manage users
+ * </remarks>
+ */
+public interface IUserRepository : IBaseRepository<User>
+{
+    /**
+     * <summary>
+     *     Find a user by id
+     * </summary>
+     * <param name="username">The username to search</param>
+     * <param name="cancellationToken">The cancellation token</param>
+     * <returns>The user</returns>
+     */
+    Task<User?> FindByUsernameAsync(string username, CancellationToken cancellationToken);
+
+    /**
+     * <summary>
+     *     Check if a user exists by username
+     * </summary>
+     * <param name="username">The username to search</param>
+     * <param name="cancellationToken">The cancellation token</param>
+     * <returns>True if the user exists, false otherwise</returns>
+     */
+    Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken);
+
+    /**
+     * <summary>
+     *     Get the role names for a user by their id
+     * </summary>
+     * <param name="userId">The user id</param>
+     * <param name="cancellationToken">The cancellation token</param>
+     * <returns>The list of role names (empty if user not found)</returns>
+     */
+    Task<IReadOnlyList<string>> GetRolesByUserIdAsync(int userId, CancellationToken cancellationToken);
+
+    /**
+     * <summary>
+     *     Find a user by id, eagerly loading their roles
+     * </summary>
+     * <param name="id">The user id</param>
+     * <param name="cancellationToken">The cancellation token</param>
+     * <returns>The user with roles loaded, or null if not found</returns>
+     */
+    Task<User?> FindByIdWithRolesAsync(int id, CancellationToken cancellationToken);
+}
