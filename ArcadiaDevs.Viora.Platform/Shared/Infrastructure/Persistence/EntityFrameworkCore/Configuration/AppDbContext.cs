@@ -33,6 +33,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// </summary>
     public DbSet<User> Users => Set<User>();
 
+    /// <summary>
+    ///     Gets the roles set.
+    /// </summary>
+    public DbSet<Role> Roles => Set<Role>();
+
     /// <inheritdoc />
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
