@@ -42,4 +42,14 @@ public interface IUserRepository : IBaseRepository<User>
      * <returns>The list of role names (empty if user not found)</returns>
      */
     Task<IReadOnlyList<string>> GetRolesByUserIdAsync(int userId, CancellationToken cancellationToken);
+
+    /**
+     * <summary>
+     *     Find a user by id, eagerly loading their roles
+     * </summary>
+     * <param name="id">The user id</param>
+     * <param name="cancellationToken">The cancellation token</param>
+     * <returns>The user with roles loaded, or null if not found</returns>
+     */
+    Task<User?> FindByIdWithRolesAsync(int id, CancellationToken cancellationToken);
 }

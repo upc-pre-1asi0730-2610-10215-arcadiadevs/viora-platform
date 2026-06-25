@@ -60,4 +60,19 @@ public class UserRepository(AppDbContext context) : BaseRepository<User>(context
 
         return user?.Roles.Select(r => r.Name).ToList() ?? [];
     }
+
+    /**
+     * <summary>
+     *     Find a user by id, eagerly loading their roles
+     * </summary>
+     * <param name="id">The user id</param>
+     * <param name="cancellationToken">The cancellation token</param>
+     * <returns>The user with roles loaded, or null if not found</returns>
+     */
+    public async Task<User?> FindByIdWithRolesAsync(int id, CancellationToken cancellationToken)
+    {
+        return await Context.Set<User>()
+            .Include(u => u.Roles)
+            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+    }
 }

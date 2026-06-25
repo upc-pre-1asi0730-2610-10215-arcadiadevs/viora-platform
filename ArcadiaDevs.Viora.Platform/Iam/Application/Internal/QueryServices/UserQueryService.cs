@@ -25,7 +25,7 @@ public class UserQueryService(IUserRepository userRepository) : IUserQueryServic
      */
     public async Task<User?> Handle(GetUserByIdQuery query, CancellationToken cancellationToken)
     {
-        return await userRepository.FindByIdAsync(query.Id, cancellationToken);
+        return await userRepository.FindByIdWithRolesAsync(query.Id, cancellationToken);
     }
 
     /**

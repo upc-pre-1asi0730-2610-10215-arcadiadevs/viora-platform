@@ -4,6 +4,19 @@ namespace ArcadiaDevs.Viora.Platform.Iam.Application.Internal.OutboundServices;
 
 /**
  * <summary>
+ *     Result of JWT token validation, distinguishing between valid, expired, and invalid tokens.
+ * </summary>
+ */
+public record JwtValidationResult(bool IsValid, int? UserId, string? FailureCode)
+{
+    public static JwtValidationResult Success(int userId) => new(true, userId, null);
+    public static JwtValidationResult Failure(string code) => new(false, null, code);
+    public static JwtValidationResult Expired => new(false, null, "Iam.TokenExpired");
+    public static JwtValidationResult Invalid => new(false, null, "Iam.TokenInvalid");
+}
+
+/**
+ * <summary>
  *     The token service interface
  * </summary>
  * <remarks>
@@ -26,7 +39,7 @@ public interface ITokenService
      *     Validate a JWT token
      * </summary>
      * <param name="token">The token to validate</param>
-     * <returns>The user id if the token is valid, null otherwise</returns>
+     * <returns>A JwtValidationResult indicating success, expiry, or other failure</returns>
      */
-    Task<int?> ValidateToken(string token);
+    Task<JwtValidationResult> ValidateToken(string token);
 }

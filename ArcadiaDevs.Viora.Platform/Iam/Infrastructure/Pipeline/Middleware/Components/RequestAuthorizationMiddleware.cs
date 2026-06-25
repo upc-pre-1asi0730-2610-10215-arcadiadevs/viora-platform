@@ -73,22 +73,25 @@ public class RequestAuthorizationMiddleware(RequestDelegate next)
         }
 
         // Validate token
-        var userId = await tokenService.ValidateToken(token);
+        var validation = await tokenService.ValidateToken(token);
 
-        if (userId == null)
+        if (!validation.IsValid)
         {
-            logger.LogDebug("Token validation failed for {Path}", context.Request.Path);
+            var error = validation.FailureCode == "Iam.TokenExpired"
+                ? IamErrors.TokenExpired
+                : IamErrors.TokenInvalid;
+            logger.LogDebug("Token validation failed ({FailureCode}) for {Path}", validation.FailureCode, context.Request.Path);
             await IamActionResultAssembler.HandleErrorAsync(
-                context, IamErrors.TokenInvalid, errorLocalizer, problemDetailsFactory);
+                context, error, errorLocalizer, problemDetailsFactory);
             return;
         }
 
         // Load user from database (per design: DB lookup on every authenticated request)
-        var user = await userQueryService.Handle(new GetUserByIdQuery(userId.Value), cancellationToken);
+        var user = await userQueryService.Handle(new GetUserByIdQuery(validation.UserId!.Value), cancellationToken);
 
         if (user == null)
         {
-            logger.LogDebug("User {UserId} from token not found in database for {Path}", userId.Value, context.Request.Path);
+            logger.LogDebug("User {UserId} from token not found in database for {Path}", validation.UserId.Value, context.Request.Path);
             await IamActionResultAssembler.HandleErrorAsync(
                 context, IamErrors.UserNotFound, errorLocalizer, problemDetailsFactory);
             return;
@@ -96,13 +99,19 @@ public class RequestAuthorizationMiddleware(RequestDelegate next)
 
         // Set user in HttpContext for downstream use
         context.Items["User"] = user;
+        context.Items["UserId"] = user.Id;
+        context.Items["Username"] = user.Username;
 
-        // Populate HttpContext.User with claims for S2 role-based authorization
+        // Populate HttpContext.User with claims for role-based authorization
         var claims = new List<System.Security.Claims.Claim>
         {
             new(System.Security.Claims.ClaimTypes.Sid, user.Id.ToString()),
             new(System.Security.Claims.ClaimTypes.Name, user.Username),
         };
+        // Add role claims so IsInRole() works as expected
+        foreach (var role in user.Roles)
+            claims.Add(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, role.Name));
+
         var identity = new System.Security.Claims.ClaimsIdentity(claims, "jwt");
         context.User = new System.Security.Claims.ClaimsPrincipal(identity);
 
