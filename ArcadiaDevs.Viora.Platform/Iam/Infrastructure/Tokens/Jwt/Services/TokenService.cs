@@ -63,14 +63,14 @@ public class TokenService(IOptions<TokenSettings> tokenSettings) : ITokenService
      *     Validate token
      * </summary>
      * <param name="token">The token to validate</param>
-     * <returns>The user id if the token is valid, null otherwise</returns>
+     * <returns>A JwtValidationResult indicating success, expiry, or other failure</returns>
      */
-    public async Task<int?> ValidateToken(string token)
+    public async Task<JwtValidationResult> ValidateToken(string token)
     {
         // If token is null or empty
         if (string.IsNullOrEmpty(token))
-            // Return null
-            return null;
+            return JwtValidationResult.Invalid;
+
         // Otherwise, perform validation
         var tokenHandler = new JsonWebTokenHandler();
         var key = Encoding.ASCII.GetBytes(_tokenSettings.Secret);
@@ -88,11 +88,15 @@ public class TokenService(IOptions<TokenSettings> tokenSettings) : ITokenService
 
             var jwtToken = (JsonWebToken)tokenValidationResult.SecurityToken;
             var userId = int.Parse(jwtToken.Claims.First(claim => claim.Type == ClaimTypes.Sid).Value);
-            return userId;
+            return JwtValidationResult.Success(userId);
+        }
+        catch (SecurityTokenExpiredException)
+        {
+            return JwtValidationResult.Expired;
         }
         catch
         {
-            return null;
+            return JwtValidationResult.Invalid;
         }
     }
 }

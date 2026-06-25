@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <data name="Iam.UsernameAlreadyTaken" xml:space="preserve">
+    <value>The username is already taken.</value>
+  </data>
+    <data name="Iam.WeakPassword" xml:space="preserve">
+    <value>Password must be at least 8 characters.</value>
+  </data>
+    <data name="Iam.InvalidRoleName" xml:space="preserve">
+    <value>The specified role does not exist.</value>
+  </data>
+    <data name="Iam.UserNotFound" xml:space="preserve">
+    <value>The user was not found.</value>
+  </data>
+    <data name="Iam.InvalidCredentials" xml:space="preserve">
+    <value>Invalid username or password.</value>
+  </data>
+    <data name="Iam.UserDisabled" xml:space="preserve">
+    <value>The user account is disabled.</value>
+  </data>
+    <data name="Iam.SignUpRequiresAdmin" xml:space="preserve">
+    <value>Only administrators can create new accounts.</value>
+  </data>
+    <data name="Iam.InsufficientRole" xml:space="preserve">
+    <value>You do not have the required role.</value>
+  </data>
+    <data name="Iam.TokenRequired" xml:space="preserve">
+    <value>A valid bearer token is required to access this resource.</value>
+  </data>
+    <data name="Iam.TokenMalformed" xml:space="preserve">
+    <value>The authorization token is malformed.</value>
+  </data>
+    <data name="Iam.TokenInvalid" xml:space="preserve">
+    <value>The authorization token is invalid.</value>
+  </data>
+    <data name="Iam.TokenExpired" xml:space="preserve">
+    <value>The authorization token has expired.</value>
+  </data>
+</root>
