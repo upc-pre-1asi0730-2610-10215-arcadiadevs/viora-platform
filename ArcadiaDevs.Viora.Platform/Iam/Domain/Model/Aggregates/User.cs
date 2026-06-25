@@ -23,6 +23,17 @@ public partial class User(string username, string passwordHash)
 
     /**
      * <summary>
+     *     The roles assigned to this user
+     * </summary>
+     * <remarks>
+     *     This is an EF Core skip-navigation — no UserRole entity class exists.
+     *     The join table user_roles is generated automatically by EF Core.
+     * </remarks>
+     */
+    public ICollection<Role> Roles { get; private set; } = [];
+
+    /**
+     * <summary>
      *     Update the username
      * </summary>
      * <param name="username">The new username</param>
