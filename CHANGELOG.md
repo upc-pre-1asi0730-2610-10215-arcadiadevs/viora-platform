@@ -5,6 +5,29 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.5] - 2026-06-28
+
+### added
+- new xunit test project at `tests/arcadiadevs.viora.platform.tests/` wired into `viora-platform.sln` under a `tests` solution folder
+- 12 unit tests covering 13 given-when-then scenarios across the iam bounded context:
+  - `HashingService`: 3 tests (non-empty hash, two-calls-differ, verify-true, verify-false)
+  - `TokenService`: 6 tests (claim shape + exp window, round-trip, expired, tampered, empty, null)
+  - `UserCommandService`: 3 tests (weak password, username already taken, invalid credentials) with `didnotreceive()` guards on the security-critical early-return paths
+- test project structure: folders mirroring the `iam / agronomic / surveillance / shared` ddd bounded contexts (the latter three as `.gitkeep` placeholders for future slices)
+- xunit + nsubstitute + coverlet test stack pinned at the package versions documented in the test project's `README.md` (xunit 2.9.3, nsubstitute 5.3.0, coverlet.collector 6.0.4, etc.)
+- test project `README.md` documenting stack choice, deferred items, the `exp` assertion window (`+6d23h..+7d+5s`), and the license-drift caveat for moq and fluentassertions
+
+### changed
+- (none)
+
+### fixed
+- `TokenService.ValidateToken` now correctly distinguishes expired from invalid jwts under `JsonWebTokenHandler` 8.x, which returns a `TokenValidationResult` with `IsValid=false` instead of throwing; the pre-fix `try/catch (SecurityTokenExpiredException)` never caught and would have silently misreported every expired token as invalid
+- expired-token test scenario now sets `NotBefore` and `IssuedAt` in the past (not only `Expires`) so the handler's lifetime-ordering check fires before the token-expired check
+
+### security
+- the security-critical early-return paths in `UserCommandService` are now covered by unit tests with `didnotreceive()` guards: weak password prevents hashing, username already taken prevents `AddAsync`, and invalid credentials prevents token generation
+- the per-file coverage for `HashingService.cs` and `TokenService.cs` is at 100% (the security-critical jwt and password-hashing paths); aggregate coverage across the three covered files is 74.3%
+
 ## [1.7.0] - 2026-06-25
 
 ### added
@@ -50,5 +73,6 @@ and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0
 - ef core model now uses schema-agnostic configuration to boot on render
 - surveillance: 404 returned when reviewing a missing alert (was 500)
 
+[1.7.5]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.7.0...1.7.5
 [1.7.0]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.6.0...1.7.0
 [1.6.0]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.4.0...release/1.6.0
