@@ -74,29 +74,29 @@ public class TokenService(IOptions<TokenSettings> tokenSettings) : ITokenService
         // Otherwise, perform validation
         var tokenHandler = new JsonWebTokenHandler();
         var key = Encoding.ASCII.GetBytes(_tokenSettings.Secret);
-        try
+        var tokenValidationResult = await tokenHandler.ValidateTokenAsync(token, new TokenValidationParameters
         {
-            var tokenValidationResult = await tokenHandler.ValidateTokenAsync(token, new TokenValidationParameters
-            {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateIssuer = false,
-                ValidateAudience = false,
-                // Expiration without delay
-                ClockSkew = TimeSpan.Zero
-            });
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            // Expiration without delay
+            ClockSkew = TimeSpan.Zero
+        });
 
+        // Note: JsonWebTokenHandler.ValidateTokenAsync does NOT throw on validation
+        // failure — it returns a result with IsValid=false and Exception populated.
+        // We must inspect the result instead of relying on catch blocks.
+        if (tokenValidationResult.IsValid)
+        {
             var jwtToken = (JsonWebToken)tokenValidationResult.SecurityToken;
             var userId = int.Parse(jwtToken.Claims.First(claim => claim.Type == ClaimTypes.Sid).Value);
             return JwtValidationResult.Success(userId);
         }
-        catch (SecurityTokenExpiredException)
+        if (tokenValidationResult.Exception is SecurityTokenExpiredException)
         {
             return JwtValidationResult.Expired;
         }
-        catch
-        {
-            return JwtValidationResult.Invalid;
-        }
+        return JwtValidationResult.Invalid;
     }
 }
