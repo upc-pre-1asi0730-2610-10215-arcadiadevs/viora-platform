@@ -41,6 +41,7 @@ using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Tokens.Jwt.Configuration;
 using ArcadiaDevs.Viora.Platform.Iam.Application.Acl;
 using ArcadiaDevs.Viora.Platform.Iam.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Tokens.Jwt.Services;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -163,7 +164,9 @@ builder.Services.AddScoped<IDynamicNutritionPlanRepository, DynamicNutritionPlan
 builder.Services.AddHealthChecks();
 
 // Iam Bounded Context Injection Configuration
-builder.Services.Configure<TokenSettings>(builder.Configuration.GetSection("Jwt"));
+builder.Services.AddSingleton<IValidateOptions<TokenSettings>, TokenSettingsValidator>();
+builder.Services.AddOptionsWithValidateOnStart<TokenSettings>()
+    .Bind(builder.Configuration.GetSection("Jwt"));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUserQueryService, UserQueryService>();
@@ -171,16 +174,6 @@ builder.Services.AddScoped<IUserCommandService, UserCommandService>();
 builder.Services.AddScoped<IHashingService, HashingService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IIamContextFacade, IamContextFacade>();
-
-// Startup guard: fail fast in Production if the JWT secret is the placeholder
-var jwtSecret = builder.Configuration["Jwt:Secret"] ?? string.Empty;
-if (builder.Environment.IsProduction() &&
-    jwtSecret == "DEV-ONLY-PLEASE-CHANGE-ME")
-{
-    throw new InvalidOperationException(
-        "JWT secret is set to the placeholder value in Production. " +
-        "Set a real secret via appsettings.Production.json or the Jwt__Secret environment variable.");
-}
 
 // Cortex Mediator
 builder.Services.AddCortexMediator([typeof(Program)]);
@@ -208,9 +201,12 @@ using (var scope = app.Services.CreateScope())
 // Configure the HTTP request pipeline.
 app.UseGlobalExceptionHandler();
 
-// Swagger UI is enabled in all environments for API testing.
-app.UseSwagger();
-app.UseSwaggerUI();
+// Swagger UI is enabled only in Development and Staging.
+if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 // Localization Configuration
 string[] supportedCultures = ["en", "en-US", "es", "es-PE"];

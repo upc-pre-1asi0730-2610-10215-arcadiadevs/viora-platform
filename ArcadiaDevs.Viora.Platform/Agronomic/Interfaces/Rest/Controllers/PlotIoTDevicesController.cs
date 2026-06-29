@@ -4,6 +4,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Transform;
+using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Pipeline.Middleware.Attributes;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Resources.Errors;
 using Microsoft.AspNetCore.Mvc;
@@ -22,6 +23,7 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Controllers;
 /// </remarks>
 [ApiController]
 [Route("api/v1/plots/{plotId:int}/iot-devices")]
+[Authorize]
 public class PlotIoTDevicesController(
     IIoTDeviceQueryService ioTDeviceQueryService,
     IIoTDeviceCommandService ioTDeviceCommandService,
