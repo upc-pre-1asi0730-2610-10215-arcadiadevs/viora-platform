@@ -1,4 +1,4 @@
-using ArcadiaDevs.Viora.Platform.Agronomic.Application.CommandServices;
+using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.CommandServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;

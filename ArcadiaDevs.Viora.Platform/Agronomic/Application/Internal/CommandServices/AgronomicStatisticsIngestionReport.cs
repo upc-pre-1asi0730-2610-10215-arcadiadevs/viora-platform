@@ -1,4 +1,4 @@
-namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.CommandServices;
+namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.CommandServices;
 
 /// <summary>
 ///     Outcome of an agronomic statistic snapshot ingestion run.
