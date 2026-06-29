@@ -208,9 +208,12 @@ using (var scope = app.Services.CreateScope())
 // Configure the HTTP request pipeline.
 app.UseGlobalExceptionHandler();
 
-// Swagger UI is enabled in all environments for API testing.
-app.UseSwagger();
-app.UseSwaggerUI();
+// Swagger UI is enabled only in Development and Staging.
+if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 // Localization Configuration
 string[] supportedCultures = ["en", "en-US", "es", "es-PE"];

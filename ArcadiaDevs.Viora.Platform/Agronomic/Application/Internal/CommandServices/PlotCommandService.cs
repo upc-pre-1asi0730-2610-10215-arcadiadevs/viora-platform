@@ -158,9 +158,9 @@ public class PlotCommandService(
         var infoResult = plot.UpdateInformation(
             updatedName, updatedCropType, updatedVariety, updatedLocation, updatedCampaign, updatedNotes);
 
-        if (infoResult is Result<Plot, Error>.Failure infoFailure)
+        if (infoResult is Result<Unit, Error>.Failure infoFailure)
         {
-            return infoFailure;
+            return new Result<Plot, Error>.Failure(infoFailure.Error);
         }
 
         if (command.PolygonCoordinates != null)
