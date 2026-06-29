@@ -1,4 +1,5 @@
 using System.Net.Mime;
+using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Pipeline.Middleware.Attributes;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Rest.Resources;
@@ -21,6 +22,7 @@ public record EmptyResource();
 [ApiController]
 [Route("api/v1/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
+[Authorize]
 public class AlertsController(
     IAlertQueryService alertQueryService,
     IAlertCommandService alertCommandService) : ControllerBase
