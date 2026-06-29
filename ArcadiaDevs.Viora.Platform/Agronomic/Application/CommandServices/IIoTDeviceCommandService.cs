@@ -10,5 +10,9 @@ public interface IIoTDeviceCommandService
     Task<Result<IoTDevice, Error>> Handle(CreateIoTDeviceCommand command, CancellationToken cancellationToken = default);
     Task<Result<IoTDevice, Error>> Handle(
         UpdateIoTDeviceCommand command, 
-        CancellationToken cancellationToken = default);    Task<Result<bool, Error>> Handle(DeleteIoTDeviceCommand command, CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default);
+
+    Task<Result<bool, Error>> Handle(
+        DeleteIoTDeviceCommand command, 
+        CancellationToken cancellationToken = default);
 }

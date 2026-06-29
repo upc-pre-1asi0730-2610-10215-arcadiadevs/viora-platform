@@ -2,6 +2,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Transform;
+using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Pipeline.Middleware.Attributes;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Resources.Errors;
 using Microsoft.AspNetCore.Http;
@@ -16,6 +17,7 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/v1/monitoring-summaries")]
+[Authorize]
 public class MonitoringSummariesController(
     IMonitoringSummaryQueryService monitoringSummaryQueryService,
     IStringLocalizer<ErrorMessages> errorLocalizer,

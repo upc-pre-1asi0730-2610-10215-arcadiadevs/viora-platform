@@ -58,6 +58,33 @@ To use PostgreSQL, set `Database:Provider` to `PostgreSql` and configure
 `ConnectionStrings:DefaultConnection` in the appropriate appsettings file or
 through environment variables.
 
+## JWT Configuration
+
+The application requires a JWT secret to start. The secret must be at least 32
+characters long and must not be the placeholder value.
+
+**Linux / macOS (environment variable):**
+
+```bash
+export Jwt__Secret="your-64-byte-random-secret-here"
+```
+
+**Windows (PowerShell):**
+
+```powershell
+$env:Jwt__Secret = "your-64-byte-random-secret-here"
+```
+
+**Windows (user secrets):**
+
+```powershell
+cd ArcadiaDevs.Viora.Platform
+dotnet user-secrets set "Jwt:Secret" "your-64-byte-random-secret-here"
+```
+
+The application will fail to start if the secret is missing, too short, or set
+to the placeholder value.
+
 ## Docker
 
 Build and run the API from the repository root:

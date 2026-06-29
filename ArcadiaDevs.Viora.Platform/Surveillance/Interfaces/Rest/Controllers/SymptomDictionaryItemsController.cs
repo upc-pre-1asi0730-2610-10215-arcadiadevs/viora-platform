@@ -1,4 +1,5 @@
 using System.Net.Mime;
+using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Pipeline.Middleware.Attributes;
 using ArcadiaDevs.Viora.Platform.Shared.Resources.Errors;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Queries;
@@ -12,6 +13,7 @@ namespace ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Rest.Controllers;
 [ApiController]
 [Route("api/v1/symptom-dictionary-items")]
 [Produces(MediaTypeNames.Application.Json)]
+[Authorize]
 public class SymptomDictionaryItemsController(
     ISymptomQueryService queryService,
     IStringLocalizer<ErrorMessages> errorLocalizer,
