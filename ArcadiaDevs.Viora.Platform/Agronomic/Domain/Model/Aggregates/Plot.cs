@@ -213,7 +213,12 @@ public partial class Plot
     /// <summary>
     ///     Updates the general information of the plot.
     /// </summary>
-    public Result<Plot, Error> UpdateInformation(
+    /// <remarks>
+    ///     Validates all inputs first; on validation failure, returns <see cref="Result{TValue,TError}.Failure"/>
+    ///     and leaves state unchanged. On success, applies the update and returns <see cref="Result{TValue,TError}.Success"/>
+    ///     with no payload.
+    /// </remarks>
+    public Result<Unit, Error> UpdateInformation(
         string plotName,
         string? cropType,
         string? variety,
@@ -222,7 +227,7 @@ public partial class Plot
         string? notes)
     {
         if (string.IsNullOrWhiteSpace(plotName))
-            return new Result<Plot, Error>.Failure(new Error("PLOT_NAME_REQUIRED", "Plot name must not be empty"));
+            return new Result<Unit, Error>.Failure(new Error("PLOT_NAME_REQUIRED", "Plot name must not be empty"));
 
         PlotName = plotName.Trim();
         CropType = SanitizeText(cropType, 60);
@@ -231,7 +236,7 @@ public partial class Plot
         Campaign = SanitizeText(campaign, 60);
         Notes = SanitizeText(notes, 500);
 
-        return new Result<Plot, Error>.Success(this);
+        return new Result<Unit, Error>.Success(Unit.Value);
     }
 
     /// <summary>
