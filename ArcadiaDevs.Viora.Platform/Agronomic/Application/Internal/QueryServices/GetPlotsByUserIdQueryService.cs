@@ -13,23 +13,27 @@ using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices;
 
-public class GetPlotsByUserIdQueryService(IPlotRepository plotRepository) : IGetPlotsByUserIdQueryService
+public class GetPlotsByUserIdQueryService(
+    IPlotRepository plotRepository,
+    ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock) : IGetPlotsByUserIdQueryService
 {
     public async Task<Result<IEnumerable<PlotResource>, Error>> Handle(GetPlotsByUserIdQuery query, CancellationToken cancellationToken = default)
     {
         var plots = await plotRepository.ListAsync(cancellationToken);
         var userPlots = plots.Where(p => p.OwnerUserId == query.UserId && !p.IsDeleted)
-                             .Select(p => MapToResource(p, query.IncludeCurrentImagery))
+                             .Select(p => MapToResource(p, query.IncludeCurrentImagery, clock))
                              .ToList();
 
         return new Result<IEnumerable<PlotResource>, Error>.Success(userPlots);
     }
 
-    private static PlotResource MapToResource(Plot plot, bool includeCurrentImagery)
+    private static PlotResource MapToResource(Plot plot, bool includeCurrentImagery, ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock)
     {
         var polygon = plot.PolygonCoordinates.Points
             .Select(p => (IEnumerable<double>)new double[] { (double)p.Longitude, (double)p.Latitude })
             .ToList();
+
+        var now = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero);
 
         CurrentImageryResource? imagery = null;
         if (includeCurrentImagery)
@@ -38,7 +42,7 @@ public class GetPlotsByUserIdQueryService(IPlotRepository plotRepository) : IGet
                 "img-" + plot.Id,
                 plot.Id,
                 "https://satellite.viora.local/tiles/" + plot.Id,
-                DateTimeOffset.UtcNow.AddDays(-1),
+                now.AddDays(-1),
                 0.65,
                 0.05
             );
@@ -50,7 +54,7 @@ public class GetPlotsByUserIdQueryService(IPlotRepository plotRepository) : IGet
             plot.PlotName,
             polygon,
             plot.AreaSize,
-            plot.CreatedAt ?? DateTimeOffset.UtcNow,
+            plot.CreatedAt ?? now,
             plot.CropType,
             plot.Variety,
             plot.Location,

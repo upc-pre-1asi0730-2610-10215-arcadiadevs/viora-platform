@@ -14,7 +14,8 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryService
 
 public class GetMyPlotsOverviewQueryService(
     IPlotRepository plotRepository,
-    IIoTDeviceRepository ioTDeviceRepository) : IGetMyPlotsOverviewQueryService
+    IIoTDeviceRepository ioTDeviceRepository,
+    ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock) : IGetMyPlotsOverviewQueryService
 {
     public async Task<Result<MyPlotsOverviewResource, Error>> Handle(GetMyPlotsOverviewQuery query, CancellationToken cancellationToken = default)
     {
@@ -50,7 +51,7 @@ public class GetMyPlotsOverviewQueryService(
                 "Low",
                 plotDevicesCount,
                 0,
-                DateTimeOffset.UtcNow,
+                new DateTimeOffset(clock.UtcNow, TimeSpan.Zero),
                 "active",
                 "active"
             );
