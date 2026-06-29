@@ -16,7 +16,8 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryService
 
 public class GetPlotDetailQueryService(
     IPlotRepository plotRepository,
-    IIoTDeviceRepository ioTDeviceRepository) : IGetPlotDetailQueryService
+    IIoTDeviceRepository ioTDeviceRepository,
+    ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock) : IGetPlotDetailQueryService
 {
     public async Task<Result<PlotDetailResource, Error>> Handle(GetPlotDetailQuery query, CancellationToken cancellationToken = default)
     {
@@ -31,17 +32,19 @@ public class GetPlotDetailQueryService(
             .Select(pt => (IEnumerable<double>)new double[] { (double)pt.Longitude, (double)pt.Latitude })
             .ToList();
 
+        var now = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero);
+
         var deviceResources = devices.Select(d => new PlotDeviceResource(
             d.Id,
             d.DeviceName,
             d.Status.ToString(),
-            DateTimeOffset.UtcNow, // default
-            DateTimeOffset.UtcNow // default
+            now, // default
+            now  // default
         )).ToList();
 
         var activities = new List<RecentConfigurationActivityResource>
         {
-            new RecentConfigurationActivityResource("Creation", "Plot registered", plot.CreatedAt ?? DateTimeOffset.UtcNow)
+            new RecentConfigurationActivityResource("Creation", "Plot registered", plot.CreatedAt ?? now)
         };
 
         var resource = new PlotDetailResource(
@@ -57,10 +60,10 @@ public class GetPlotDetailQueryService(
             plot.AreaSize,
             polygon.Count,
             "Valid",
-            plot.CreatedAt ?? DateTimeOffset.UtcNow,
-            plot.CreatedAt ?? DateTimeOffset.UtcNow,
-            new MonitoringLinksResource("active", "active", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow),
-            new IoTDetailResource("active", devices.Count(), onlineDevices, DateTimeOffset.UtcNow),
+            plot.CreatedAt ?? now,
+            plot.CreatedAt ?? now,
+            new MonitoringLinksResource("active", "active", now, now),
+            new IoTDetailResource("active", devices.Count(), onlineDevices, now),
             deviceResources,
             activities
         );

@@ -30,6 +30,10 @@ public class TokenService(IOptions<TokenSettings> tokenSettings) : ITokenService
      */
     public string GenerateToken(User user)
     {
+        // Secret length / placeholder / empty checks are enforced at startup by
+        // TokenSettingsValidator (SHARED-003 — fail-fast in all environments
+        // via IValidateOptions<TokenSettings>). No need to re-check here; the
+        // host cannot reach this point with an invalid secret.
         var secret = _tokenSettings.Secret;
         var key = Encoding.ASCII.GetBytes(secret);
 

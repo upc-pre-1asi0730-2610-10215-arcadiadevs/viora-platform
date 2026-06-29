@@ -108,6 +108,7 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
 
 // Shared Bounded Context Injection Configuration
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Shared.Domain.IClock, ArcadiaDevs.Viora.Platform.Shared.Infrastructure.SystemClock>();
 
 // External API Clients
 builder.Services.AddHttpClient<AgroMonitoringApiClient>(client =>
@@ -136,6 +137,7 @@ builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.Quer
 builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices.IGetPlotNdviTileQueryService, ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices.GetPlotNdviTileQueryService>();
 builder.Services.AddScoped<IIoTDeviceRepository, IoTDeviceRepository>();
 builder.Services.AddScoped<IMonitoringSummaryQueryService, MonitoringSummaryQueryService>();
+builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.ClimateRiskEvaluator>();
 builder.Services.AddScoped<IAgronomicStatisticRepository, AgronomicStatisticRepository>();
 builder.Services.AddScoped<IAgronomicStatisticsQueryService, AgronomicStatisticsQueryService>();
 builder.Services.AddScoped<IAgronomicStatisticSeriesQueryService, AgronomicStatisticSeriesQueryService>();

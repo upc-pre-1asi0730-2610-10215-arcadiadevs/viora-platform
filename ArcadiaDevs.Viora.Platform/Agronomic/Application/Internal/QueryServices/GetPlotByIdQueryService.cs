@@ -14,7 +14,9 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Errors;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices;
 
-public class GetPlotByIdQueryService(IPlotRepository plotRepository) : IGetPlotByIdQueryService
+public class GetPlotByIdQueryService(
+    IPlotRepository plotRepository,
+    ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock) : IGetPlotByIdQueryService
 {
     public async Task<Result<PlotResource, Error>> Handle(GetPlotByIdQuery query, CancellationToken cancellationToken = default)
     {
@@ -32,7 +34,7 @@ public class GetPlotByIdQueryService(IPlotRepository plotRepository) : IGetPlotB
             plot.PlotName,
             polygon,
             plot.AreaSize,
-            plot.CreatedAt ?? DateTimeOffset.UtcNow,
+            plot.CreatedAt ?? new DateTimeOffset(clock.UtcNow, TimeSpan.Zero),
             plot.CropType,
             plot.Variety,
             plot.Location,

@@ -12,7 +12,9 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Errors;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices;
 
-public class GetPlotWeatherForecastQueryService(IPlotRepository plotRepository) : IGetPlotWeatherForecastQueryService
+public class GetPlotWeatherForecastQueryService(
+    IPlotRepository plotRepository,
+    ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock) : IGetPlotWeatherForecastQueryService
 {
     public async Task<Result<PlotWeatherForecastResource, Error>> Handle(GetPlotWeatherForecastQuery query, CancellationToken cancellationToken = default)
     {
@@ -20,28 +22,30 @@ public class GetPlotWeatherForecastQueryService(IPlotRepository plotRepository) 
         if (plot is null || plot.IsDeleted)
             return new Result<PlotWeatherForecastResource, Error>.Failure(AgronomicErrors.PlotNotFound);
 
+        var now = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero);
+
         var hourly = new List<HourlyForecastResource>
         {
-            new HourlyForecastResource(DateTimeOffset.UtcNow, 22.5, "Sunny", 45, 0.0, 3.5, 5.0)
+            new HourlyForecastResource(now, 22.5, "Sunny", 45, 0.0, 3.5, 5.0)
         };
 
         var daily = new List<DailyForecastResource>
         {
-            new DailyForecastResource(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd"), 15.0, 28.0, 21.5, "Sunny", 50, 0.0, 6.0)
+            new DailyForecastResource(now.ToString("yyyy-MM-dd"), 15.0, 28.0, 21.5, "Sunny", 50, 0.0, 6.0)
         };
 
         var warnings = new List<WeatherWarningResource>
         {
-            new WeatherWarningResource("Frost", "Low", DateTimeOffset.UtcNow.ToString("yyyy-MM-dd"), "No frost expected")
+            new WeatherWarningResource("Frost", "Low", now.ToString("yyyy-MM-dd"), "No frost expected")
         };
 
-        var source = new ExternalSourceResource("OpenWeather", "Online", DateTimeOffset.UtcNow, 180);
+        var source = new ExternalSourceResource("OpenWeather", "Online", now, 180);
 
         var resource = new PlotWeatherForecastResource(
             plot.Id,
             plot.OwnerUserId,
             plot.PlotName,
-            DateTimeOffset.UtcNow,
+            now,
             hourly,
             daily,
             0.5,

@@ -24,15 +24,18 @@ public class AgronomicStatisticSeriesQueryService : IAgronomicStatisticSeriesQue
     private readonly IAgronomicStatisticRepository _statisticRepository;
     private readonly IPlotRepository _plotRepository;
     private readonly ChillRequirementResolver _chillRequirementResolver;
+    private readonly ArcadiaDevs.Viora.Platform.Shared.Domain.IClock _clock;
 
     public AgronomicStatisticSeriesQueryService(
         IAgronomicStatisticRepository statisticRepository,
         IPlotRepository plotRepository,
-        ChillRequirementResolver chillRequirementResolver)
+        ChillRequirementResolver chillRequirementResolver,
+        ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock)
     {
         _statisticRepository = statisticRepository;
         _plotRepository = plotRepository;
         _chillRequirementResolver = chillRequirementResolver;
+        _clock = clock;
     }
 
     public async Task<Result<AgronomicStatisticSeriesResource, Error>> Handle(
@@ -65,7 +68,7 @@ public class AgronomicStatisticSeriesQueryService : IAgronomicStatisticSeriesQue
         
         chillRequirement = _chillRequirementResolver.ResolveFor(plot);
 
-        var today = DateTimeOffset.UtcNow;
+        var today = new DateTimeOffset(_clock.UtcNow, TimeSpan.Zero);
         var currentWindow = query.TimeRange.ToDateRange(today);
         var windowDays = (currentWindow.EndDate - currentWindow.StartDate).TotalDays + 1;
         var previousEnd = currentWindow.StartDate.AddDays(-1);

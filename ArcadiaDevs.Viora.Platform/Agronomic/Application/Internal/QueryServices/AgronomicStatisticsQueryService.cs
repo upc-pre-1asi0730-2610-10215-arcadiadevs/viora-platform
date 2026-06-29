@@ -22,13 +22,16 @@ public class AgronomicStatisticsQueryService : IAgronomicStatisticsQueryService
 {
     private readonly IAgronomicStatisticRepository _agronomicStatisticRepository;
     private readonly IPlotRepository _plotRepository;
+    private readonly ArcadiaDevs.Viora.Platform.Shared.Domain.IClock _clock;
 
     public AgronomicStatisticsQueryService(
         IAgronomicStatisticRepository agronomicStatisticRepository,
-        IPlotRepository plotRepository)
+        IPlotRepository plotRepository,
+        ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock)
     {
         _agronomicStatisticRepository = agronomicStatisticRepository;
         _plotRepository = plotRepository;
+        _clock = clock;
     }
 
     public async Task<Result<IEnumerable<AgronomicStatistic>, Error>> Handle(
@@ -42,7 +45,7 @@ public class AgronomicStatisticsQueryService : IAgronomicStatisticsQueryService
             );
         }
 
-        var today = DateTimeOffset.UtcNow;
+        var today = new DateTimeOffset(_clock.UtcNow, TimeSpan.Zero);
         var dateRange = query.TimeRange.ToDateRange(today);
 
         if (!query.PlotId.HasValue)
