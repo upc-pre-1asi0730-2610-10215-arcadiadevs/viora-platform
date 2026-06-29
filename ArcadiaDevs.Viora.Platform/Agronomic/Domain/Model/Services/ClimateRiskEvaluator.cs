@@ -1,6 +1,6 @@
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 
-namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Services;
+namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services;
 
 /// <summary>
 /// Domain service to evaluate climate risks and generate mitigation recommendations.

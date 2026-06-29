@@ -20,14 +20,16 @@ public class RecommendDynamicNutritionPlanCommandService(
     IDynamicNutritionPlanRepository dynamicNutritionPlanRepository,
     IUnitOfWork unitOfWork,
     IMediator mediator,
-    ILogger<RecommendDynamicNutritionPlanCommandService> logger) : IRecommendDynamicNutritionPlanCommandService
+    ILogger<RecommendDynamicNutritionPlanCommandService> logger,
+    ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock) : IRecommendDynamicNutritionPlanCommandService
 {
     public async Task<Result<DynamicNutritionPlan, Error>> Handle(RecommendDynamicNutritionCommand command, CancellationToken cancellationToken = default)
     {
         try
         {
+            var now = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero);
             var rationale = new PlanRationale($"Automated recommendation based on current plot conditions.", EClimateRiskLevel.Moderate, new NdviValue(0.5), 1.2);
-            var applicationWindow = new NutritionApplicationWindow(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(30));
+            var applicationWindow = new NutritionApplicationWindow(now, now.AddDays(30));
             var recommendations = new[]
             {
                 new NutritionInputRecommendation("Nitrogen 120kg/ha", "Promote vegetative growth", 120, "kg/ha", ENutritionInputStatus.Recommended),
@@ -41,7 +43,7 @@ public class RecommendDynamicNutritionPlanCommandService(
                 recommendations,
                 applicationWindow,
                 rationale,
-                DateTimeOffset.UtcNow);
+                now);
 
             await dynamicNutritionPlanRepository.AddAsync(plan);
             await unitOfWork.CompleteAsync(cancellationToken);

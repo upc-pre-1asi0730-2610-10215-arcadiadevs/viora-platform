@@ -15,7 +15,8 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryService
 
 public class GetPlotMonitoringSummaryQueryService(
     IPlotRepository plotRepository,
-    IAgroMonitoringImageryService imageryService) : IGetPlotMonitoringSummaryQueryService
+    IAgroMonitoringImageryService imageryService,
+    ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock) : IGetPlotMonitoringSummaryQueryService
 {
     public async Task<Result<PlotMonitoringSummaryResource, Error>> Handle(GetPlotMonitoringSummaryQuery query, CancellationToken cancellationToken = default)
     {
@@ -29,20 +30,23 @@ public class GetPlotMonitoringSummaryQueryService(
         // Trigger synchronization with external AgroMonitoring API cache
         await imageryService.FindCurrentImageryAsync(plot, cancellationToken);
 
+        var now = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero);
+        var tomorrow = now.AddDays(1);
+
         var series = new List<NdviTrendSeriesResource>
         {
-            new NdviTrendSeriesResource(DateTimeOffset.UtcNow, 0.65, 0.60, 0.70, 0.65)
+            new NdviTrendSeriesResource(now, 0.65, 0.60, 0.70, 0.65)
         };
 
         var trend = new NdviTrendResource("up", 0.05, series);
-        var weather = new WeatherSummaryResource("Sunny", DateTimeOffset.UtcNow.ToString("yyyy-MM-dd"), "Low", 22.5);
+        var weather = new WeatherSummaryResource("Sunny", now.ToString("yyyy-MM-dd"), "Low", 22.5);
         
         var recommendations = new List<RecommendationResource>
         {
-            new RecommendationResource("Irrigation", "Apply 10mm", DateTimeOffset.UtcNow.ToString("yyyy-MM-dd"), DateTimeOffset.UtcNow.AddDays(1).ToString("yyyy-MM-dd"))
+            new RecommendationResource("Irrigation", "Apply 10mm", now.ToString("yyyy-MM-dd"), tomorrow.ToString("yyyy-MM-dd"))
         };
 
-        var source = new ExternalSourceResource("AgroMonitoring", "Online", DateTimeOffset.UtcNow, 60);
+        var source = new ExternalSourceResource("AgroMonitoring", "Online", now, 60);
 
         var resource = new PlotMonitoringSummaryResource(
             plot.Id,
@@ -61,7 +65,7 @@ public class GetPlotMonitoringSummaryQueryService(
             4500,
             weather,
             "Low",
-            DateTimeOffset.UtcNow,
+            now,
             recommendations,
             source,
             source

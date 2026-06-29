@@ -5,6 +5,18 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-06-29
+
+### added
+- `Shared.Domain.IClock` abstraction + `Shared.Infrastructure.SystemClock` implementation registered as a singleton in `Program.cs`. Every `DateTime.UtcNow` / `DateTimeOffset.UtcNow` in `*/Application/Internal/**` is now resolved through the ctor-injected `IClock` (domain layer untouched). 2 new unit tests pin the behaviour: `SystemClockTests` and `AgronomicStatisticIngestionServiceClockTests`.
+- `GET /api/v1/users/me` endpoint on `UsersController` (`[Authorize]`-protected, class-level also). Returns the authenticated user as a `UserResource` (200) or 404 `ProblemDetails` if the user was deleted between token issuance and request time. 3 new unit tests cover the OK / 404 / `[Authorize]` paths.
+
+### changed
+- `Agronomic/Domain/Services/ClimateRiskEvaluator.cs` moved to `Agronomic/Domain/Model/Services/` to align with the convention used by `ChillAccumulationCalculator`, `ChillRequirementResolver`, and `PlotDeletionPolicy`. Namespace updated to `Agronomic.Domain.Model.Services`.
+- `MonitoringSummaryQueryService` now constructor-injects `ClimateRiskEvaluator` (singleton, registered in `Program.cs`) instead of `new`ing it; also constructor-injects `IClock`.
+- 11 `Agronomic/Application/Internal/**` services now constructor-inject `IClock` and replace `DateTimeOffset.UtcNow` / `DateTime.UtcNow` with `_clock.UtcNow`.
+- `TokenService.GenerateToken` documents that secret-length / placeholder / empty checks are enforced at startup by `TokenSettingsValidator` (SHARED-003) — no re-check needed in the token service.
+
 ## [1.7.7] - 2026-06-29
 
 ### fixed
