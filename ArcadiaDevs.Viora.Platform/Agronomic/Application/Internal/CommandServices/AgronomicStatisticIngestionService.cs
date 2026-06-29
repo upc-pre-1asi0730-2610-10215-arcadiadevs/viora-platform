@@ -26,6 +26,7 @@ public class AgronomicStatisticIngestionService : IAgronomicStatisticIngestionSe
     private readonly IWeatherDataService _weatherDataService;
     private readonly ChillAccumulationCalculator _chillAccumulationCalculator;
     private readonly IAgroMonitoringPlotIntegrationRepository _integrationRepository;
+    private readonly ArcadiaDevs.Viora.Platform.Shared.Domain.IClock _clock;
 
     public AgronomicStatisticIngestionService(
         IPlotRepository plotRepository,
@@ -33,7 +34,8 @@ public class AgronomicStatisticIngestionService : IAgronomicStatisticIngestionSe
         IAgroMonitoringImageryService agroMonitoringImageryService,
         IWeatherDataService weatherDataService,
         ChillAccumulationCalculator chillAccumulationCalculator,
-        IAgroMonitoringPlotIntegrationRepository integrationRepository)
+        IAgroMonitoringPlotIntegrationRepository integrationRepository,
+        ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock)
     {
         _plotRepository = plotRepository;
         _statisticRepository = statisticRepository;
@@ -41,6 +43,7 @@ public class AgronomicStatisticIngestionService : IAgronomicStatisticIngestionSe
         _weatherDataService = weatherDataService;
         _chillAccumulationCalculator = chillAccumulationCalculator;
         _integrationRepository = integrationRepository;
+        _clock = clock;
     }
 
     public async Task<Result<AgronomicStatisticsIngestionReport, Error>> Handle(
@@ -55,7 +58,7 @@ public class AgronomicStatisticIngestionService : IAgronomicStatisticIngestionSe
     public async Task<AgronomicStatisticsIngestionReport> IngestAllActivePlotsAsync(CancellationToken cancellationToken = default)
     {
         var plots = (await _plotRepository.ListAsync(cancellationToken)).ToList();
-        return await IngestAsync(plots, DateTimeOffset.UtcNow, cancellationToken);
+        return await IngestAsync(plots, new DateTimeOffset(_clock.UtcNow, TimeSpan.Zero), cancellationToken);
     }
 
     public async Task<bool> IngestForPlotAsync(Plot plot, CancellationToken cancellationToken = default)
@@ -65,7 +68,7 @@ public class AgronomicStatisticIngestionService : IAgronomicStatisticIngestionSe
             return false;
         }
 
-        return await IngestPlotAsync(plot, DateTimeOffset.UtcNow, cancellationToken);
+        return await IngestPlotAsync(plot, new DateTimeOffset(_clock.UtcNow, TimeSpan.Zero), cancellationToken);
     }
 
     private async Task<AgronomicStatisticsIngestionReport> IngestAsync(

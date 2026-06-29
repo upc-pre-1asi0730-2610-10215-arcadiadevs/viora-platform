@@ -2,9 +2,9 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
-using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
@@ -19,17 +19,23 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
     private readonly IPlotRepository _plotRepository;
     private readonly IIoTDeviceRepository _ioTDeviceRepository;
     private readonly AgroMonitoringApiClient _agroMonitoringClient;
+    private readonly ClimateRiskEvaluator _climateRiskEvaluator;
+    private readonly ArcadiaDevs.Viora.Platform.Shared.Domain.IClock _clock;
     private readonly ILogger<MonitoringSummaryQueryService> _logger;
 
     public MonitoringSummaryQueryService(
         IPlotRepository plotRepository,
         IIoTDeviceRepository ioTDeviceRepository,
         AgroMonitoringApiClient agroMonitoringClient,
+        ClimateRiskEvaluator climateRiskEvaluator,
+        ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock,
         ILogger<MonitoringSummaryQueryService> logger)
     {
         _plotRepository = plotRepository;
         _ioTDeviceRepository = ioTDeviceRepository;
         _agroMonitoringClient = agroMonitoringClient;
+        _climateRiskEvaluator = climateRiskEvaluator;
+        _clock = clock;
         _logger = logger;
     }
 
@@ -73,15 +79,16 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
             
         if (totalDevices == 0) healthStatusStr = "Moderate"; // Default when no devices
 
+        var now = new DateTimeOffset(_clock.UtcNow, TimeSpan.Zero);
+
         // TS016TASK007, TS016TASK008, TS016TASK009, TS016TASK010: Weather, Risk Evaluation and Mitigation
         var simulatedWeather = new WeatherSnapshot(
-            22.5m, 
-            WeatherStatus.Sunny, 
-            DateTimeOffset.UtcNow.AddMinutes(-30), 
+            22.5m,
+            WeatherStatus.Sunny,
+            now.AddMinutes(-30),
             ClimateRiskLevel.Medium);
 
-        var evaluator = new ClimateRiskEvaluator();
-        var recommendation = evaluator.EvaluateRisk(
+        var recommendation = _climateRiskEvaluator.EvaluateRisk(
             new AccumulatedChillHours(chillHours),
             new AverageNdvi(simulatedNdvi),
             simulatedWeather);
@@ -95,7 +102,7 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
             simulatedYieldProjection,
             simulatedWeather,
             recommendation,
-            DateTimeOffset.UtcNow
+            now
         );
 
         if (summaryResult is Result<MonitoringSummary, Error>.Failure failure)
@@ -143,7 +150,7 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
         const double chillThresholdKelvin = 273.15;
 
         // Use a 30-day window for chill accumulation.
-        var end = DateTimeOffset.UtcNow;
+        var end = new DateTimeOffset(_clock.UtcNow, TimeSpan.Zero);
         var start = end.AddDays(-30);
 
         foreach (var plot in plots)
