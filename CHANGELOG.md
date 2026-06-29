@@ -5,6 +5,22 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.7] - 2026-06-29
+
+### fixed
+- all 9 unprotected controllers now have class-level `[Authorize]` attribute — only `AuthenticationController` sign-in/sign-up endpoints remain `[AllowAnonymous]`
+- `DEV-ONLY-PLEASE-CHANGE-ME` placeholder removed from `appsettings.json` — secret is now empty by default and validated at startup
+
+### added
+- `TokenSettingsValidator` implementing `IValidateOptions<TokenSettings>` — fails fast at startup in all environments if JWT secret is missing, too short (<32 chars), or set to the placeholder value
+- `DynamicNutritionRecommendedEventHandler` and `NutritionApplicationCertifiedEventHandler` log-and-exit stubs for the 2 orphaned Agronomic events (per design-decisions #28)
+- 8 new unit tests: 4 for `TokenSettingsValidator`, 4 for the two event handlers
+- JWT configuration instructions in README with environment variable and user-secrets examples
+
+### changed
+- `AgronomicStatisticIngestionService`, `AgronomicStatisticsIngestionReport`, and `IAgronomicStatisticIngestionService` moved from `Agronomic/Application/CommandServices/` to `Agronomic/Application/Internal/CommandServices/` — public folder now contains only interfaces
+- Production-only JWT startup guard replaced with `AddOptionsWithValidateOnStart<TokenSettings>` that validates in all environments
+
 ## [1.7.6] - 2026-06-29
 
 ### fixed
@@ -85,6 +101,7 @@ and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0
 - ef core model now uses schema-agnostic configuration to boot on render
 - surveillance: 404 returned when reviewing a missing alert (was 500)
 
+[1.7.7]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.7.6...release/1.7.7
 [1.7.6]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.7.5...release/1.7.6
 [1.7.5]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.7.0...1.7.5
 [1.7.0]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.6.0...1.7.0
