@@ -58,6 +58,31 @@ To use PostgreSQL, set `Database:Provider` to `PostgreSql` and configure
 `ConnectionStrings:DefaultConnection` in the appropriate appsettings file or
 through environment variables.
 
+## Weather Provider (AgroMonitoring)
+
+The platform uses [AgroMonitoring](https://agromonitoring.com/) as the **sole**
+external weather provider. There is no fabricated-data fallback: if AgroMonitoring
+is down, returns an error, or the API key is missing/empty, the platform will
+**not** invent a forecast. Endpoints that depend on live weather will surface a
+5xx and the original error will be logged.
+
+**Required configuration** (any of the three below):
+
+- `appsettings.json` → `Agronomic:Weather:AgroMonitoring:ApiKey`
+- Linux/macOS environment variable: `Agronomic__Weather__AgroMonitoring__ApiKey`
+- Windows PowerShell: `$env:Agronomic__Weather__AgroMonitoring__ApiKey = "..."`
+- Windows user secrets:
+  `dotnet user-secrets set "Agronomic:Weather:AgroMonitoring:ApiKey" "..."`
+
+The application fails to start if the key is missing or empty (this is the only
+way to guarantee the production path never falls back to hard-coded
+`22.5 °C / Sunny` constants).
+
+> **Operational risk (AGRO-003):** the platform has no alternative weather
+> source in v1. If AgroMonitoring's quota is exhausted or the service is
+> unavailable, weather-dependent features will return errors. A cache or
+> fallback provider is a future enhancement.
+
 ## JWT Configuration
 
 The application requires a JWT secret to start. The secret must be at least 32
