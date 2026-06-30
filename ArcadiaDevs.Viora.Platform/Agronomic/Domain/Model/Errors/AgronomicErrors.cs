@@ -42,6 +42,13 @@ public static class AgronomicErrors
     public static readonly Error GenerationError =
         new("Agronomic.GenerationError", "Failed to generate the dynamic nutrition plan.");
 
+    // A2 part 2: the generator throws DynamicNutritionPlanUnavailableException
+    // when no triggering risk is observed (CC-7: early throw, no silent
+    // default). The command service boundary catches the exception and
+    // converts it to this error so the REST surface sees a normal 4xx.
+    public static readonly Error NoTriggeringRisk =
+        new("Agronomic.NoTriggeringRisk", "No triggering risk was observed for the plot; a dynamic nutrition plan cannot be generated.");
+
     public static readonly Error AgronomicStatisticsAccess =
         new("Agronomic.AgronomicStatisticsAccess", "The authenticated user cannot access statistics from another user.");
 

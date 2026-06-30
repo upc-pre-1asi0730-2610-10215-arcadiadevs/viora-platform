@@ -165,6 +165,14 @@ builder.Services.AddOptionsWithValidateOnStart<DynamicNutritionPolicyOptions>()
 builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.IChillDeficitEvaluator, ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.ChillDeficitEvaluator>();
 builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.ILowNdviEvaluator, ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.LowNdviEvaluator>();
 builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.IHydricStressEvaluator, ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.HydricStressEvaluator>();
+// A2 part 2 (PR-D2) — the dynamic-nutrition plan generator (port of OS
+// DynamicNutritionPlanGenerator.java) + the risk translator (per-risk booleans
+// → IReadOnlyCollection<EThreatType>). Both stateless; singleton lifetime
+// matches the existing 3 evaluators. The generator throws on empty risks
+// (CC-7); the translator's output is fed into the generator as the
+// triggering-risk set.
+builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.IDynamicNutritionPlanGenerator, ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.DynamicNutritionPlanGenerator>();
+builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services.IAgronomicRiskTranslator, ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services.AgronomicRiskTranslator>();
 builder.Services.AddScoped<IAgronomicStatisticRepository, AgronomicStatisticRepository>();
 builder.Services.AddScoped<IAgronomicStatisticsQueryService, AgronomicStatisticsQueryService>();
 builder.Services.AddScoped<IAgronomicStatisticSeriesQueryService, AgronomicStatisticSeriesQueryService>();
