@@ -8,6 +8,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices;
+using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices.Configuration;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.Internal.CommandServices;
@@ -118,6 +119,15 @@ builder.Services.AddHttpClient<AgroMonitoringApiClient>(client =>
     client.BaseAddress = new Uri(baseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
 });
+// AGRO-003: expose the weather-only port so the AgroMonitoringWeatherDataService
+// can be unit-tested with a substitute without spinning up an HttpClient.
+builder.Services.AddScoped<IAgroMonitoringWeatherClient>(sp => sp.GetRequiredService<AgroMonitoringApiClient>());
+
+// AgroMonitoring weather options: validated at startup (CC-5). AGRO-003 — sole weather
+// provider in v1, no fabricated-data fallback if the key is missing.
+builder.Services.AddSingleton<IValidateOptions<AgroMonitoringWeatherOptions>, AgroMonitoringWeatherOptionsValidator>();
+builder.Services.AddOptionsWithValidateOnStart<AgroMonitoringWeatherOptions>()
+    .Bind(builder.Configuration.GetSection(AgroMonitoringWeatherOptions.SectionName));
 
 // Agronomic Bounded Context Injection Configuration
 builder.Services.AddSingleton(new ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects.ChillRequirementPolicy(50.0));
@@ -126,7 +136,7 @@ builder.Services.AddScoped<IPlotRepository, PlotRepository>();
 builder.Services.AddScoped<IAgronomicContextFacade, AgronomicContextFacade>();
 builder.Services.AddScoped<IAgroMonitoringPlotIntegrationRepository, AgroMonitoringPlotIntegrationRepository>();
 builder.Services.AddScoped<IAgroMonitoringImageryService, AgroMonitoringImageryServiceAdapter>();
-builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.OutboundServices.IWeatherDataService, ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices.WeatherDataServiceAdapter>();
+builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.OutboundServices.IWeatherDataService, ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices.AgroMonitoringWeatherDataService>();
 builder.Services.AddScoped<IPlotCommandService, PlotCommandService>();
 builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices.IGetMyPlotsOverviewQueryService, ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices.GetMyPlotsOverviewQueryService>();
 builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices.IGetPlotDetailQueryService, ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices.GetPlotDetailQueryService>();

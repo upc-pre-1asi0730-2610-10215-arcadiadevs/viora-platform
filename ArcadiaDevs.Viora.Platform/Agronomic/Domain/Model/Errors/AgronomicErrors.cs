@@ -57,6 +57,9 @@ public static class AgronomicErrors
     public static readonly Error PlotNotLinked =
         new("Agronomic.PlotNotLinked", "The plot is not linked to AgroMonitoring.");
 
+    public static readonly Error WeatherUnavailable =
+        new("Agronomic.WeatherUnavailable", "Live weather data is currently unavailable; the platform does not provide a fabricated fallback.");
+
     public static readonly Error InternalServerError =
         new("Agronomic.InternalServerError", "An unexpected internal error occurred in Agronomic.");
 }

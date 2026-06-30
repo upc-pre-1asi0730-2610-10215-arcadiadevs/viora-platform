@@ -14,7 +14,7 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices;
 ///     accumulated temperature data. All public methods return
 ///     <see cref="Result{TValue,TError}"/> to keep error handling explicit.
 /// </remarks>
-public class AgroMonitoringApiClient
+public class AgroMonitoringApiClient : IAgroMonitoringWeatherClient
 {
     private readonly HttpClient _httpClient;
     private readonly string _apiKey;
