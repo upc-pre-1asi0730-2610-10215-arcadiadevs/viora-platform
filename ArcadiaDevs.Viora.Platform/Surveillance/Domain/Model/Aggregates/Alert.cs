@@ -81,6 +81,17 @@ public partial class Alert : IHasDomainEvents
     private readonly List<IEvent> _domainEvents;
     public IReadOnlyCollection<IEvent> DomainEvents => _domainEvents.AsReadOnly();
 
+    /// <summary>
+    ///     Clears the <see cref="DomainEvents"/> collection. Invoked by the
+    ///     <c>PostCommitDomainEventDispatcher</c> (SHARED-011) AFTER each
+    ///     <see cref="IEvent"/> has been (attempted to be) dispatched on
+    ///     the in-process bus, so the next <c>SaveChanges</c> does not
+    ///     re-dispatch the same events. The <c>IHasDomainEvents</c>
+    ///     contract stays read-only; the clear method is a public member
+    ///     of the concrete aggregate.
+    /// </summary>
+    public void ClearDomainEvents() => _domainEvents.Clear();
+
     public void AddTimelineRecord(string tag, string title, string description)
     {
         _timeline.Add(new AlertTimelineRecord(tag, title, description));

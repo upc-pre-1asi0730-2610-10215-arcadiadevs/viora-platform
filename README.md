@@ -125,6 +125,11 @@ Swagger will then be available at `http://localhost:8080/swagger`.
 
 Project documentation belongs in the [`docs`](docs/) directory.
 
+- [Domain events architecture](docs/architecture/events.md) — in-process
+  `Cortex.Mediator` bus, the `IEvent` / `IEventHandler<TEvent>` contract, the
+  post-commit `PostCommitDomainEventDispatcher` (SHARED-011), and the
+  best-effort failure-handling semantics (CC-9).
+
 ## License
 
 This project is licensed under the MIT License. See
