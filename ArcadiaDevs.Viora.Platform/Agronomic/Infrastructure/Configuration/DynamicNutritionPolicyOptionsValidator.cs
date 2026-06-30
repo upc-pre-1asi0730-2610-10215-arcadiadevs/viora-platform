@@ -92,6 +92,13 @@ public class DynamicNutritionPolicyOptionsValidator
                 $"(actual: {options.BiostimulantDosageLitersPerHectare}).");
         }
 
+        if (options.ChillDeficitRatio < 0m || options.ChillDeficitRatio > 1m)
+        {
+            failures.Add(
+                "ChillDeficitRatio must be within the closed interval [0, 1] " +
+                $"(actual: {options.ChillDeficitRatio}).");
+        }
+
         return failures.Count == 0
             ? ValidateOptionsResult.Success
             : ValidateOptionsResult.Fail(failures);
