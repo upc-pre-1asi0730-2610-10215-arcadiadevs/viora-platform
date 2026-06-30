@@ -5,17 +5,13 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.11.1] - 2026-06-30
+## [1.11.0] - 2026-06-30
 
-### added
-- `Agronomic/Domain/Model/ValueObjects/IoTDeviceType.cs` — new 3-value BC-local enum (`SoilProbe`, `LeafWetness`, `WeatherStation`) encoding the sensor kind derived from an `ActivationCode` prefix. Coexists with `Surveillance.Domain.Model.ValueObjects.EThreatType` (13 values, unchanged) per CC-11; the C# namespaces keep them unambiguous, and fully-qualified names are used at every call site that crosses BC boundaries (A4 part 1).
-- `Agronomic/Domain/Model/ValueObjects/ActivationCode.cs` — new `sealed record` VO enforcing the `^VIORA-(SP|LW|WS)\d{2}-[A-Z0-9]{4}$` shape. Constructor normalises the raw string (trim + upper-case to `InvariantCulture`), throws `ArgumentException` on `null` / blank / malformed input, and exposes `DeviceType()` returning the prefix-derived `IoTDeviceType`. Pattern compiled with `RegexOptions.Compiled` for reuse. The format guarantee is separated from the "is it actually issued?" check, which lives in `IActivationCodeCatalog` (A4 part 1).
-- `Agronomic/Domain/Model/Services/IActivationCodeCatalog.cs` — new domain port with a single `bool IsIssued(ActivationCode code)` method. The interface is BC-local; the Infrastructure layer provides the in-memory implementation today and can swap to a persisted/remote registry without touching the domain (A4 part 1).
-- `Agronomic/Infrastructure/Configuration/InMemoryActivationCodeCatalog.cs` — new `sealed class` seeding the Viora demo fleet's 9 issued activation codes (3 soil probes, 3 leaf wetness sensors, 3 weather stations). Backed by a static `ImmutableHashSet<string>` so reads are thread-safe with no locks. The set is initialised once at type-load and never mutated. Whitelisted codes: `VIORA-SP01-7K3M`, `VIORA-SP02-9P2X`, `VIORA-SP03-4T8H`, `VIORA-LW01-5F1N`, `VIORA-LW02-7K9R`, `VIORA-LW03-2M6Y`, `VIORA-WS01-3H8V`, `VIORA-WS02-8C4Q`, `VIORA-WS03-1Z7Y`. The `IsIssued` method tolerates a `null` code argument and returns `false` (defensive).
+### changed
+- `Agronomic/Infrastructure/Persistence/EntityFrameworkCore/Repositories/PlotRepository.cs` — `HasRelatedOperationalRecordsAsync` now short-circuits across all 3 intra-BC aggregates that own a `PlotId` foreign key: `IoTDevice`, `DynamicNutritionPlan`, and `AgronomicStatistic` (A3). Previously the method checked `IoTDevice` only, so a plot with a `DynamicNutritionPlan` or `AgronomicStatistic` (but no IoT devices) would be physically deleted and leave orphan FK references in those tables. The new behaviour routes those plots through logical deletion (`Plot.Deactivate()`) via the existing `PlotDeletionPolicy`. The XML doc carries a `TODO AGRONOMIC-A3-CROSSBC` note marking `SHARED-015` (`IAgronomicContextFacade`) as the deferred resolution for cross-BC `Alert` and `PestSightingReport` checks; per locked decision #2 in engram #42, cross-BC checks remain a known limitation until SHARED-015 lands.
 
 ### notes
-- **No tests written** (Phase 2 user decision, engram #50). The 84 existing xUnit tests in `tests/ArcadiaDevs.Viora.Platform.Tests/Iam/` are untouched and were not re-run as part of this PR. Behavioural verification rests on code review and manual smoke. `sdd-verify` at the end of Phase 2 will mark A4 part 1 as "not verified, no test coverage"; this is accepted.
-- **No consumers wired in this PR.** The new types are additive only; `IoTDevice.ActivationCode`, the `IoTDevice.Claim` factory, the `IoTDeviceCommandService` parse-check-claim flow, the EF migration adding the `activation_code` column, and the `IIoTDeviceRepository.ExistsByActivationCodeAsync` repository method all land in PR-B2 (1.11.2). This PR ships the whitelist + VO + enum so PR-B2 can compose them.
+- **No tests written** (Phase 2 user decision, engram #50). The 84 existing xUnit tests in `tests/ArcadiaDevs.Viora.Platform.Tests/Iam/` are untouched and were not re-run as part of this PR. Behavioural verification rests on code review and manual smoke. `sdd-verify` at the end of Phase 2 will mark A3 as "not verified, no test coverage"; this is accepted.
 
 ## [1.10.0] - 2026-06-29
 
