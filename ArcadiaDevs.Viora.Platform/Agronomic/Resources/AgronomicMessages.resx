@@ -12,4 +12,7 @@
   <data name="ActivationCodeAlreadyClaimed" xml:space="preserve">
     <value>Activation code has already been claimed by another device.</value>
   </data>
+  <data name="NoTriggeringRisk" xml:space="preserve">
+    <value>No triggering risk was observed for the plot; a dynamic nutrition plan cannot be generated.</value>
+  </data>
 </root>
