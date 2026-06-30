@@ -11,13 +11,20 @@ public record MitigationRecommendation
     public string SuggestedInputs { get; init; }
     public string RecommendedApplicationWindow { get; init; }
 
+    /// <summary>
+    ///     Parameterless constructor required by EF Core when this value object is
+    ///     used as an owned/complex entity type. Production code uses the validating
+    ///     constructor below; EF Core uses this one at materialization time.
+    /// </summary>
+    public MitigationRecommendation() { }
+
     public MitigationRecommendation(
-        string actionType, 
-        string suggestedInputs, 
+        string actionType,
+        string suggestedInputs,
         string recommendedApplicationWindow,
         ClimateRiskLevel riskLevel)
     {
-        if (riskLevel == ClimateRiskLevel.Low && 
+        if (riskLevel == ClimateRiskLevel.Low &&
             (!string.IsNullOrEmpty(actionType) || !string.IsNullOrEmpty(suggestedInputs)))
         {
             throw new ArgumentException("Mitigation recommendations should only be generated for Medium, High or Critical risks.");

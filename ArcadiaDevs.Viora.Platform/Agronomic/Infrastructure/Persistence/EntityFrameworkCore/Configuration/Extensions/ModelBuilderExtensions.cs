@@ -27,5 +27,6 @@ public static class ModelBuilderExtensions
         builder.ApplyConfiguration(new AgronomicStatisticConfiguration());
         builder.ApplyConfiguration(new AgroMonitoringPlotIntegrationConfiguration());
         builder.ApplyConfiguration(new DynamicNutritionPlanConfiguration());
+        builder.ApplyConfiguration(new MonitoringSummaryConfiguration());
     }
 }
