@@ -5,6 +5,32 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2026-06-29
+
+### added
+- `Surveillance/Domain/Model/Events/AlertGeneratedIntegrationEvent.cs` — cross-BC `record` carrying primitive `long PlotId`, `long AlertId`, `string ThreatType`, `DateTime GeneratedAt`. CC-1 xml-doc on every field documents "primitive transport, recipient must wrap in its own PlotId/UserId VO". Published by the Surveillance BC on the in-process `Cortex.Mediator` bus (`IEvent`/`IEventHandler<T>`) when an `Alert` is created with `ThreatType == PHENOLOGICAL_RISK` (SURV-002). The post-commit publish is fire-and-forget; an event-bus failure surfaces as a `Result.Failure` (matches the existing `AlertCreatedEvent` error model).
+- `Agronomic/Application/Internal/EventHandlers/AlertGeneratedIntegrationEventHandler.cs` — Agronomic-side `IEventHandler<AlertGeneratedIntegrationEvent>` (SURV-002). Filters on `ThreatType == PHENOLOGICAL_RISK` (case-insensitive); no-op for any other threat type. For matching events, wraps the primitive `PlotId` in `Agronomic.Domain.Model.ValueObjects.PlotId` (CC-1) and calls `IRecommendDynamicNutritionPlanCommandService.Handle(RecommendDynamicNutritionCommand(alertId, plotId))`. Handler is auto-registered via `AddCortexMediator` assembly scan. Handler exceptions are logged and swallowed per CC-2 (the originating alert in Surveillance is already committed; no retry, no DLQ).
+- `Surveillance/Domain/Model/Queries/GetAlertsByUserIdQuery.cs` — `record(long UserId, string? Sort, int Limit)`. New query type for the SURV-003 sort fix.
+- 4 new `POST /api/v1/alerts/{id}/{action}` endpoints on `AlertsController` (SURV-003, all class-level `[Authorize]`, all map `Result<Unit,Error>` to RFC 7807 `ProblemDetails` per CC-6):
+  - `POST /api/v1/alerts/{id}/confirm` — calls `Alert.ConfirmFromInspection()` (any non-terminal → `UNDER_REVIEW`, severity +1).
+  - `POST /api/v1/alerts/{id}/dismiss` — calls `Alert.Dismiss()` (any non-`DISMISSED` → `DISMISSED`, terminal).
+  - `POST /api/v1/alerts/{id}/escalate` — calls `Alert.Escalate()` (severity +1, no state change).
+  - `POST /api/v1/alerts/{id}/link-report?reportId={reportId}` — calls `Alert.LinkReport(PestSightingReportId)` (attaches the report, no state change).
+- 4 new command records in `Surveillance/Domain/Model/Commands/MarkAlertAsReviewedCommand.cs` — `ConfirmAlertCommand`, `DismissAlertCommand`, `EscalateAlertCommand`, `LinkAlertReportCommand`. Each is the in-process command shape consumed by `IAlertCommandService`.
+- 4 new `Handle(...)` overloads on `IAlertCommandService` (returning `Task<Result<Unit, Error>>`) and matching implementations on `AlertCommandService`. Each loads the alert via the repository, applies the state-machine method, persists on success, and surfaces the state-machine `Result<Unit, Error>` directly (so `ALERT_TERMINAL` failures propagate as 4xx).
+- 15 new xUnit tests across 3 test files (TDD strict mode):
+  - `tests/.../Surveillance/Application/Internal/CommandServices/AlertCommandServiceCrossBcEventTests.cs` — 1 fact + 5 theory cases pinning the publish-on-`PHENOLOGICAL_RISK` and no-publish-on-`PEST_SYMPTOM`/`CLIMATE_EXTREME`/`CHILL_DEFICIT`/`WATER_STRESS`/`UNKNOWN` behaviour.
+  - `tests/.../Agronomic/Application/Internal/EventHandlers/AlertGeneratedIntegrationEventHandlerTests.cs` — 1 fact + 4 theory cases pinning the recommend-on-`PHENOLOGICAL_RISK` and no-call-on-other-threat-type behaviour (with CC-1 wrap verification on the `Agronomic.PlotId` value).
+  - `tests/.../Surveillance/Interfaces/Rest/Controllers/AlertsControllerStateTransitionTests.cs` — 4 controller tests: `Confirm_OnValid_Returns200`, `Confirm_OnDismissed_Returns400ProblemDetails`, `GET_Alerts_SortBySeverity_NotEmptyList`, `GET_Alerts_OnEmptyTimeline_ReturnsEmptyArrayNot500`. Includes a hand-rolled `TestProblemDetailsFactory` + stub `IStringLocalizer<ErrorMessages>` so the controller's `CreateProblemDetails(...)` calls never NRE.
+
+### changed
+- `Surveillance/Application/CommandServices/IAlertCommandService.cs` + `Internal/CommandServices/AlertCommandService.cs` — grew 4 new `Handle(...)` overloads for the SURV-003 state-machine transitions. The existing `Handle(CreateAlertCommand)` now publishes the cross-BC `AlertGeneratedIntegrationEvent` post-commit when `alert.Type == EThreatType.PHENOLOGICAL_RISK` (SURV-002). The `using` block uses an explicit `Unit = ArcadiaDevs.Viora.Platform.Shared.Domain.Model.Unit;` alias to disambiguate from `Cortex.Mediator.Unit` (a pre-existing namespace collision in the same file).
+- `Surveillance/Application/QueryServices/IAlertQueryService.cs` + `Internal/QueryServices/AlertQueryService.cs` — new `Handle(GetAlertsByUserIdQuery, ...)` overload routes the sort key: `recent` (CreatedAt desc, default), `severity` (severity desc, then createdAt desc), `type` (type asc, then createdAt desc). Empty timelines return `Enumerable.Empty<AlertSummaryResource>()` — never null, never 500. The implementation re-uses the existing `FindByPlotIdInOrderByCreatedAtDescAsync(...)` repository method and sorts client-side per the sort key, keeping the EF query count constant.
+- `Surveillance/Interfaces/Rest/Controllers/AlertsController.cs` — replaced the empty-list placeholder for non-`recent` sorts with a single `GetAlertsByUserIdQuery` dispatch (SURV-003 sort fix). Constructor gained `IStringLocalizer<ErrorMessages>` and `ProblemDetailsFactory` dependencies (matches the `UsersController` CC-6 pattern). Added 4 new state-transition endpoints + the shared `MapTransitionFailureToResult(...)` / `BuildOkWithAlertAsync(...)` helpers.
+
+### notes
+- **PR size:exception** (925 lines vs 400 budget, precedent: PR-6a tag 1.9.0). 502 lines of production code + 423 lines of test code. The SURV-002 + SURV-003 deliverables cannot be sliced without breaking the test-with-impl work-unit pattern (the controller test contains the `TestProblemDetailsFactory` + stub localizer that both deliverables share).
+
 ## [1.10.0-rc] - 2026-06-29
 
 ### added
@@ -181,6 +207,8 @@ and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0
 - ef core model now uses schema-agnostic configuration to boot on render
 - surveillance: 404 returned when reviewing a missing alert (was 500)
 
+[1.10.0]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.10.0-rc...release/1.10.0
+[1.10.0-rc]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.9.1...release/1.10.0-rc
 [1.7.7]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.7.6...release/1.7.7
 [1.9.0]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.8.2...release/1.9.0
 [1.9.1]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.9.0...release/1.9.1

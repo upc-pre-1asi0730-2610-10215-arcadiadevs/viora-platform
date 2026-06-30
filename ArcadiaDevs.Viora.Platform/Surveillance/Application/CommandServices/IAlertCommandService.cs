@@ -18,4 +18,10 @@ public interface IAlertCommandService
     /// <returns>A result containing the created alert or an error.</returns>
     Task<Result<Alert, Error>> Handle(CreateAlertCommand command, CancellationToken cancellationToken = default);
     Task<Result<long, Error>> Handle(MarkAlertAsReviewedCommand command, CancellationToken cancellationToken = default);
+
+    // SURV-003: state-machine transition handlers
+    Task<Result<Unit, Error>> Handle(ConfirmAlertCommand command, CancellationToken cancellationToken = default);
+    Task<Result<Unit, Error>> Handle(DismissAlertCommand command, CancellationToken cancellationToken = default);
+    Task<Result<Unit, Error>> Handle(EscalateAlertCommand command, CancellationToken cancellationToken = default);
+    Task<Result<Unit, Error>> Handle(LinkAlertReportCommand command, CancellationToken cancellationToken = default);
 }
