@@ -5,6 +5,19 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] - 2026-06-29
+
+### changed
+- `IWeatherDataService` now resolves to `AgroMonitoringWeatherDataService` exclusively. The previous `WeatherDataServiceAdapter` (which returned hard-coded 22.5 °C / Sunny snapshots) is removed. AgroMonitoring is the sole weather provider in v1; there is no fabricated-data fallback.
+
+### added
+- `Agronomic/Infrastructure/ExternalServices/AgroMonitoringWeatherDataService.cs` — real implementation that delegates to the existing `AgroMonitoringApiClient` via the new `IAgroMonitoringWeatherClient` port. On client `Result.Failure` returns null (caller surfaces the unavailability); on client exception logs and rethrows (caller surfaces a 5xx). Never returns fabricated data.
+- `Agronomic/Infrastructure/ExternalServices/Configuration/AgroMonitoringWeatherOptions.cs` + `AgroMonitoringWeatherOptionsValidator` — `IValidateOptions<>` bound from `Agronomic:Weather:AgroMonitoring:ApiKey`. Fails fast at startup in all environments when the key is missing, empty, or whitespace-only (CC-5).
+- `Agronomic/Infrastructure/ExternalServices/IAgroMonitoringWeatherClient.cs` — weather-only port on top of `AgroMonitoringApiClient`, scoped to the methods the new service actually needs (lets the service be unit-tested with NSubstitute without an `HttpClient`).
+- `Agronomic/Application/Internal/QueryServices/GetPlotWeatherForecastQueryService` now constructor-injects `IWeatherDataService` and delegates the snapshot to the real provider. Returns `AgronomicErrors.WeatherUnavailable` when the real provider can't be reached (no fabricated fallback).
+- 9 new unit tests: 4 for `AgroMonitoringWeatherOptionsValidator` (missing / empty / whitespace / valid keys) + 5 for `AgroMonitoringWeatherDataService` (success mapping, failure returns null, exception propagates, history failure returns null, source metadata reports `AgroMonitoring`).
+- README: new "Weather Provider (AgroMonitoring)" section documenting the required config key and the operational risk of the no-fallback design.
+
 ## [1.8.0] - 2026-06-29
 
 ### added
