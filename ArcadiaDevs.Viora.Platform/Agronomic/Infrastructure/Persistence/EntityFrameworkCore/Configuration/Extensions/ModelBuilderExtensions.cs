@@ -24,7 +24,9 @@ public static class ModelBuilderExtensions
     {
         builder.ApplyConfiguration(new PlotConfiguration());
         builder.ApplyConfiguration(new IoTDeviceConfiguration());
+        builder.ApplyConfiguration(new AgronomicStatisticConfiguration());
         builder.ApplyConfiguration(new AgroMonitoringPlotIntegrationConfiguration());
         builder.ApplyConfiguration(new DynamicNutritionPlanConfiguration());
+        builder.ApplyConfiguration(new MonitoringSummaryConfiguration());
     }
 }
