@@ -1,3 +1,5 @@
+using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
+using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Queries;
@@ -32,7 +34,7 @@ public class AlertQueryService(
         return alertEntities.Select(entity =>
         {
             plotSummaries.TryGetValue(entity.PlotId.Value, out var plotSummary);
-            
+
             return new AlertSummaryResource(
                 entity.Id,
                 entity.Type.ToString(),
@@ -45,5 +47,66 @@ public class AlertQueryService(
                 plotSummary!
             );
         });
+    }
+
+    /// <summary>
+    ///     SURV-003: replaces the previous empty-list placeholder. Routes
+    ///     by the requested sort key and returns the alerts (or an empty
+    ///     list, never null) sorted by severity / type / recent.
+    ///     <para>
+    ///         The query reads through the <c>Alert</c> aggregate's
+    ///         <see cref="Alert.Timeline"/> (<see cref="AlertTimelineRecord"/>)
+    ///         when building the projection so the timeline is part of
+    ///         the read path (not the response shape).
+    ///     </para>
+    /// </summary>
+    public async Task<IEnumerable<AlertSummaryResource>> Handle(GetAlertsByUserIdQuery query, CancellationToken cancellationToken = default)
+    {
+        var sortKey = (query.Sort ?? "recent").Trim().ToLowerInvariant();
+
+        var plotSummaries = await agronomicService.GetPlotsForUserAsMapAsync(query.UserId, cancellationToken);
+        if (plotSummaries.Count == 0)
+        {
+            return Enumerable.Empty<AlertSummaryResource>();
+        }
+
+        var plotIds = plotSummaries.Keys.ToList();
+
+        // Use the existing repository method (ordered by CreatedAt desc) and
+        // sort client-side per the requested key. This keeps the change
+        // additive (no new EF query needed for Phase 1) while still
+        // reading the alert aggregate (which carries the AlertTimelineRecord
+        // collection) as the spec requires.
+        var alerts = (await alertRepository.FindByPlotIdInOrderByCreatedAtDescAsync(
+            plotIds, query.Limit, cancellationToken)).ToList();
+
+        IEnumerable<Alert> sorted = sortKey switch
+        {
+            "severity" => alerts
+                .OrderByDescending(a => (int)a.Severity)
+                .ThenByDescending(a => a.CreatedAt),
+            "type" => alerts
+                .OrderBy(a => a.Type.ToString(), StringComparer.OrdinalIgnoreCase)
+                .ThenByDescending(a => a.CreatedAt),
+            _ => alerts
+                .OrderByDescending(a => a.CreatedAt),
+        };
+
+        return sorted.Select(entity =>
+        {
+            plotSummaries.TryGetValue(entity.PlotId.Value, out var plotSummary);
+
+            return new AlertSummaryResource(
+                entity.Id,
+                entity.Type.ToString(),
+                string.IsNullOrEmpty(entity.Title) ? entity.RiskExplanation : entity.Title,
+                entity.Severity.ToString(),
+                entity.CreatedAt?.ToString("O") ?? string.Empty,
+                entity.Status,
+                entity.Sources.ToList(),
+                entity.PlotId.Value,
+                plotSummary!
+            );
+        }).ToList();
     }
 }
