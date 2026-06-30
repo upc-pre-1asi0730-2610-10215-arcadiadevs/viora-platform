@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
@@ -93,5 +94,22 @@ public class IoTDeviceRepository : BaseRepository<IoTDevice>, IIoTDeviceReposito
              .AsNoTracking()
              .Where(d => plotIds.Contains(d.PlotId))
              .ToListAsync(cancellationToken);
+     }
+
+     /// <inheritdoc />
+     public async Task<bool> ExistsByActivationCodeAsync(
+         ActivationCode code,
+         CancellationToken cancellationToken = default)
+     {
+         if (code is null)
+         {
+             return false;
+         }
+
+         return await Context.Set<IoTDevice>()
+             .AsNoTracking()
+             .AnyAsync(
+                 d => d.ActivationCode != null && d.ActivationCode.Value == code.Value,
+                 cancellationToken);
      }
 }

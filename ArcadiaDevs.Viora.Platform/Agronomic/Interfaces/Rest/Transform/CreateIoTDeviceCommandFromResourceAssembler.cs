@@ -24,7 +24,8 @@ public static class CreateIoTDeviceCommandFromResourceAssembler
         return new CreateIoTDeviceCommand(
             plotId,
             resource.DeviceName,
-            effectiveStatus
+            effectiveStatus,
+            resource.ActivationCode
         );
     }
 }

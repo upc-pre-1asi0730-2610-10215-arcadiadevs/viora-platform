@@ -3,4 +3,13 @@
     <data name="WelcomeMessage" xml:space="preserve">
     <value>¡Bienvenido al módulo Agronómico!</value>
   </data>
+  <data name="InvalidActivationCodeFormat" xml:space="preserve">
+    <value>Formato de código de activación inválido. Se esperaba VIORA-&lt;SP|LW|WS&gt;&lt;NN&gt;-&lt;XXXX&gt;.</value>
+  </data>
+  <data name="ActivationCodeNotRecognized" xml:space="preserve">
+    <value>El código de activación no está reconocido por el catálogo de códigos emitidos.</value>
+  </data>
+  <data name="ActivationCodeAlreadyClaimed" xml:space="preserve">
+    <value>El código de activación ya fue canjeado por otro dispositivo.</value>
+  </data>
 </root>

@@ -49,6 +49,19 @@ public class IoTDeviceConfiguration : IEntityTypeConfiguration<IoTDevice>
             .HasMaxLength(20)
             .IsRequired();
 
+        // A4 part 2: activation_code is nullable in v1 (devices pre-dating the
+        // catalog can keep NULL); the value comes from ActivationCode.Value.
+        // The unique index is added directly in the AddIoTDeviceActivationCode
+        // migration (EF Core 9's HasIndex does not navigate through VO members
+        // like .Value for index expressions).
+        builder.Property(d => d.ActivationCode)
+            .HasColumnName("activation_code")
+            .HasConversion(
+                v => v == null ? null : v.Value,
+                v => v == null ? null : new ActivationCode(v))
+            .HasMaxLength(20)
+            .IsRequired(false);
+
         // Foreign key index for efficient plot-scoped lookups
         builder.HasIndex(d => d.PlotId)
             .HasDatabaseName("ix_iot_devices_plot_id");
