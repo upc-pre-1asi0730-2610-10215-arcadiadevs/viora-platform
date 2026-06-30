@@ -5,6 +5,22 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.1] - 2026-06-29
+
+### changed
+- `Agronomic/Domain/Model/Aggregates/IoTDevice.cs` — public setters replaced by private setters; the legacy `new IoTDevice(plotId, deviceName, status)` ctor replaced by a static `IoTDevice.Create(plotId, deviceName, clock)` factory returning `Result<IoTDevice, Error>`. The factory validates `plotId > 0` and non-blank `deviceName`, stamps `CreatedAt` from the constructor-injected `IClock` (SHARED-008), and emits the device in `IoTDeviceStatus.Pending`. New domain methods: `Activate()` (Pending → Active), `Deactivate()` (Active → Inactive), `UpdateInformation(name, status)` (validate-then-apply, returns `Result<Unit, Error>`), and a state-machine-agnostic `RecordReading()` no-op forward-compat hook for the future `IHasDomainEvents` dispatcher (CC-4). The lowercase `update` method is removed in favour of the Plot-pattern `UpdateInformation`.
+- `Agronomic/Domain/Model/Aggregates/AgronomicStatistic.cs` — public ctor replaced by a static `AgronomicStatistic.Create(userId, plotId, measurementDate, ndviValue, chillPortions, chillHours, chillModelState)` factory returning `Result<AgronomicStatistic, Error>`. Validates `userId > 0`, `plotId > 0`, NDVI in `[-1, 1]`, `chillPortions >= 0`, `chillHours >= 0`. `null` `chillModelState` defaults to `ChillModelState.Empty()`. New `RecordReading(...)` domain method re-applies the same validation contract and updates the measurement in place, returning `Result<Unit, Error>` and leaving state unchanged on failure.
+- `Agronomic/Domain/Model/ValueObjects/IoTDeviceStatus.cs` — additive enum value `IoTDeviceStatus.Pending` (no schema change; the column is `varchar(20)` storing the enum name as a string).
+- `Agronomic/Infrastructure/Persistence/EntityFrameworkCore/Configuration/IoTDeviceConfiguration.cs` — `builder.UsePropertyAccessMode(PropertyAccessMode.Field)` so EF Core reads and writes the aggregate's backing fields directly. Explicit `DeviceName → device_name` column mapping locks the snake_case column name; no schema change vs. the v1.9.0 InitialCreate migration.
+- `Agronomic/Infrastructure/Persistence/EntityFrameworkCore/Configuration/AgronomicStatisticConfiguration.cs` — same `UsePropertyAccessMode(PropertyAccessMode.Field)` call.
+- `Agronomic/Application/Internal/CommandServices/IoTDeviceCommandService.cs` — constructor-injects `IClock` (per SHARED-008) and routes device creation through `IoTDevice.Create(...)`. Update path now calls `device.UpdateInformation(...)` (returns `Result<Unit, Error>`).
+- `Agronomic/Application/Internal/CommandServices/AgronomicStatisticIngestionService.cs` — routes ingestion through `AgronomicStatistic.Create(...)`. A factory validation failure is treated as a per-plot skip (`return false`) so a single bad plot cannot poison the ingestion report; the report's `WithSkipped()` counter still reflects the miss.
+
+### added
+- `tests/ArcadiaDevs.Viora.Platform.Tests/Agronomic/Domain/Model/Aggregates/IoTDeviceTests.cs` — 10 xUnit tests pinning the `Create` validation contract (empty device name, non-positive plot id), the `Pending → Active` / `Active → Inactive` state machine, the `Activate` failure on non-`Pending` source state, the `Deactivate` failure on non-`Active` source state, and the factory `CreatedAt` stamping.
+- `tests/ArcadiaDevs.Viora.Platform.Tests/Agronomic/Domain/Model/Aggregates/AgronomicStatisticTests.cs` — 9 xUnit tests pinning the `Create` validation contract (non-positive user/plot id, out-of-range NDVI, negative chill), the null-`chillModelState` default to `Empty()`, the `RecordReading` update path, and the no-mutation guarantee on validation failure.
+- `scripts/verify-agro-002-roundtrip.ps1` — one-off round-trip verification: fresh `postgres:16` container, apply all migrations, assert `iot_devices` + `agronomic_statistics` table shape, round-trip a factory-shaped row INSERT → SELECT (Pending → Active UPDATE state machine), then tear down. Stands in for the Tier 3 test harness (out of scope).
+
 ## [1.9.0] - 2026-06-29
 
 ### added
@@ -151,7 +167,8 @@ and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0
 
 [1.7.7]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.7.6...release/1.7.7
 [1.9.0]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.8.2...release/1.9.0
+[1.9.1]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.9.0...release/1.9.1
 [1.7.6]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.7.5...release/1.7.6
-[1.7.5]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.7.0...1.7.5
-[1.7.0]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.6.0...1.7.0
+[1.7.5]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.7.4...release/1.7.5
+[1.7.0]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.6.0...release/1.7.0
 [1.6.0]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.4.0...release/1.6.0
