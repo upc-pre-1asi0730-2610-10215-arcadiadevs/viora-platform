@@ -80,4 +80,15 @@ public sealed class DynamicNutritionPolicyOptions
     ///     Biostimulant dosage (litres per hectare). Must be positive.
     /// </summary>
     public decimal BiostimulantDosageLitersPerHectare { get; set; } = 1.2m;
+
+    /// <summary>
+    ///     Chill-deficit trigger ratio consumed by
+    ///     <c>IChillDeficitEvaluator</c> (A2 part 1, PR-D1). A chill
+    ///     deficit is reported when
+    ///     <c>accumulatedChillPortions &lt; chillRequirement.Portions × ChillDeficitRatio</c>.
+    ///     Must be inside the closed interval [0, 1]. Default 0.7
+    ///     (the OS default; ~70 % of the requirement is enough to
+    ///     consider the requirement met).
+    /// </summary>
+    public decimal ChillDeficitRatio { get; set; } = 0.7m;
 }
