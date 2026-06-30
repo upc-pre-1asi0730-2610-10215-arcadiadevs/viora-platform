@@ -5,6 +5,29 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0] - 2026-06-30
+
+### added
+- `Agronomic/Domain/Model/Services/IYieldForecastEstimator.cs` — new domain port `IYieldForecastEstimator.Estimate(Plot, AgronomicStatistic?, ChillRequirement, DynamicNutritionPolicyOptions) -> decimal` (A1, PR-C). Pure-function port of the OS `YieldForecastEstimator.java`; signature follows design §5.1 (engram #45).
+- `Agronomic/Domain/Model/Services/YieldForecastEstimator.cs` — `sealed class` implementation registered as a singleton in `Program.cs`. Math: `yieldTonnes = baseYield × clamp(0.5 + 0.7·ndvi, 0.5, 1.2) × min(1, accumulatedChill / requirementChill)`, rounded to 2 decimals. Base yield 5.5 t/ha matches the OS `YieldEstimationPolicy` default. The policy is part of the signature so the estimator is deterministic per configuration and unit-testable without DI.
+- `Agronomic/Infrastructure/Configuration/DynamicNutritionPolicyOptions.cs` — `public sealed class` bound from the new `Agronomic:DynamicNutrition` configuration section (8 fields mirroring the OS `DynamicNutritionPolicy.java` shape: `TemperatureReferenceCelsius`, `HighRiskNdviThreshold`, `ModerateRiskNdviThreshold`, `HighRiskWindowDays`, `ExtremeRiskWindowDays`, `FoliarSupportDosageLitersPerHectare`, `PotassiumCalciumDosageKilogramsPerHectare`, `BiostimulantDosageLitersPerHectare`). Defaults: 20.0 / 0.30 / 0.50 / 14 / 21 / 2.5 / 3.0 / 1.2.
+- `Agronomic/Infrastructure/Configuration/DynamicNutritionPolicyOptionsValidator.cs` — `IValidateOptions<DynamicNutritionPolicyOptions>` enforcing the OS invariants at startup (CC-5 fail-fast): NDVI thresholds in [-1, 1] with `HighRiskNdviThreshold < ModerateRiskNdviThreshold`, `windowDays >= 1`, all dosages strictly positive.
+- `Program.cs` — registers `IYieldForecastEstimator` as a singleton and binds `DynamicNutritionPolicyOptions` via `AddOptionsWithValidateOnStart<DynamicNutritionPolicyOptions>().Bind(...)`. The validator is registered as a singleton `IValidateOptions<T>` and runs on startup; an invalid config aborts the host. The same options class is reused by `IDynamicNutritionPlanGenerator` in PR-D2 (single source of truth per design §5.2.1).
+- `appsettings.json` — new `Agronomic:DynamicNutrition` section with the 8 OS-default values.
+
+### changed
+- `Agronomic/Application/Internal/QueryServices/MonitoringSummaryQueryService.cs` — the three hard-coded `simulatedNdvi = 0.65m`, `simulatedYieldProjection = 4500m`, and `simulatedWeather = new WeatherSnapshot(22.5m, WeatherStatus.Sunny, ...)` literals (and the `120.5m` chill fallback) are removed. The resource values now reflect real provider-backed reads:
+  - NDVI = the latest `AgronomicStatistic.NdviValue` for the representative plot, or `0m` if no statistic exists.
+  - Yield = `_yieldForecastEstimator.Estimate(representative, latestStatistic, chillRequirement, _policy.Value)`.
+  - Weather = `await _weatherDataService.GetCurrentWeatherSnapshotAsync(representative, ct)`; a `null` snapshot propagates as `AgronomicErrors.WeatherUnavailable` (no fabricated `22.5m/Sunny/Medium` fallback).
+  - Chill hours fall back to `0m` + a `Warning`-level log line when no plot has AgroMonitoring data (the legacy `120.5m` literal is gone; there is no fabricated-data fallback, CC-8).
+  - The constructor now injects 5 new dependencies: `IWeatherDataService`, `IYieldForecastEstimator`, `IAgronomicStatisticRepository`, `IOptions<DynamicNutritionPolicyOptions>`, and `ChillRequirementResolver`. The representative-plot selection is deterministic (`OrderByDescending(IsActive).ThenBy(Id).First()`).
+- Acceptance gate: `grep -rn "0.65m\|4500m\|22.5m\|120.5m" ArcadiaDevs.Viora.Platform/Agronomic/Application/Internal/QueryServices/MonitoringSummaryQueryService.cs` returns 0 matches (the spec's acceptance gate, engram #43 §A1).
+
+### notes
+- No tests written and no `dotnet test` run during this PR (Phase 2 user decision, engram #50). Build sanity only (`dotnet build`).
+- No schema change; no EF migration; the only DB impact is on the AgronomicStatistic reads (read-only).
+
 ## [1.11.2] - 2026-06-30
 
 ### added
