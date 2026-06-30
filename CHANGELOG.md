@@ -5,6 +5,19 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-06-29
+
+### added
+- SHARED-001 part 1: 4 new EF Core migrations that persist the 4 Agronomic aggregates that previously had no PostgreSQL representation (`agronomic_statistics` and `monitoring_summaries` are new; `iot_devices` and `dynamic_nutrition_plans` were already in `InitialCreate` and the matching `AddIoTDevice` / `AddDynamicNutritionPlan` migrations are empty no-ops kept for alphabetical ordering). Migrations ship with the per-BC `Apply<BC>Configuration` extension methods in place (SHARED-014, shipped in 1.8.2).
+- `Agronomic/Infrastructure/Persistence/EntityFrameworkCore/Configuration/AgronomicStatisticConfiguration.cs` — `IEntityTypeConfiguration<AgronomicStatistic>` maps the aggregate to `agronomic_statistics` (long id, user_id, plot_id, measurement_date, ndvi_value, chill_portions, chill_hours, and the flattened `ChillModelState` value object via `OwnsOne` → `chill_model_intermediate_product`, `chill_model_previous_hour_temperature_celsius`, `chill_model_prior_hour_temperature_celsius`). Two indexes: `(plot_id, measurement_date)` and `user_id`.
+- `Agronomic/Infrastructure/Persistence/EntityFrameworkCore/Configuration/MonitoringSummaryConfiguration.cs` — `IEntityTypeConfiguration<MonitoringSummary>` maps the aggregate to `monitoring_summaries` (long id via `MonitoringSummaryId` value-converter, user_id via `UserId` value-converter, `general_health_status` enum-as-string, `average_ndvi` / `accumulated_chill_hours` / `yield_projection` via decimal value-converters, `last_synchronization_at` via DateTimeOffset value-converter, plus the flattened `WeatherSnapshot` (4 columns) and `MitigationRecommendation` (3 columns) record VOs via `ComplexProperty`). One index on `user_id`.
+- `Agronomic/Application/Internal/Configuration/Extensions/ModelBuilderExtensions.cs` — `ApplyAgronomicConfiguration` now wires the 2 new configurations in alphabetical order.
+- `Agronomic/Domain/Model/ValueObjects/MitigationRecommendation.cs` — additive parameterless constructor for EF Core materialization as a `ComplexProperty`. The validating constructor is unchanged.
+
+### changed
+- `Migrations/AppDbContextModelSnapshot.cs` regenerated to include `AgronomicStatistic` and `MonitoringSummary` plus their flattened value-object sub-fields. The pre-1.9.0 per-BC config sections are byte-equivalent (verified by PR-5's `NoOpAfterRefactor` migration round-trip).
+- 2 Surveillance-owned record value-object sub-fields (the `PlotId` and `ReporterUserId` owned types on `Alert` / `PestSightingReport`) now correctly have their `id` columns in the snapshot (post-PR-5 SHARED-014 refactor).
+
 ## [1.8.2] - 2026-06-29
 
 ### changed
@@ -137,6 +150,7 @@ and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0
 - surveillance: 404 returned when reviewing a missing alert (was 500)
 
 [1.7.7]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.7.6...release/1.7.7
+[1.9.0]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.8.2...release/1.9.0
 [1.7.6]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.7.5...release/1.7.6
 [1.7.5]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.7.0...1.7.5
 [1.7.0]: https://github.com/upc-pre-1asi0730-2610-10215-arcadiadevs/viora-platform/compare/release/1.6.0...1.7.0
