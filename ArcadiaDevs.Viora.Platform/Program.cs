@@ -158,6 +158,13 @@ builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.
 builder.Services.AddSingleton<IValidateOptions<DynamicNutritionPolicyOptions>, DynamicNutritionPolicyOptionsValidator>();
 builder.Services.AddOptionsWithValidateOnStart<DynamicNutritionPolicyOptions>()
     .Bind(builder.Configuration.GetSection(DynamicNutritionPolicyOptions.SectionName));
+// A2 part 1 (PR-D1) — the 3 per-risk evaluators consumed by the future
+// RecommendDynamicNutritionPlanCommandService refactor (PR-D2). Stateless
+// pure functions; singleton lifetime matches the existing
+// ClimateRiskEvaluator / InMemoryActivationCodeCatalog pattern.
+builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.IChillDeficitEvaluator, ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.ChillDeficitEvaluator>();
+builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.ILowNdviEvaluator, ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.LowNdviEvaluator>();
+builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.IHydricStressEvaluator, ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.HydricStressEvaluator>();
 builder.Services.AddScoped<IAgronomicStatisticRepository, AgronomicStatisticRepository>();
 builder.Services.AddScoped<IAgronomicStatisticsQueryService, AgronomicStatisticsQueryService>();
 builder.Services.AddScoped<IAgronomicStatisticSeriesQueryService, AgronomicStatisticSeriesQueryService>();
