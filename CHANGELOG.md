@@ -5,6 +5,34 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.2] - 2026-06-30
+
+### added
+- `Agronomic/Domain/Model/Aggregates/IoTDevice.cs` — new `ActivationCode? ActivationCode { get; private set; }` property (A4 part 2). Nullable at the persistence boundary so legacy devices pre-dating the catalog can keep `null`; new devices created via the new `Claim` factory always carry a non-null code. The legacy `Create` factory is unchanged and continues to emit devices without an `ActivationCode` (back-compat).
+- `Agronomic/Domain/Model/Aggregates/IoTDevice.cs` — new `static Result<IoTDevice, Error> Claim(long plotId, string deviceName, ActivationCode code, IClock clock)` factory (A4 part 2). Mirrors the existing `Create` factory with the additional `code == null` → `ACTIVATION_CODE_REQUIRED` invariant. The device is emitted in `IoTDeviceStatus.Pending` and the `ActivationCode` is bound to the aggregate.
+- `Agronomic/Application/Internal/CommandServices/IoTDeviceCommandService.cs` — `Handle(CreateIoTDeviceCommand)` now performs the full parse-check-claim-save flow against the `IActivationCodeCatalog` from PR-B1 (A4 part 2):
+  1. Parse the `ActivationCode` VO from the command string; `ArgumentException` is caught and surfaced as `AgronomicErrors.InvalidActivationCodeFormat`.
+  2. `_catalog.IsIssued(code)` returns `false` → `AgronomicErrors.ActivationCodeNotRecognized` (the code is well-formed but not in the issued-code catalog).
+  3. `_repository.ExistsByActivationCodeAsync(code, ct)` returns `true` → `AgronomicErrors.ActivationCodeAlreadyClaimed` (the pre-flight guard against double-claim).
+  4. `IoTDevice.Claim(...)` propagates any factory failure (e.g. `PLOT_ID_REQUIRED` / `DEVICE_NAME_REQUIRED` / `ACTIVATION_CODE_REQUIRED`).
+  5. `_repository.AddAsync(device)` + `_unitOfWork.CompleteAsync(ct)`; the race guard catches `DbUpdateException` wrapping a Postgres 23505 SQLSTATE on the `ix_iot_devices_activation_code` index and maps it to the same `AgronomicErrors.ActivationCodeAlreadyClaimed` failure.
+  The constructor now also injects `IUnitOfWork` (replacing the legacy `SaveAsync` direct-save path) so the race guard can wrap the save in a try/catch.
+- `Agronomic/Domain/Repositories/IIoTDeviceRepository.cs` — new `Task<bool> ExistsByActivationCodeAsync(ActivationCode code, CancellationToken)` (A4 part 2). The interface also gains `Task AddAsync(IoTDevice device, CancellationToken)` so the command service can call `Add` + `CompleteAsync` separately, letting the race guard wrap the save.
+- `Agronomic/Infrastructure/Persistence/EntityFrameworkCore/Repositories/IoTDeviceRepository.cs` — `ExistsByActivationCodeAsync` implementation: `Context.Set<IoTDevice>().AsNoTracking().AnyAsync(d => d.ActivationCode != null && d.ActivationCode.Value == code.Value, cancellationToken)`. `AddAsync` is inherited from `BaseRepository<IoTDevice>`.
+- `Agronomic/Resources/AgronomicMessages.resx` + `AgronomicMessages.es.resx` — 3 new error keys: `InvalidActivationCodeFormat` (en) / `Formato de código de activación inválido` (es), `ActivationCodeNotRecognized` (en) / `Código de activación no reconocido` (es), `ActivationCodeAlreadyClaimed` (en) / `Código de activación ya canjeado` (es).
+- `Agronomic/Domain/Model/Errors/AgronomicErrors.cs` — 3 new `static readonly Error` constants matching the resx keys: `InvalidActivationCodeFormat`, `ActivationCodeNotRecognized`, `ActivationCodeAlreadyClaimed`. The codes follow the existing `Agronomic.<Name>` convention.
+- `Migrations/20260630055455_AddIoTDeviceActivationCode.cs` — new EF Core migration that adds a nullable `activation_code` `varchar(20)` column to `iot_devices` and a unique index `ix_iot_devices_activation_code` (A4 part 2 schema change). The column is nullable in v1 so the migration is safe to apply on a populated database; the unique index is the backstop against double-claim races that slip past the pre-flight `ExistsByActivationCodeAsync` check.
+
+### changed
+- `Agronomic/Interfaces/Rest/Resources/CreateIoTDeviceResource.cs` — `POST /api/v1/plots/{plotId}/iot-devices` request body now **requires** `activationCode` (was optional in v1.11.1). The new field is decorated with `[Required]` and `[StringLength(20)]` to match the column shape.
+- `Agronomic/Domain/Model/Commands/CreateIoTDeviceCommand.cs` — `CreateIoTDeviceCommand` ctor now requires a non-blank `activationCode` parameter and validates it; the assembler (`CreateIoTDeviceCommandFromResourceAssembler.cs`) passes the resource's `activationCode` through. Existing callers that omit the field will throw `ArgumentException` at construction time.
+- **Deployment runbook** — `iot_devices.activation_code` is added as a nullable column. Operators must either (a) backfill the column for every existing device with the activation code that corresponds to the device's IoT unit, or (b) deactivate the existing devices in the field. New devices created via the API are always claimed against a real issued code. **There is no automatic backfill** in this migration; the choice between (a) and (b) is an operational one.
+
+### notes
+- **No tests written** (Phase 2 user decision, engram #50). The 84 existing xUnit tests in `tests/ArcadiaDevs.Viora.Platform.Tests/Iam/` are untouched and were not re-run as part of this PR. Behavioural verification rests on code review and manual smoke. `sdd-verify` at the end of Phase 2 will mark A4 part 2 as "not verified, no test coverage"; this is accepted.
+- **One deviation from the spec**: the design sketch in engram #45 specified `public ActivationCode ActivationCode { get; private set; } = null!;` (non-nullable with a null-forgiving initializer). The implemented property is `ActivationCode? ActivationCode { get; private set; }` (nullable) so that the EF Core materializer can correctly hydrate legacy `iot_devices` rows whose `activation_code` is `NULL` (pre-PR-B2 devices). The `null!` pattern would compile but would throw `NullReferenceException` at materialization time for legacy rows; the nullable shape matches the migration's `nullable: true` column definition and keeps the legacy `IoTDevice.Create` factory path safe.
+- **One deviation from the spec**: the design sketch in engram #45 §7.3 specified `builder.HasIndex(d => d.ActivationCode.Value).IsUnique()` in the EF configuration. EF Core 9 rejects the `.Value` navigation as an invalid member-access expression (the index expression must be a direct property/field access), so the unique index is declared in the migration's `Up` method instead of in the configuration. The configuration still maps the column (name + converter + max length + nullable) so the model snapshot is consistent.
+
 ## [1.11.0] - 2026-06-30
 
 ### changed
