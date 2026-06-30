@@ -5,6 +5,16 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.2] - 2026-06-29
+
+### changed
+- `AppDbContext.OnModelCreating` no longer uses `builder.ApplyConfigurationsFromAssembly(typeof(PlotConfiguration).Assembly)`. It now calls three explicit per-BC extension methods — `builder.ApplyAgronomicConfiguration()`, `builder.ApplyIamConfiguration()`, `builder.ApplySurveillanceConfiguration()` — and then `UseSnakeCaseNamingConvention()`. Each bounded context now owns its own EF Core mapping; the `AppDbContext` only orchestrates the call order. This is the SHARED-014 standalone refactor and is the load-bearing pre-requisite for the new EF migrations shipping in the next release.
+
+### added
+- `Agronomic/Infrastructure/Persistence/EntityFrameworkCore/Configuration/Extensions/ModelBuilderExtensions.cs` — `ApplyAgronomicConfiguration` now wires the 4 Agronomic `IEntityTypeConfiguration<>` classes (`PlotConfiguration`, `IoTDeviceConfiguration`, `AgroMonitoringPlotIntegrationConfiguration`, `DynamicNutritionPlanConfiguration`). The previous file only wired 2 of them.
+- `Iam/Infrastructure/Persistence/EntityFrameworkCore/Configuration/Extensions/ModelBuilderExtensions.cs` — `ApplyIamConfiguration` now delegates to `UserConfiguration` + `RoleConfiguration` instead of the previous inline `builder.Entity<User>()` calls (which were missing the `HasIndex` / `HasColumnName` / `Roles` relationship that the proper configurations already provide).
+- `Surveillance/Infrastructure/Persistence/EntityFrameworkCore/Configuration/Extensions/ModelBuilderExtensions.cs` — new file. `ApplySurveillanceConfiguration` wires the 3 Surveillance `IEntityTypeConfiguration<>` classes (`AlertConfiguration`, `PestSightingReportConfiguration`, `SymptomDictionaryItemConfiguration`).
+
 ## [1.8.1] - 2026-06-29
 
 ### changed

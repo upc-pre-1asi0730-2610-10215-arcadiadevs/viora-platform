@@ -1,9 +1,11 @@
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Entities;
-using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Aggregates;
+using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
+using ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
@@ -58,7 +60,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         // schema via HasDefaultSchema made the runtime model diverge from the
         // migration snapshot whenever DATABASE_SCHEMA != "public", which tripped
         // EF Core's PendingModelChangesWarning and aborted startup.
-        builder.ApplyConfigurationsFromAssembly(typeof(PlotConfiguration).Assembly);
+        //
+        // SHARED-014: per-BC Apply<BC>Configuration extension methods replace
+        // ApplyConfigurationsFromAssembly so each bounded context owns its own
+        // EF Core mapping. The call order is alphabetical by BC and matches the
+        // order used to generate the migration snapshot.
+        builder.ApplyAgronomicConfiguration();
+        builder.ApplyIamConfiguration();
+        builder.ApplySurveillanceConfiguration();
         builder.UseSnakeCaseNamingConvention();
     }
 }
