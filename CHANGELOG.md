@@ -5,6 +5,22 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0-rc] - 2026-06-29
+
+### added
+- `Surveillance/Domain/Model/Events/AlertUpdatedEvent.cs` — `record` carrying `long AlertId`, `long PlotId` (CC-1 primitive transport), and a `string Transition` label (`CONFIRMED` / `DISMISSED` / `ESCALATED` / `LINKED_REPORT`) so observers can discriminate the originating method without sniffing the resulting state.
+- `Shared/Domain/Model/Events/IHasDomainEvents.cs` — contract for aggregates that raise domain events; the post-commit `SaveChangesInterceptor` dispatcher (CC-4) is deferred to SHARED-011 and is **not** wired in Phase 1. The interface exposes `IReadOnlyCollection<IEvent> DomainEvents` so the future dispatcher can route through the existing `Cortex.Mediator` bus without an additional layer of abstraction.
+- `Surveillance/Domain/Model/ValueObjects/EAlertSeverityExtensions.cs` — `RaiseOne()` implements the severity ladder `LOW → MEDIUM → HIGH → CRITICAL` and caps at `CRITICAL` (no overflow).
+- `Surveillance/Domain/Model/Aggregates/Alert.cs` — 4 new state-machine domain methods (SURV-001). Each returns `Result<Unit, Error>`, leaves state unchanged on failure, and raises an `AlertUpdatedEvent` on every successful transition:
+  - `ConfirmFromInspection()` — from any non-terminal state (`ACTIVE` / `UNDER_REVIEW` / `RESOLVED` is *not* terminal for this method, but `DISMISSED` and `RESOLVED` are) to `UNDER_REVIEW`; raises severity by one level. Returns `ALERT_TERMINAL` on `DISMISSED` / `RESOLVED` source.
+  - `Dismiss()` — from any non-`DISMISSED` state to `DISMISSED` (terminal). Returns `ALERT_TERMINAL` on already-`DISMISSED`.
+  - `Escalate()` — raises severity by one level without changing status. Always succeeds.
+  - `LinkReport(PestSightingReportId)` — attaches the report id to the new `LinkedReportId` property; no state change. Always succeeds. The `LinkedReportId` property is marked `[NotMapped]` in Phase 1; the EF column and FK migration are added in a future phase.
+- `tests/ArcadiaDevs.Viora.Platform.Tests/Surveillance/Domain/Model/Aggregates/AlertTests.cs` — 11 xUnit tests pinning the state machine: `ACTIVE → UNDER_REVIEW` transition + severity raise, `ConfirmFromInspection` on `DISMISSED` returns `ALERT_TERMINAL` and leaves state unchanged, `Dismiss` from `UNDER_REVIEW` and from `ACTIVE`, `Escalate` severity raise and cap at `CRITICAL`, `LinkReport` attaches without state change, `MarkAsReviewed` preservation, `IHasDomainEvents` implementation, and `DomainEvents` empty on construction.
+
+### changed
+- `Surveillance/Domain/Model/Aggregates/Alert.cs` — the aggregate now implements `IHasDomainEvents` and exposes a private `List<IEvent> _domainEvents` field. The existing `MarkAsReviewed()` is **unchanged** and is still the path used by `PATCH /api/v1/alerts/{id}`; the controller surface is **not** modified in this PR (the 4 new HTTP endpoints + the cross-BC `AlertGeneratedIntegrationEvent` publication land in PR-8b).
+
 ## [1.9.1] - 2026-06-29
 
 ### changed
