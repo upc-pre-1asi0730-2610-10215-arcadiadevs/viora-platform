@@ -124,16 +124,23 @@ public class AgronomicStatisticIngestionService : IAgronomicStatisticIngestionSe
         double accumulatedChillHours = Math.Max(0.0, (baseStatistic?.ChillHours ?? 0.0) + chillAccumulation.ChillHours);
         double accumulatedChillPortions = Math.Max(0.0, (baseStatistic?.ChillPortions ?? 0.0) + chillAccumulation.ChillPortions);
 
-        var newStatistic = new AgronomicStatistic(
-            plot.OwnerUserId,
-            plot.Id,
-            today,
-            integration.NdviMean.Value,
-            accumulatedChillPortions,
-            accumulatedChillHours,
-            chillAccumulation.NewState
-        );
+        // AGRO-002: route through the factory so private setters + validation
+        // are the only way to instantiate an AgronomicStatistic. On validation
+        // failure, skip the plot rather than poison the ingestion report.
+        var createResult = AgronomicStatistic.Create(
+            userId: plot.OwnerUserId,
+            plotId: plot.Id,
+            measurementDate: today,
+            ndviValue: integration.NdviMean.Value,
+            chillPortions: accumulatedChillPortions,
+            chillHours: accumulatedChillHours,
+            chillModelState: chillAccumulation.NewState);
+        if (createResult is Result<AgronomicStatistic, Error>.Failure)
+        {
+            return false;
+        }
 
+        var newStatistic = ((Result<AgronomicStatistic, Error>.Success)createResult).Value;
         await _statisticRepository.AddAsync(newStatistic, cancellationToken);
         return true;
     }

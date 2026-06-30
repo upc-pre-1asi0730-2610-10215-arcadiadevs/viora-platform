@@ -9,9 +9,13 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.Entity
 ///     Entity type configuration for the <see cref="IoTDevice"/> aggregate root.
 /// </summary>
 /// <remarks>
-///     (TS012TASK002) Maps the IoTDevice aggregate to the <c>iot_devices</c> table
-///     in snake_case following the project convention. The <see cref="IoTDeviceStatus"/>
-///     enum is stored as a varchar for readability and portability.
+///     (TS012TASK002 + AGRO-002) Maps the IoTDevice aggregate to the
+///     <c>iot_devices</c> table in snake_case following the project convention.
+///     The <see cref="IoTDeviceStatus"/> enum is stored as a varchar for
+///     readability and portability. The aggregate uses private setters and
+///     exposes a <c>Create</c> factory; EF Core is told to read and write the
+///     backing fields directly via <see cref="EntityTypeBuilder{TEntity}.UsePropertyAccessMode"/>,
+///     so the private setters are never bypassed at runtime.
 /// </remarks>
 public class IoTDeviceConfiguration : IEntityTypeConfiguration<IoTDevice>
 {
@@ -19,6 +23,11 @@ public class IoTDeviceConfiguration : IEntityTypeConfiguration<IoTDevice>
     public void Configure(EntityTypeBuilder<IoTDevice> builder)
     {
         builder.ToTable("iot_devices");
+
+        // AGRO-002: read/write backing fields directly so the private setters
+        // on the aggregate are not bypassed. Required for the factory-method +
+        // private-setter hardening pattern.
+        builder.UsePropertyAccessMode(PropertyAccessMode.Field);
 
         builder.HasKey(d => d.Id);
 
@@ -30,12 +39,15 @@ public class IoTDeviceConfiguration : IEntityTypeConfiguration<IoTDevice>
             .HasColumnName("plot_id")
             .IsRequired();
 
+        builder.Property(d => d.DeviceName)
+            .HasColumnName("device_name")
+            .IsRequired();
+
         builder.Property(d => d.Status)
             .HasColumnName("status")
             .HasConversion<string>()
             .HasMaxLength(20)
             .IsRequired();
-        
 
         // Foreign key index for efficient plot-scoped lookups
         builder.HasIndex(d => d.PlotId)

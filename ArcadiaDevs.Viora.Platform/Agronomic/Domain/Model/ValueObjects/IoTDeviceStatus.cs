@@ -8,6 +8,7 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects
     /// </summary>
     public enum IoTDeviceStatus
     {
+        Pending,
         Active,
         Inactive,
         Maintenance
