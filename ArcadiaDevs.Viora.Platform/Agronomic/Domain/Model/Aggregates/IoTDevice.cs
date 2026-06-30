@@ -20,6 +20,19 @@ public partial class IoTDevice
     public string DeviceName { get; private set; } = string.Empty;
     public IoTDeviceStatus Status { get; private set; }
 
+    /// <summary>
+    ///     The activation code the device was claimed with (A4 part 2).
+    ///     <para>
+    ///         Nullable at the persistence boundary for migration safety:
+    ///         devices pre-dating the catalog can keep <c>null</c>; new
+    ///         devices created via <see cref="Claim"/> always carry a code.
+    ///         EF Core reads the underlying <c>activation_code</c> column
+    ///         (nullable <c>varchar(20)</c> per the AddIoTDeviceActivationCode
+    ///         migration) and assigns <c>null</c> for legacy rows.
+    ///     </para>
+    /// </summary>
+    public ActivationCode? ActivationCode { get; private set; }
+
     // Parameterless constructor for EF Core materialization.
     private IoTDevice() { }
 
@@ -57,6 +70,64 @@ public partial class IoTDevice
             PlotId = plotId,
             DeviceName = deviceName.Trim(),
             Status = IoTDeviceStatus.Pending,
+            CreatedAt = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero)
+        };
+        return new Result<IoTDevice, Error>.Success(device);
+    }
+
+    /// <summary>
+    ///     Claims a new <see cref="IoTDevice"/> by binding a pre-issued
+    ///     <see cref="ActivationCode"/> to the device record (A4 part 2).
+    ///     <para>
+    ///         The catalog check (whether the code was actually issued) and
+    ///         the uniqueness check (whether the code is already claimed)
+    ///         happen at the command-service layer; this factory only enforces
+    ///         the aggregate-level invariants: positive <paramref name="plotId"/>,
+    ///         non-blank <paramref name="deviceName"/>, and a non-null
+    ///         <paramref name="code"/>. The device is emitted in
+    ///         <see cref="IoTDeviceStatus.Pending"/>.
+    ///     </para>
+    /// </summary>
+    /// <param name="plotId">The owning plot identifier; must be positive.</param>
+    /// <param name="deviceName">The human-readable device name; must not be empty.</param>
+    /// <param name="code">The activation code the producer is claiming; must not be null.</param>
+    /// <param name="clock">Clock used to stamp <c>CreatedAt</c>.</param>
+    /// <returns>
+    ///     A <see cref="Result{TValue, TError}"/> wrapping the device on success
+    ///     or an <see cref="Error"/> on validation failure.
+    /// </returns>
+    public static Result<IoTDevice, Error> Claim(
+        long plotId,
+        string deviceName,
+        ActivationCode code,
+        IClock clock)
+    {
+        if (plotId <= 0)
+        {
+            return new Result<IoTDevice, Error>.Failure(
+                new Error("PLOT_ID_REQUIRED", "IoTDevice requires a positive PlotId."));
+        }
+
+        if (string.IsNullOrWhiteSpace(deviceName))
+        {
+            return new Result<IoTDevice, Error>.Failure(
+                new Error("DEVICE_NAME_REQUIRED", "DeviceName must not be empty."));
+        }
+
+        if (code is null)
+        {
+            return new Result<IoTDevice, Error>.Failure(
+                new Error("ACTIVATION_CODE_REQUIRED", "ActivationCode is required to claim a device."));
+        }
+
+        ArgumentNullException.ThrowIfNull(clock);
+
+        var device = new IoTDevice
+        {
+            PlotId = plotId,
+            DeviceName = deviceName.Trim(),
+            Status = IoTDeviceStatus.Pending,
+            ActivationCode = code,
             CreatedAt = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero)
         };
         return new Result<IoTDevice, Error>.Success(device);

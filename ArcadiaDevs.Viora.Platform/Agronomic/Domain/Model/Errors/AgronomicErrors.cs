@@ -60,6 +60,17 @@ public static class AgronomicErrors
     public static readonly Error WeatherUnavailable =
         new("Agronomic.WeatherUnavailable", "Live weather data is currently unavailable; the platform does not provide a fabricated fallback.");
 
+    // A4 part 2: activation-code claim failures. The codes are stable
+    // identifiers; the messages are surfaced via AgronomicMessages.resx.
+    public static readonly Error InvalidActivationCodeFormat =
+        new("Agronomic.InvalidActivationCodeFormat", "The activation code format is invalid. Expected VIORA-<SP|LW|WS><NN>-<XXXX>.");
+
+    public static readonly Error ActivationCodeNotRecognized =
+        new("Agronomic.ActivationCodeNotRecognized", "The activation code is not in the issued-code catalog.");
+
+    public static readonly Error ActivationCodeAlreadyClaimed =
+        new("Agronomic.ActivationCodeAlreadyClaimed", "The activation code has already been claimed by another device.");
+
     public static readonly Error InternalServerError =
         new("Agronomic.InternalServerError", "An unexpected internal error occurred in Agronomic.");
 }
