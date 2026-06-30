@@ -20,6 +20,11 @@ public class AgronomicStatisticConfiguration : IEntityTypeConfiguration<Agronomi
     {
         builder.ToTable("agronomic_statistics");
 
+        // AGRO-002: read/write backing fields directly so the private setters
+        // on the aggregate are not bypassed. Required for the factory-method +
+        // private-setter hardening pattern.
+        builder.UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.HasKey(s => s.Id);
 
         builder.Property(s => s.Id)
