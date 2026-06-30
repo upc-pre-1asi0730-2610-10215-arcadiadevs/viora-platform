@@ -150,6 +150,14 @@ builder.Services.AddScoped<IIoTDeviceRepository, IoTDeviceRepository>();
 builder.Services.AddScoped<IMonitoringSummaryQueryService, MonitoringSummaryQueryService>();
 builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.ClimateRiskEvaluator>();
 builder.Services.AddSingleton<IActivationCodeCatalog, InMemoryActivationCodeCatalog>();
+// A1 (PR-C): yield forecast estimator (pure-function port of OS YieldForecastEstimator).
+builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.IYieldForecastEstimator, ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.YieldForecastEstimator>();
+// A1 (PR-C) + A2 (PR-D1) — dynamic-nutrition policy bound from configuration.
+// The same options class is consumed by the yield estimator (this PR) and the
+// dynamic-nutrition plan generator (PR-D2). Single source of truth.
+builder.Services.AddSingleton<IValidateOptions<DynamicNutritionPolicyOptions>, DynamicNutritionPolicyOptionsValidator>();
+builder.Services.AddOptionsWithValidateOnStart<DynamicNutritionPolicyOptions>()
+    .Bind(builder.Configuration.GetSection(DynamicNutritionPolicyOptions.SectionName));
 builder.Services.AddScoped<IAgronomicStatisticRepository, AgronomicStatisticRepository>();
 builder.Services.AddScoped<IAgronomicStatisticsQueryService, AgronomicStatisticsQueryService>();
 builder.Services.AddScoped<IAgronomicStatisticSeriesQueryService, AgronomicStatisticSeriesQueryService>();
