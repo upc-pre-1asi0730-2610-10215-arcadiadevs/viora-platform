@@ -26,6 +26,7 @@ using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Pipeline.Middleware.Extensions;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Cortex.Mediator.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
@@ -82,8 +83,27 @@ var useEnvironmentVariables =
     !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("DATABASE_URL"));
 
 // Configure Database Context and route EF logs through the app logger pipeline.
+// SHARED-011: the EF Core SaveChangesInterceptors are now registered here
+// (previously, AuditableEntityInterceptor was registered in
+// AppDbContext.OnConfiguring). The composition root owns the interceptor
+// registration so both interceptors can be DI-injected AND so the locked
+// order — AuditableEntityInterceptor FIRST, PostCommitDomainEventDispatcher
+// LAST — is enforced in exactly one place.
 builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
 {
+    // Interceptor order is locked (SHARED-011, design #45 §5.6):
+    //   1) AuditableEntityInterceptor FIRST: stamps CreatedAt/UpdatedAt
+    //      on every tracked entity BEFORE the post-commit dispatcher
+    //      reads the entity into the event payload. If the audit
+    //      interceptor ran AFTER the dispatcher, the event payload would
+    //      carry a stale (pre-stamp) timestamp.
+    //   2) PostCommitDomainEventDispatcher LAST: dispatches
+    //      IHasDomainEvents.DomainEvents on the in-process bus after
+    //      the DB write commits (CC-9 best-effort, CC-2 in-process bus).
+    options.AddInterceptors(
+        serviceProvider.GetRequiredService<AuditableEntityInterceptor>(),
+        serviceProvider.GetRequiredService<PostCommitDomainEventDispatcher>());
+
     if (!useEnvironmentVariables)
     {
         options.UseInMemoryDatabase("VioraPlatform");
@@ -111,6 +131,18 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
 // Shared Bounded Context Injection Configuration
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Shared.Domain.IClock, ArcadiaDevs.Viora.Platform.Shared.Infrastructure.SystemClock>();
+// SHARED-011: the two EF Core SaveChangesInterceptors are registered as
+// singletons so they can be DI-injected into the AddDbContext lambda
+// (previously, AuditableEntityInterceptor was constructed inline in
+// AppDbContext.OnConfiguring and could not consume services from the
+// host's DI container). Both are stateless: the audit interceptor
+// stamps CreatedAt/UpdatedAt; the post-commit dispatcher holds an
+// IMediator + ILogger reference and snapshots the ChangeTracker on
+// every SavedChanges call. The singleton lifetime matches the
+// "stateless shared infrastructure service" pattern of
+// ClimateRiskEvaluator / InMemoryActivationCodeCatalog.
+builder.Services.AddSingleton<AuditableEntityInterceptor>();
+builder.Services.AddSingleton<PostCommitDomainEventDispatcher>();
 
 // External API Clients
 builder.Services.AddHttpClient<AgroMonitoringApiClient>(client =>

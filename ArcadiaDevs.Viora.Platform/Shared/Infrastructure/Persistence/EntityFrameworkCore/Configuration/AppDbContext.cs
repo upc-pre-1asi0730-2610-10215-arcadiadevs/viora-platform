@@ -4,7 +4,6 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFram
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
-using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using Microsoft.EntityFrameworkCore;
 
@@ -43,7 +42,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// <inheritdoc />
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
-        builder.AddInterceptors(new AuditableEntityInterceptor());
+        // SHARED-011: the interceptors are no longer registered here.
+        // The composition root (Program.cs) registers them via the
+        // AddDbContext<AppDbContext> lambda in the locked order:
+        //   1) AuditableEntityInterceptor FIRST (audit timestamps set
+        //      before the post-commit dispatcher reads the entity)
+        //   2) PostCommitDomainEventDispatcher LAST (post-commit dispatch)
+        // This keeps DbContext configuration centralized in the
+        // composition root and lets both interceptors be DI-injected
+        // (the previous in-method construction could not consume
+        // services from the host's DI container).
         base.OnConfiguring(builder);
     }
 
