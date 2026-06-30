@@ -82,21 +82,49 @@ public class PlotRepository : BaseRepository<Plot>, IPlotRepository
                 cancellationToken);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    ///     Checks whether the plot has any related operational records.
+    /// </summary>
+    /// <remarks>
+    ///     A3 — short-circuits across the 3 intra-BC aggregates that own a
+    ///     <c>PlotId</c> foreign key (<c>IoTDevice</c>, <c>DynamicNutritionPlan</c>,
+    ///     <c>AgronomicStatistic</c>). Cross-BC checks (Surveillance <c>Alert</c>,
+    ///     Surveillance <c>PestSightingReport</c>) are intentionally OUT of scope
+    ///     for this PR (see locked decision #2 in engram #42 — fail-open
+    ///     <c>return false</c>, status quo).
+    ///     <para>
+    ///     TODO AGRONOMIC-A3-CROSSBC: when SHARED-015 (<c>IAgronomicContextFacade</c>)
+    ///     lands, replace this method's body with calls to
+    ///     <c>IAgronomicContextFacade.AlertsExistForPlotAsync</c> and
+    ///     <c>IAgronomicContextFacade.PestSightingReportsExistForPlotAsync</c> in
+    ///     addition to the 3 intra-BC checks. Until then, plots with cross-BC
+    ///     records will be physically deleted and leave orphan FK references in
+    ///     Surveillance — this is the accepted limitation per engram #42.
+    ///     </para>
+    /// </remarks>
     public async Task<bool> HasRelatedOperationalRecordsAsync(
         int plotId,
         CancellationToken cancellationToken = default)
     {
-        // Check if there are any related operational records
-        // For example, IoTDevices, DynamicNutritionPlans, etc.
-        // As a simple implementation we will check IoTDevices if they have a PlotId
-        // In a real scenario we'd query multiple aggregate roots or use a domain event/read model
-        
         bool hasDevices = await Context.Set<IoTDevice>()
             .AnyAsync(d => d.PlotId == plotId, cancellationToken);
-            
-        // Additional checks can be added here
-        
-        return hasDevices;
+
+        if (hasDevices)
+        {
+            return true;
+        }
+
+        bool hasNutritionPlans = await Context.Set<DynamicNutritionPlan>()
+            .AnyAsync(p => p.PlotId == plotId, cancellationToken);
+
+        if (hasNutritionPlans)
+        {
+            return true;
+        }
+
+        bool hasAgronomicStatistics = await Context.Set<AgronomicStatistic>()
+            .AnyAsync(s => s.PlotId == plotId, cancellationToken);
+
+        return hasAgronomicStatistics;
     }
 }

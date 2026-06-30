@@ -5,6 +5,14 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] - 2026-06-30
+
+### changed
+- `Agronomic/Infrastructure/Persistence/EntityFrameworkCore/Repositories/PlotRepository.cs` — `HasRelatedOperationalRecordsAsync` now short-circuits across all 3 intra-BC aggregates that own a `PlotId` foreign key: `IoTDevice`, `DynamicNutritionPlan`, and `AgronomicStatistic` (A3). Previously the method checked `IoTDevice` only, so a plot with a `DynamicNutritionPlan` or `AgronomicStatistic` (but no IoT devices) would be physically deleted and leave orphan FK references in those tables. The new behaviour routes those plots through logical deletion (`Plot.Deactivate()`) via the existing `PlotDeletionPolicy`. The XML doc carries a `TODO AGRONOMIC-A3-CROSSBC` note marking `SHARED-015` (`IAgronomicContextFacade`) as the deferred resolution for cross-BC `Alert` and `PestSightingReport` checks; per locked decision #2 in engram #42, cross-BC checks remain a known limitation until SHARED-015 lands.
+
+### notes
+- **No tests written** (Phase 2 user decision, engram #50). The 84 existing xUnit tests in `tests/ArcadiaDevs.Viora.Platform.Tests/Iam/` are untouched and were not re-run as part of this PR. Behavioural verification rests on code review and manual smoke. `sdd-verify` at the end of Phase 2 will mark A3 as "not verified, no test coverage"; this is accepted.
+
 ## [1.10.0] - 2026-06-29
 
 ### added
