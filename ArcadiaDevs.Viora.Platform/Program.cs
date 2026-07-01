@@ -299,3 +299,11 @@ app.MapHealthChecks("/healthz");
 app.MapControllers();
 
 app.Run();
+
+// Marker that exposes the top-level Program entry point to
+// WebApplicationFactory<Program> in the test project. Without this
+// partial class declaration, the test project cannot reference Program
+// (it is implicit and internal because Program.cs uses top-level
+// statements). This is a single-line, no-op test helper. See
+// tests/ArcadiaDevs.Viora.Platform.Tests/README.md for the harness usage.
+public partial class Program { }
