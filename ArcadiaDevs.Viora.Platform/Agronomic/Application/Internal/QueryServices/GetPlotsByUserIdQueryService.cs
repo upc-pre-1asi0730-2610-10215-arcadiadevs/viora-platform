@@ -61,7 +61,7 @@ public class GetPlotsByUserIdQueryService(
             plot.Campaign,
             plot.Notes,
             plot.IsActive ? "active" : "inactive",
-            "Good",
+            "Healthy",
             "Low",
             imagery
         );
