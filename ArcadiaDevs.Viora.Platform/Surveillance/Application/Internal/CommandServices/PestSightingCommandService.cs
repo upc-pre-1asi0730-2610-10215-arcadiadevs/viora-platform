@@ -43,7 +43,8 @@ public class PestSightingCommandService(
                 aggregate.ReporterUserId.Value,
                 aggregate.CalculatedRisk.ToString(),
                 aggregate.ProbableThreat.ToString(),
-                aggregate.AlertConfirmed
+                aggregate.AlertConfirmed,
+                aggregate.Status.ToString()
             );
 
             await mediator.PublishAsync(domainEvent, cancellationToken);
