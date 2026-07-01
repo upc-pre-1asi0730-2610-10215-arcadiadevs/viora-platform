@@ -5,6 +5,30 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.1] - 2026-07-01
+
+### added
+- `AgronomicStatisticIngestionScheduler` (BackgroundService) — scheduled ingestion pipeline for agronomic statistics, gated by `AgronomicStatisticsOptions.ScheduledIngestionEnabled` (default: false). the scheduler runs on `CronSchedule` from options and publishes `IngestAgronomicStatisticCommand` per active plot.
+- `NdviTrendAnalyzer` — domain service that analyzes NDVI trend direction and strength from `NdviHistory`. returns a `NdviTrend` value object with `Direction` (Improving/Stable/Declining) and `Strength` (0.0–1.0).
+- `PlotHealthEvaluator` — domain service that evaluates overall plot health by combining NDVI trend, chill deficit, and hydric stress signals into a `GeneralHealthStatus` assessment.
+- 4 NDVI value objects: `NdviHistory` (collection of NDVI readings over time), `NdviStatistic` (aggregated NDVI stats with mean/min/max/timestamp), `NdviTrend` (direction + strength), `NdviTrendDirection` (enum: Improving/Stable/Declining).
+- `AgronomicStatisticsOptions` — strongly-typed options for the scheduled ingestion pipeline (`CronSchedule`, `ScheduledIngestionEnabled`).
+- `AgronomicStatisticsHostingExtensions` — DI registration extension method `AddAgronomicStatistics` that registers the scheduler and options.
+
+### changed
+- `GeneralHealthStatus` enum extended: `Healthy`, `Unknown`, `Warning` added (replacing the old `Good` name). backward-compat alias `Good = Healthy` preserved for serialized data compatibility.
+- 7 enum call-sites updated to use new names where appropriate: `PlotHealthEvaluator`, `PlotResourceFromEntityAssembler`, `GetPlotByIdQueryService`, `GetMyPlotsOverviewQueryService`, `GetPlotsByUserIdQueryService`, `GetPlotMonitoringSummaryQueryService`, `MonitoringSummaryQueryService`.
+
+### fixed
+- Chill deficit producer is now live (gated by `ScheduledIngestionEnabled=false`). previously the chill deficit calculation was never invoked by any scheduler; now it's part of the `AgronomicStatisticIngestionScheduler` pipeline.
+
+### notes
+- **work unit**: 1.16.1 (the 2nd of 7 release chains in the phase 3 parity work for `audit/wa-os-viora-gap-analysis-2026-06-29/phase-3`). 6 implementation commits on `feature/agronomic/agronomic-statistic-ingestion-scheduler` (branch from develop, per branch-naming convention): (1) `feat(agronomic): extend generalhealthstatus enum with healthy/unknown/warning and backward-compat alias`; (2) `feat(agronomic): add ndvi history/statistic/trend/direction value objects`; (3) `feat(agronomic): add ndvi_trend_analyzer domain service`; (4) `feat(agronomic): add plot_health_evaluator domain service`; (5) `feat(agronomic): add agronomic_statistics_options + hosting_extensions for the scheduled ingestion pipeline`; (6) `feat(agronomic): add agronomic_statistic_ingestion_scheduled background service with chill deficit producer`. all commits are lowercase english per obs #74.
+- **18 files changed**: 8 new files created, 10 existing files modified. net +656 lines / -13 lines.
+- **build/test**: `dotnet build viora-platform.sln` — 0 errors, 8 warnings (all pre-existing). `dotnet test` — 217 of 233 tests pass; 16 Testcontainers.PostgreSql failures (Docker unavailable in this environment; not a code regression).
+- **risks**: r1 (enum alias `Good = Healthy` — backward-compat verified; serialized data uses string conversion via `HasConversion<string>()`). r2 (chill deficit producer gated by `ScheduledIngestionEnabled=false` — safe default, no behavior change until explicitly enabled). r3 (16 docker-bound test failures — pre-existing, not introduced by this change).
+- **next**: 1.16.2 (the 3rd of 7 phase 3 parity releases).
+
 ## [1.16.0] - 2026-07-01
 
 ### added
