@@ -5,6 +5,20 @@ namespace ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.ValueObjects;
 /// </summary>
 public enum EReportStatus
 {
+    /// <summary>
+    /// Legacy binary model value, kept for back-compat with persisted reports.
+    /// </summary>
     UNDER_REVIEW,
-    CONFIRMED
+    /// <summary>
+    /// Middle triage outcome: a real signal exists but is not yet corroborated.
+    /// </summary>
+    NEEDS_INSPECTION,
+    /// <summary>
+    /// Confirmed pest threat that requires immediate attention.
+    /// </summary>
+    CONFIRMED,
+    /// <summary>
+    /// Weak signal: recorded for community epidemiology, no alert raised.
+    /// </summary>
+    LOGGED
 }
