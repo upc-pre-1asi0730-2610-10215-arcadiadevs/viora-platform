@@ -1,9 +1,7 @@
-using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace ArcadiaDevs.Viora.Platform.Tests.TestHarness;
 
@@ -62,19 +60,14 @@ public abstract class IntegrationTestBase : IAsyncLifetime
                         ["Jwt:Audience"] = "viora-test",
                     });
                 });
-                builder.ConfigureServices(services =>
-                {
-                    // R3-workaround: the production PostCommitDomainEventDispatcher
-                    // is registered as singleton but consumes a scoped IMediator
-                    // (Cortex.Mediator's default lifetime). The pre-existing
-                    // production bug only surfaces when the host is built
-                    // (which never happens in unit tests). Demote the
-                    // dispatcher's lifetime to scoped so the host's scope
-                    // validation passes. A future change should fix this
-                    // in production code (sdd-apply batch 1, obs #81).
-                    services.RemoveAll<PostCommitDomainEventDispatcher>();
-                    services.AddScoped<PostCommitDomainEventDispatcher>();
-                });
+                // Note: the previous F1a workaround that demoted
+                // PostCommitDomainEventDispatcher from singleton to scoped
+                // here has been removed (release 1.15.1). The dispatcher is
+                // now natively scoped in Program.cs (obs #81), so the
+                // workaround is no longer needed. The new
+                // PostCommitDomainEventDispatcherLifetimeTests guards the
+                // production lifetime contract; if a future change flips
+                // it back to singleton, the test will fail.
             });
     }
 

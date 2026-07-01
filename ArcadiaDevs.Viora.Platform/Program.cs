@@ -131,18 +131,34 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
 // Shared Bounded Context Injection Configuration
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Shared.Domain.IClock, ArcadiaDevs.Viora.Platform.Shared.Infrastructure.SystemClock>();
-// SHARED-011: the two EF Core SaveChangesInterceptors are registered as
-// singletons so they can be DI-injected into the AddDbContext lambda
-// (previously, AuditableEntityInterceptor was constructed inline in
+// SHARED-011: the two EF Core SaveChangesInterceptors are registered
+// here (previously AuditableEntityInterceptor was constructed inline in
 // AppDbContext.OnConfiguring and could not consume services from the
-// host's DI container). Both are stateless: the audit interceptor
-// stamps CreatedAt/UpdatedAt; the post-commit dispatcher holds an
-// IMediator + ILogger reference and snapshots the ChangeTracker on
-// every SavedChanges call. The singleton lifetime matches the
-// "stateless shared infrastructure service" pattern of
-// ClimateRiskEvaluator / InMemoryActivationCodeCatalog.
+// host's DI container). The composition root owns the interceptor
+// registration so both interceptors can be DI-injected AND so the
+// locked order — AuditableEntityInterceptor FIRST,
+// PostCommitDomainEventDispatcher LAST — is enforced in exactly one
+// place.
+//
+// LIFETIMES:
+//   * AuditableEntityInterceptor: singleton. The audit interceptor is
+//     fully stateless (it stamps CreatedAt/UpdatedAt via the local
+//     IClock, which is itself a singleton). Singleton matches the
+//     "stateless shared infrastructure service" pattern of
+//     ClimateRiskEvaluator / InMemoryActivationCodeCatalog.
+//   * PostCommitDomainEventDispatcher: scoped. The dispatcher holds an
+//     IMediator + ILogger reference and snapshots the ChangeTracker
+//     on every SavedChanges call. The ctor is stateless, but the
+//     ctor's IMediator dependency is registered scoped by
+//     Cortex.Mediator's default; a singleton dispatcher would trigger
+//     the "Cannot consume scoped service from singleton" validation
+//     error when the host is built (which is why the F1a harness
+//     worked around it by demoting the dispatcher to scoped in
+//     ConfigureTestServices — see CHANGELOG 1.15.0 R3 note). With
+//     this scoped registration, the workaround is no longer needed
+//     and the production lifetime matches the dependency graph.
 builder.Services.AddSingleton<AuditableEntityInterceptor>();
-builder.Services.AddSingleton<PostCommitDomainEventDispatcher>();
+builder.Services.AddScoped<PostCommitDomainEventDispatcher>();
 
 // External API Clients
 builder.Services.AddHttpClient<AgroMonitoringApiClient>(client =>

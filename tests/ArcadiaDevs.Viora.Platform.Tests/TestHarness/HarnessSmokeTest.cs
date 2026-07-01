@@ -25,6 +25,7 @@ namespace ArcadiaDevs.Viora.Platform.Tests.TestHarness;
 [Trait("Category", "Integration")]
 [Trait("Category", "Smoke")]
 [Trait("Database", "Postgres")]
+[Collection("Postgres")]
 public class HarnessSmokeTest : IntegrationTestBase
 {
     [Fact]

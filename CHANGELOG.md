@@ -5,6 +5,28 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.1] - 2026-06-30
+
+### fixed
+- `ArcadiaDevs.Viora.Platform/Program.cs` — `PostCommitDomainEventDispatcher` registration lifetime changed from `AddSingleton` to `AddScoped`. The dispatcher (added in Phase 2 PR-F / 1.14.0) holds an `IMediator` + `ILogger` reference; `Cortex.Mediator.IMediator` is registered scoped by default, so consuming it from a singleton triggered the `Cannot consume scoped service from singleton` validation error when the host was built (e.g. via `WebApplicationFactory<Program>` in the F1a test harness). The bug was invisible to the 96 pre-Phase 3 unit tests because they construct the SUT directly and skip the host-build scope validation. F1a added a workaround that demoted the dispatcher to scoped in `IntegrationTestBase.ConfigureTestServices`; this release resolves the bug at the source by registering the dispatcher as scoped in production, so the workaround is no longer needed. The companion test `PostCommitDomainEventDispatcherLifetimeTests` (regression guard) asserts the production lifetime contract: same instance within a scope, different instances across scopes.
+
+### changed
+- `tests/.../TestHarness/IntegrationTestBase.cs` — removed the F1a workaround that demoted `PostCommitDomainEventDispatcher` from singleton to scoped in `ConfigureTestServices`. The workaround is no longer needed because the production registration is now natively scoped. Removed the now-unused `using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;` and `using Microsoft.Extensions.DependencyInjection.Extensions;` imports.
+- `tests/.../TestHarness/HarnessSmokeTest.cs` and `tests/.../Shared/Application/Internal/PostCommitDomainEventDispatcherLifetimeTests.cs` — both classes now carry `[Collection("Postgres")]`, joining the `HarnessCollection` defined in F1a. The collection serializes the two Postgres test classes so the production `Program.cs` startup seed (`SymptomCommandService.Handle(SeedSymptomsCommand)`) runs once per test class without colliding on the shared InMemory `VioraPlatform` database name (the `XYLELLA` SymptomDictionaryItem key was the first to collide). Without the collection, xUnit's per-class-parallel default races on the InMemory dictionary insert.
+- `tests/.../README.md` — updated the "R3 workaround note" section (now "Production di lifetime: postcommitdomaineventdispatcher (resolved in 1.15.1)") to reflect the native fix + workaround removal. The previous text described the workaround as the mitigation; the new text describes the production fix + the regression guard test.
+
+### added
+- `tests/.../Shared/Application/Internal/PostCommitDomainEventDispatcherLifetimeTests.cs` — new regression guard (1 test: `PostCommitDomainEventDispatcher_Should_Be_Registered_As_Scoped`) that boots `WebApplicationFactory<Program>` via `IntegrationTestBase`, resolves the dispatcher from two different scopes, and asserts: (a) same instance within a single scope (scoped, not transient); (b) different instances across scopes (scoped, not singleton). If a future change flips the production registration back to singleton, the host build itself throws the scope-validation error and the test fails. The test inherits `IntegrationTestBase` (real `WebApplicationFactory<Program>` against a Testcontainers.PostgreSql instance) and is in the `Postgres` xUnit collection.
+
+### notes
+- **Work unit**: 3 commits on `fix/postcommitdispatcher-di-lifetime` (branch from develop): (1) `fix(shared): change postcommitdomaineventdispatcher lifetime from singleton to scoped` (Program.cs); (2) `chore(test): remove redundant postcommitdispatcher workaround from integrationtestbase` (IntegrationTestBase.cs); (3) `test(shared): add postcommitdispatcher scoped lifetime test + serialize postgres test classes` (new test + HarnessSmokeTest.cs + README.md).
+- **Pre-1.15.1 baseline**: 117 of 118 tests passed (the 1 failure is the pre-existing S3.9 `PlotRepositoryTests.HasRelatedOperationalRecordsAsync_CrossBcDocumentedLimitation_IsDocumentedInXmlDoc` XML doc gate, documented in obs #82 / obs #63 / obs #80).
+- **Post-1.15.1 result**: 118 of 119 tests pass (1 new test added, the 1 S3.9 pre-existing failure remains — unchanged from baseline). 0 errors in `dotnet build viora-platform.sln`; 66 pre-existing nullable warnings (not introduced by this change).
+- **No schema change; no EF migration; no `dotnet ef` step required.** This is a 1-line production lifetime change + test infrastructure cleanup + regression guard.
+- **No `size:exception`**: total diff is ~97 lines across 5 files (36 ins / 10 del in Program.cs + 8 ins / 15 del in IntegrationTestBase.cs + 1 new test file at 59 lines + 1-line HarnessSmokeTest.cs change + 3 ins / 3 del in README.md). Well under the 400-line review budget per file and the 800-line work-unit budget.
+- **Reference**: obs #81 (prediscovered DI lifetime issue + F1a workaround design); obs #82 (F1a apply progress + the workaround that this release retires); obs #74 (gitflow + lowercase conventional commits); obs #73 (Phase 3 proposal, LOCKED 2026-06-30).
+- **Next**: continue with F1b (the original 1.15.1 plan: A6 `PostCommitDomainEventDispatcher` + 7-migration smoke + IClock contract + LoggingCommandBehavior tests) — now that the production DI lifetime is correct, F1b can close the Shared BC from 30% to 80%.
+
 ## [1.15.0] - 2026-06-30
 
 ### added

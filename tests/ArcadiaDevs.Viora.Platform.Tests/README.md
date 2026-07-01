@@ -97,8 +97,8 @@ dotnet test tests\ArcadiaDevs.Viora.Platform.Tests\ArcadiaDevs.Viora.Platform.Te
 - `coverlet.collector` produces a coverage report at `tests\ArcadiaDevs.Viora.Platform.Tests\TestResults\{guid}\coverage.cobertura.xml`.
 - **Coverage targets** (per Phase 3 proposal #73): Agronomic 55%, Iam 75%, Surveillance 60%, Shared 80%, Overall 35%.
 
-## 11. R3 workaround note
+## 11. Production di lifetime: postcommitdomaineventdispatcher (resolved in 1.15.1)
 
-The production `PostCommitDomainEventDispatcher` (added in Phase 2 PR-F / 1.14.0) is registered as **Singleton** but consumes a scoped `Cortex.Mediator.IMediator`. This is a pre-existing production bug that is invisible to the existing 96 unit tests (which never boot the host). When the harness boots the host via `WebApplicationFactory<Program>`, the DI scope validator surfaces it.
+The production `PostCommitDomainEventDispatcher` (added in Phase 2 PR-F / 1.14.0) was originally registered as **Singleton** but its constructor consumes a scoped `Cortex.Mediator.IMediator`. This was a pre-existing production bug that was invisible to the existing 96 unit tests (which never boot the host) — the DI scope validator only runs when the host is built via `WebApplicationFactory<Program>`.
 
-`IntegrationTestBase` works around this by demoting the dispatcher's lifetime to `Scoped` via `ConfigureTestServices`. A future change should fix the production bug (e.g. register `IMediator` as singleton, or change the dispatcher to transient). Tracked in engram obs #81.
+**Resolution (release 1.15.1):** the dispatcher is now natively registered as **Scoped** in `Program.cs` (it consumes a scoped `IMediator` from `Cortex.Mediator`, so the lifetime must match). The F1a workaround that demoted the dispatcher to `Scoped` in `IntegrationTestBase.ConfigureTestServices` has been removed — the new `PostCommitDomainEventDispatcherLifetimeTests` (regression guard) asserts the production lifetime contract: same instance within a scope, different instances across scopes. Tracked in engram obs #81.
