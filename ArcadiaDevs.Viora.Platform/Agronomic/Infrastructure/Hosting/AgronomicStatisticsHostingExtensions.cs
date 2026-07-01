@@ -1,0 +1,38 @@
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Hosting;
+
+/// <summary>
+/// Extension methods for registering agronomic statistics services.
+/// </summary>
+public static class AgronomicStatisticsHostingExtensions
+{
+    /// <summary>
+    /// Registers the agronomic statistics services including options binding,
+    /// domain services, and the scheduled ingestion background service.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The configuration instance.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddAgronomicStatisticsHosting(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        // Bind options from configuration
+        services.AddOptionsWithValidateOnStart<AgronomicStatisticsOptions>()
+            .Bind(configuration.GetSection(AgronomicStatisticsOptions.SectionName));
+
+        // Register domain services as singletons (pure functions, no I/O)
+        services.AddSingleton<NdviTrendAnalyzer>();
+        services.AddSingleton<PlotHealthEvaluator>();
+
+        // Register the scheduled ingestion background service
+        // NOTE: AddHostedService<AgronomicStatisticIngestionScheduler>() is commented out
+        // because the scheduler class doesn't exist yet. Uncomment it in commit 6.
+        // services.AddHostedService<AgronomicStatisticIngestionScheduler>();
+
+        return services;
+    }
+}
