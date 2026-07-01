@@ -29,9 +29,7 @@ public static class AgronomicStatisticsHostingExtensions
         services.AddSingleton<PlotHealthEvaluator>();
 
         // Register the scheduled ingestion background service
-        // NOTE: AddHostedService<AgronomicStatisticIngestionScheduler>() is commented out
-        // because the scheduler class doesn't exist yet. Uncomment it in commit 6.
-        // services.AddHostedService<AgronomicStatisticIngestionScheduler>();
+        services.AddHostedService<AgronomicStatisticIngestionScheduler>();
 
         return services;
     }
