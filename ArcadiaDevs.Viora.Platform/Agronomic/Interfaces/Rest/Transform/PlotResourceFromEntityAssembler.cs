@@ -27,7 +27,7 @@ public static class PlotResourceFromEntityAssembler
             plot.Campaign,
             plot.Notes,
             plot.IsActive ? "active" : "inactive",
-            "Good",
+            "Healthy",
             "Low",
             null
         );

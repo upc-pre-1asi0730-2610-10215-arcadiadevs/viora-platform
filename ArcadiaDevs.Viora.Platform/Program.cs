@@ -10,6 +10,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices.Configuration;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Configuration;
+using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Hosting;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.Internal.CommandServices;
@@ -229,6 +230,7 @@ builder.Services.AddScoped<ChillAccumulationCalculator>();
 builder.Services.AddScoped<IDynamicNutritionQueryService, DynamicNutritionQueryService>();
 builder.Services.AddScoped<IRecommendDynamicNutritionPlanCommandService, RecommendDynamicNutritionPlanCommandService>();
 builder.Services.AddScoped<ICertifyNutritionApplicationCommandService, CertifyNutritionApplicationCommandService>();
+builder.Services.AddAgronomicStatisticsHosting(builder.Configuration);
 // Surveillance Bounded Context Injection Configuration
 builder.Services.AddScoped<IPestSightingReportRepository, PestSightingReportRepository>();
 builder.Services.AddScoped<IAlertRepository, AlertRepository>();

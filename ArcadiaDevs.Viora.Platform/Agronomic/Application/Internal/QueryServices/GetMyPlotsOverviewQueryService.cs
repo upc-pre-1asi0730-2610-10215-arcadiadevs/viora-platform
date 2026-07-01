@@ -47,7 +47,7 @@ public class GetMyPlotsOverviewQueryService(
                 p.AreaSize,
                 0.65,
                 120.5,
-                "Good",
+                "Healthy",
                 "Low",
                 plotDevicesCount,
                 0,
