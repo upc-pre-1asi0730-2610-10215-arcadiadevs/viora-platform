@@ -60,7 +60,7 @@ public class GetPlotMonitoringSummaryQueryService(
             "Davis",
             "Dynamic",
             "Portions",
-            "Good",
+            "Healthy",
             "Low",
             4500,
             weather,

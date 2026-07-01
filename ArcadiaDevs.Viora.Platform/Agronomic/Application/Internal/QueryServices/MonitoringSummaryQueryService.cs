@@ -98,11 +98,11 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
             ? Math.Round((decimal)activeDevices / totalDevices * 100, 2)
             : 0m;
 
-        var healthStatusStr = deviceHealthPercentage >= 80 ? "Good"
-            : deviceHealthPercentage >= 50 ? "Moderate"
+        var healthStatusStr = deviceHealthPercentage >= 80 ? "Healthy"
+            : deviceHealthPercentage >= 50 ? "Warning"
             : "Critical";
 
-        if (totalDevices == 0) healthStatusStr = "Moderate"; // Default when no devices
+        if (totalDevices == 0) healthStatusStr = "Warning"; // Default when no devices
 
         // S1.1 (no plots): return Result.Success with all fields 0, no provider calls.
         if (totalPlots == 0)
