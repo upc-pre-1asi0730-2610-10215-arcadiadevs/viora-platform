@@ -5,6 +5,30 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.2] - 2026-07-01
+
+### added
+- 3 cross-BC integration events (`NdviDroppedIntegrationEvent`, `HydricStressDetectedIntegrationEvent`, `DynamicNutritionPlanGeneratedIntegrationEvent`) in `Agronomic/Domain/Model/Events/` — primitive transport (CC-1) records published by Agronomic producers, consumed by Surveillance handlers
+- 3 surveillance-side event handlers (`AgronomicNdviDroppedEventHandler`, `AgronomicHydricStressEventHandler`, `DynamicNutritionPlanGeneratedEventHandler`) in `Surveillance/Application/Internal/EventHandlers/` — auto-registered via `AddCortexMediator`, best-effort boundary (log + swallow)
+- `AddAlertTimelineRecordCommand` + `IAlertCommandService.Handle` overload in `Surveillance/Domain/Model/Commands/` and `Surveillance/Application/CommandServices/` — extends alert timeline with automated plan tracking; `Create()` factory with validation
+- `HydricStressDetectedIntegrationEventProducer` + `IHydricStressDetectedIntegrationEventProducer` in `Agronomic/Application/Internal/Services/` — producer uses 1.17.0's `ISoilReadingSimulator` + `ISensorHealthEvaluator`; publishes `HydricStressDetectedIntegrationEvent` when `SoilMoisture < 20` (Critical threshold)
+
+### changed
+- `RecommendDynamicNutritionCommand` extended with `long? AlertId = null` (N1) — backward-compatible optional parameter; service resolves effective `UserId` from `plot.OwnerUserId` when `AlertId` is present
+- `RecommendDynamicNutritionPlanCommandService` publishes `DynamicNutritionPlanGeneratedIntegrationEvent` post-commit when `AlertId` is set
+- `AgronomicStatisticIngestionScheduler` now accepts `IServiceScopeFactory` and invokes `IHydricStressDetectedIntegrationEventProducer` via explicit scope (D17, Q-B resolution)
+- `Program.cs` — scoped DI registration for `IHydricStressDetectedIntegrationEventProducer`
+
+### fixed
+- `AddAlertTimelineRecordCommand` validation uses `Create()` factory pattern (corrected from buggy `new()` in tasks.md)
+- CS0266 type mismatch in `HydricStressDetectedIntegrationEventProducer`: `SoilMoisture` is `int?` but event expects `double` — explicit cast added
+
+### notes
+- 10 implementation commits on `feature/integration/missing-cross-bc-events` + release ceremony + changelog = 12 total
+- 16 files changed (10 new, 6 modified); ~780 net LOC
+- Build green (0 errors, 70 warnings baseline); tests 217/233 pass (16 Docker failures pre-existing)
+- Locked decisions: A1, A2, D7, D8, D11, D16, D17, N1
+
 ## [1.17.0] - 2026-07-01
 
 ### added
