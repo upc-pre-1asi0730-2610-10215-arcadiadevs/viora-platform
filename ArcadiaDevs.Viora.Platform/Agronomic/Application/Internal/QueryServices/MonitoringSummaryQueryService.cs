@@ -1,6 +1,7 @@
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.OutboundServices;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.AdvisorValueObjects;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
@@ -44,6 +45,8 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
     private readonly IAgronomicStatisticRepository _agronomicStatisticRepository;
     private readonly IOptions<DynamicNutritionPolicyOptions> _policy;
     private readonly ChillRequirementResolver _chillRequirementResolver;
+    private readonly IMitigationRecommendationGenerator _mitigationRecommendationGenerator;
+    private readonly IWeatherForecastAdvisor _weatherForecastAdvisor;
 
     public MonitoringSummaryQueryService(
         IPlotRepository plotRepository,
@@ -56,7 +59,9 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
         IYieldForecastEstimator yieldForecastEstimator,
         IAgronomicStatisticRepository agronomicStatisticRepository,
         IOptions<DynamicNutritionPolicyOptions> policy,
-        ChillRequirementResolver chillRequirementResolver)
+        ChillRequirementResolver chillRequirementResolver,
+        IMitigationRecommendationGenerator mitigationRecommendationGenerator,
+        IWeatherForecastAdvisor weatherForecastAdvisor)
     {
         _plotRepository = plotRepository;
         _ioTDeviceRepository = ioTDeviceRepository;
@@ -69,6 +74,8 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
         _agronomicStatisticRepository = agronomicStatisticRepository;
         _policy = policy;
         _chillRequirementResolver = chillRequirementResolver;
+        _mitigationRecommendationGenerator = mitigationRecommendationGenerator;
+        _weatherForecastAdvisor = weatherForecastAdvisor;
     }
 
     public async Task<Result<MonitoringSummaryResource, Error>> Handle(
@@ -154,6 +161,20 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
             new AverageNdvi(averageNdvi),
             weather);
 
+        // 1.16.3: Map WA's ClimateRiskLevel to AgronomicClimateRiskLevel for advisor services
+        var advisoryRiskLevel = weather.ClimateRiskLevel switch
+        {
+            ClimateRiskLevel.Low => AgronomicClimateRiskLevel.Low,
+            ClimateRiskLevel.Medium => AgronomicClimateRiskLevel.Moderate,
+            ClimateRiskLevel.High => AgronomicClimateRiskLevel.High,
+            ClimateRiskLevel.Critical => AgronomicClimateRiskLevel.Extreme,
+            _ => AgronomicClimateRiskLevel.Unknown
+        };
+        var mitigationRecommendations = _mitigationRecommendationGenerator.GenerateRecommendations(advisoryRiskLevel);
+
+        // TODO: call _weatherForecastAdvisor when WeatherForecast input is available in this release
+        WeatherForecastAnalysis? weatherForecastAnalysis = null;
+
         // Use the aggregate root to validate and create the summary
         var summaryResult = MonitoringSummary.Create(
             query.UserId,
@@ -193,7 +214,22 @@ public class MonitoringSummaryQueryService : IMonitoringSummaryQueryService
             ClimateRiskLevel = aggregate.WeatherSnapshot.ClimateRiskLevel.ToString(),
             MitigationActionType = aggregate.MitigationRecommendation.ActionType,
             MitigationSuggestedInputs = aggregate.MitigationRecommendation.SuggestedInputs,
-            MitigationRecommendedWindow = aggregate.MitigationRecommendation.RecommendedApplicationWindow
+            MitigationRecommendedWindow = aggregate.MitigationRecommendation.RecommendedApplicationWindow,
+            MitigationRecommendations = mitigationRecommendations.Select(mr => new MitigationRecommendationResource
+            {
+                ActionType = mr.ActionType.ToString(),
+                SuggestedInputs = mr.SuggestedInputs.Description,
+                RecommendedApplicationWindow = $"{mr.RecommendedApplicationWindow.StartDate} - {mr.RecommendedApplicationWindow.EndDate}",
+                ClimateRiskLevel = mr.ClimateRiskLevel.ToString()
+            }).ToList(),
+            WeatherForecastAnalysis = weatherForecastAnalysis is not null
+                ? new WeatherForecastAnalysisResource
+                {
+                    ThermalAnomalyCelsius = weatherForecastAnalysis.ThermalAnomalyCelsius,
+                    OverallRisk = weatherForecastAnalysis.OverallRisk.ToString(),
+                    WarningCount = weatherForecastAnalysis.Warnings.Count
+                }
+                : null
         };
 
         return new Result<MonitoringSummaryResource, Error>.Success(dto);
