@@ -18,9 +18,6 @@
     <data name="Iam.UserDisabled" xml:space="preserve">
     <value>La cuenta de usuario está deshabilitada.</value>
   </data>
-    <data name="Iam.SignUpRequiresAdmin" xml:space="preserve">
-    <value>Solo los administradores pueden crear nuevas cuentas.</value>
-  </data>
     <data name="Iam.InsufficientRole" xml:space="preserve">
     <value>No tienes el rol requerido.</value>
   </data>
