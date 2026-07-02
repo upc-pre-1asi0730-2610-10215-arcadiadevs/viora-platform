@@ -41,11 +41,21 @@ public class UserCommandService(
         if (exists)
             return new Result<User?, Error>.Failure(IamErrors.UsernameAlreadyTaken);
 
+        // Resolve the role to assign. Omitted/blank defaults to "Grower"
+        // (mirrors OS's Role.getDefaultRole() -> ROLE_GROWER). An explicit
+        // role that no longer exists (e.g. the retired "Administrator") is
+        // rejected before any password hashing or persistence happens.
+        var roleName = string.IsNullOrWhiteSpace(command.Role) ? "Grower" : command.Role;
+        var role = await roleRepository.FindByNameAsync(roleName, cancellationToken);
+        if (role == null)
+            return new Result<User?, Error>.Failure(IamErrors.InvalidRoleName);
+
         // Hash the password
         var passwordHash = hashingService.HashPassword(command.Password);
 
         // Create the user
         var user = new User(command.Username, passwordHash);
+        user.Roles.Add(role);
 
         try
         {

@@ -100,4 +100,76 @@ public class UserCommandServiceTests
         _tokenService.DidNotReceive().GenerateToken(Arg.Any<User>());
         _hashingService.DidNotReceive().VerifyPassword(Arg.Any<string>(), Arg.Any<string>());
     }
+
+    // REQ-1 (spec obs #156, design obs #155 Decision 1): SignUp gains an optional
+    // Role field. Omitted/blank defaults to "Grower" (WA's equivalent of OS's
+    // Role.getDefaultRole() -> ROLE_GROWER). An explicit valid role is honored.
+    // An explicit invalid role returns IamErrors.InvalidRoleName.
+
+    [Fact]
+    public async Task Handle_SignUpCommand_OmittedRole_DefaultsToGrower()
+    {
+        _userRepository.ExistsByUsernameAsync("alice", Arg.Any<CancellationToken>())
+                       .Returns(false);
+        var growerRole = ((Result<Role, Error>.Success)Role.Create("Grower")).Value;
+        _roleRepository.FindByNameAsync("Grower", Arg.Any<CancellationToken>())
+                       .Returns(growerRole);
+        _hashingService.HashPassword(Arg.Any<string>()).Returns("hashed");
+
+        var command = new SignUpCommand("alice", "long-enough-password", Role: null);
+
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var user = ((Result<User?, Error>.Success)result).Value;
+        Assert.NotNull(user);
+        Assert.Single(user!.Roles);
+        Assert.Equal("Grower", user.Roles.Single().Name);
+
+        await _roleRepository.Received(1).FindByNameAsync("Grower", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_SignUpCommand_ExplicitValidRole_AssignsRole()
+    {
+        _userRepository.ExistsByUsernameAsync("bob", Arg.Any<CancellationToken>())
+                       .Returns(false);
+        var specialistRole = ((Result<Role, Error>.Success)Role.Create("Specialist")).Value;
+        _roleRepository.FindByNameAsync("Specialist", Arg.Any<CancellationToken>())
+                       .Returns(specialistRole);
+        _hashingService.HashPassword(Arg.Any<string>()).Returns("hashed");
+
+        var command = new SignUpCommand("bob", "long-enough-password", Role: "Specialist");
+
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var user = ((Result<User?, Error>.Success)result).Value;
+        Assert.NotNull(user);
+        Assert.Single(user!.Roles);
+        Assert.Equal("Specialist", user.Roles.Single().Name);
+    }
+
+    [Fact]
+    public async Task Handle_SignUpCommand_InvalidRoleString_ReturnsInvalidRoleName()
+    {
+        _userRepository.ExistsByUsernameAsync("carol", Arg.Any<CancellationToken>())
+                       .Returns(false);
+        // "Administrator" no longer exists as a seeded role — FindByNameAsync misses.
+        _roleRepository.FindByNameAsync("Administrator", Arg.Any<CancellationToken>())
+                       .Returns((Role?)null);
+
+        var command = new SignUpCommand("carol", "long-enough-password", Role: "Administrator");
+
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(IamErrors.InvalidRoleName, ((Result<User?, Error>.Failure)result).Error);
+        Assert.Equal("Iam.InvalidRoleName", ((Result<User?, Error>.Failure)result).Error.Code);
+
+        // CRITICAL: hashing/persistence must never run for an unresolvable role
+        // (mirrors the weak-password/username-taken early-return guards above).
+        _hashingService.DidNotReceive().HashPassword(Arg.Any<string>());
+        _ = _userRepository.DidNotReceive().AddAsync(Arg.Any<User>(), Arg.Any<CancellationToken>());
+    }
 }
