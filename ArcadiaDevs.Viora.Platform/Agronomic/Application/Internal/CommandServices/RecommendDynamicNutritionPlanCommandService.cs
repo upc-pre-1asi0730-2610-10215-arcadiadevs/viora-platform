@@ -126,6 +126,12 @@ public class RecommendDynamicNutritionPlanCommandService(
                 return new Result<DynamicNutritionPlan, Error>.Failure(AgronomicErrors.PlotNotFound);
             }
 
+            // N1: resolve effective user id. When AlertId is present the plan is
+            // triggered by a Surveillance alert — use the plot owner, not the
+            // command's UserId (which may be a dummy stand-in). When AlertId is
+            // null the existing manual flow is preserved.
+            var effectiveUserId = command.AlertId.HasValue ? plot.OwnerUserId : command.UserId;
+
             // Step 2: latest agronomic statistic (drives NDVI trend + chill portions).
             var latestStatistic = await agronomicStatisticRepository
                 .FindLatestByPlotIdAsync(command.PlotId, cancellationToken);
@@ -202,7 +208,7 @@ public class RecommendDynamicNutritionPlanCommandService(
             // a typed failure. Any other exception falls through to the
             // outer catch as a generic GenerationError.
             var plan = dynamicNutritionPlanGenerator.GeneratePlan(
-                userId: command.UserId,
+                userId: effectiveUserId,
                 plotId: command.PlotId,
                 risks: risks,
                 profile: profile,
@@ -224,6 +230,16 @@ public class RecommendDynamicNutritionPlanCommandService(
                 plan.UserId,
                 plan.Rationale.TriggeringRiskLevel.ToString());
             await mediator.PublishAsync(domainEvent, cancellationToken);
+
+            // Step 13: publish the cross-BC DynamicNutritionPlanGeneratedIntegrationEvent
+            // when the plan was triggered by an alert (AlertId present). Manual plan
+            // generation (AlertId null) does not produce this event.
+            if (command.AlertId.HasValue)
+            {
+                var integrationEvent = new DynamicNutritionPlanGeneratedIntegrationEvent(
+                    plan.Id, plan.PlotId, command.AlertId);
+                await mediator.PublishAsync(integrationEvent, cancellationToken);
+            }
 
             logger.LogInformation(
                 "Successfully generated Dynamic Nutrition Plan {PlanId} for plot {PlotId} (risks: {RiskCount})",
