@@ -5,6 +5,19 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.25.0] - 2026-07-02
+
+### breaking
+- `GET /api/v1/agronomic-statistics` now returns the full list of statistics in the requested time range (`AgronomicStatisticResource[]`, ordered by measurement date ascending) instead of only the latest single object; the `/series` sub-route is unchanged
+- `POST /api/v1/agronomic-statistics/ingest` → `POST /api/v1/agronomic-statistics` — ingestion moves to the base route, coexisting with the GET via HTTP verb dispatch
+- `POST /api/v1/dynamic-nutrition-plans/{planId}/certification` → `PATCH /api/v1/dynamic-nutrition-plans/{planId}` — adds a dedicated `422 Agronomic.PlanNotCertifiable` error for invalid-state certification attempts (was mapped to the generic `400 Agronomic.InvalidState`)
+
+### notes
+- WU7 of the `audit/wa-os-backend-parity-closure-2026-07-02` SDD change (WA↔OS backend feature-parity closure) — closes REQ-9, REQ-10, and REQ-11 (agronomic route realignment)
+- Pre-check confirmed the three changing routes have zero internal callers beyond their own controllers, and no existing tests reference them — no stale-test cleanup was needed
+- Features-only implementation (no new tests) — TDD dropped for WU2-WU9 by explicit user decision (tests deferred to a dedicated post-parity testing phase); 2 commits on `feature/agronomic/route-realignment`
+- Build green (0 errors); tests 228/229 pass (same pre-existing unrelated failure carried over from prior releases: `PlotRepositoryTests` XML-doc reflection test — not introduced by this release, not regressed)
+
 ## [1.24.0] - 2026-07-02
 
 ### added
