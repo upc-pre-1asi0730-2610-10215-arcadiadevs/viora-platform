@@ -34,6 +34,9 @@ public static class IamErrors
     public static readonly Error InvalidRoleName =
         new("Iam.InvalidRoleName", "The specified role name is not valid.");
 
+    public static readonly Error InvalidCurrentPassword =
+        new("Iam.InvalidCurrentPassword", "The current password is incorrect.");
+
     // Reserved for cross-slice
     public static readonly Error InsufficientRole =
         new("Iam.InsufficientRole", "The user does not have the required role to access this resource.");
