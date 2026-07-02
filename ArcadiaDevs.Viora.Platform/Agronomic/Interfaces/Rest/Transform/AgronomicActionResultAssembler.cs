@@ -33,6 +33,7 @@ public static class AgronomicActionResultAssembler
             "Agronomic.DeleteActivePlot" => StatusCodes.Status409Conflict,
             "Agronomic.InvalidInput" => StatusCodes.Status400BadRequest,
             "Agronomic.InvalidState" => StatusCodes.Status400BadRequest,
+            "Agronomic.PlanNotCertifiable" => StatusCodes.Status422UnprocessableEntity,
             "Agronomic.InternalServerError" => StatusCodes.Status500InternalServerError,
             "Agronomic.QueryError" => StatusCodes.Status500InternalServerError,
             _ when code.StartsWith("Agronomic.") => StatusCodes.Status500InternalServerError,

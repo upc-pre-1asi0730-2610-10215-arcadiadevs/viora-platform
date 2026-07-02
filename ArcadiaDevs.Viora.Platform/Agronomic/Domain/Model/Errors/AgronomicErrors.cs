@@ -33,6 +33,9 @@ public static class AgronomicErrors
     public static readonly Error InvalidState =
         new("Agronomic.InvalidState", "The operation is invalid for the current state of the aggregate.");
 
+    public static readonly Error PlanNotCertifiable =
+        new("Agronomic.PlanNotCertifiable", "The dynamic nutrition plan cannot be certified in its current state.");
+
     public static readonly Error InvalidInput =
         new("Agronomic.InvalidInput", "The provided input was invalid.");
 
