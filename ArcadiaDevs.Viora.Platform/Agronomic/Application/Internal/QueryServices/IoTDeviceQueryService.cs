@@ -122,16 +122,49 @@ public sealed class IoTDeviceQueryService(
 
     /// <inheritdoc />
     /// <remarks>
-    ///     T1.17.0-6 placeholder — the real implementation lands in T1.17.0-7.
-    ///     Throwing now (instead of silently returning an empty list) makes any
-    ///     accidental caller of the by-user endpoint fail loudly with a clear
-    ///     "1.17.0-7" message, so the apply-progress audit trail is intact.
+    ///     Loads all of the user's active plots (N13 — reuses
+    ///     <c>FindAllByOwnerUserIdAsync</c> + the per-plot device fetch via
+    ///     <c>FindAllByPlotIdsAsync</c>; no new repository method). The
+    ///     latest-NDVI lookup is batched in a per-plot loop (one round-trip per
+    ///     plot, which is acceptable for the dashboard aggregate view) and the
+    ///     device fetch is a single round-trip via
+    ///     <c>FindAllByPlotIdsAsync(plotsById.Keys, ct)</c>. Mirrors
+    ///     <c>IoTDeviceQueryService.java:99-129</c>.
     /// </remarks>
-    public Task<Result<IEnumerable<IoTDeviceReadout>, Error>> Handle(
+    public async Task<Result<IEnumerable<IoTDeviceReadout>, Error>> Handle(
         GetIoTDevicesByUserIdQuery query,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException("IoTDeviceQueryService.Handle(GetIoTDevicesByUserIdQuery) is implemented in T1.17.0-7.");
+        ArgumentNullException.ThrowIfNull(query);
+
+        var plots = (await plotRepository.FindAllByOwnerUserIdAsync(query.UserId, cancellationToken))
+            .Where(p => p.IsActive)
+            .ToList();
+
+        if (plots.Count == 0)
+        {
+            return new Result<IEnumerable<IoTDeviceReadout>, Error>.Success([]);
+        }
+
+        var plotsById = plots.ToDictionary(p => (long)p.Id);
+        var ndviByPlot = new Dictionary<long, double?>(plots.Count);
+        foreach (var p in plots)
+        {
+            ndviByPlot[p.Id] = await LatestNdviForPlotAsync(p.Id, cancellationToken);
+        }
+
+        var now = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero);
+
+        var readouts = (await ioTDeviceRepository.FindAllByPlotIdsAsync(plotsById.Keys, cancellationToken))
+            .Select(d =>
+            {
+                plotsById.TryGetValue(d.PlotId, out var plot);
+                ndviByPlot.TryGetValue(d.PlotId, out var ndvi);
+                return ToReadout(d, plot!, ndvi, now);
+            })
+            .ToList();
+
+        return new Result<IEnumerable<IoTDeviceReadout>, Error>.Success(readouts);
     }
 
     /// <summary>
