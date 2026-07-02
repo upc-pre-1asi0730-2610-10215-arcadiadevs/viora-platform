@@ -151,6 +151,6 @@ public class PlotIoTDevicesController(
             result,
             errorLocalizer,
             problemDetailsFactory,
-            devices => Ok(devices.Select(d => d.ToResourceFromEntity())));
+            readouts => Ok(readouts.Select(r => r.ToResourceFromReadout())));
     }
 }

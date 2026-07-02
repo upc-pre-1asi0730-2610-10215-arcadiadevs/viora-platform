@@ -230,6 +230,14 @@ builder.Services.AddScoped<ChillAccumulationCalculator>();
 builder.Services.AddScoped<IDynamicNutritionQueryService, DynamicNutritionQueryService>();
 builder.Services.AddScoped<IRecommendDynamicNutritionPlanCommandService, RecommendDynamicNutritionPlanCommandService>();
 builder.Services.AddScoped<ICertifyNutritionApplicationCommandService, CertifyNutritionApplicationCommandService>();
+// 1.17.0 (R1 fix + IoT telemetry): the simulator + health evaluator are
+// stateless pure functions (singleton); the query service is scoped to match
+// the sibling MonitoringSummaryQueryService. The query service's interface
+// was previously unbacked (no concrete class in DI), so the GET endpoint
+// threw at resolve time — this registration fixes that gap.
+builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.ISoilReadingSimulator, ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.SoilReadingSimulator>();
+builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.ISensorHealthEvaluator, ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.SensorHealthEvaluator>();
+builder.Services.AddScoped<IIoTDeviceQueryService, IoTDeviceQueryService>();
 builder.Services.AddAgronomicStatisticsHosting(builder.Configuration);
 // Surveillance Bounded Context Injection Configuration
 builder.Services.AddScoped<IPestSightingReportRepository, PestSightingReportRepository>();
