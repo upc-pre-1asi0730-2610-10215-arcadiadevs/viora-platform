@@ -4,7 +4,9 @@ using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Resources.Errors;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.CommandServices;
+using ArcadiaDevs.Viora.Platform.Surveillance.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Commands;
+using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Rest.Transform;
 using Microsoft.AspNetCore.Mvc;
@@ -19,6 +21,7 @@ namespace ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Rest.Controllers;
 [Authorize]
 public class PestSightingReportsController(
     IPestSightingCommandService commandService,
+    IPestSightingReportQueryService queryService,
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
@@ -46,18 +49,33 @@ public class PestSightingReportsController(
         );
     }
 
-    [HttpPost("{reportId}/review")]
+    /// <summary>
+    ///     Lists the reports submitted by a given reporter, newest first.
+    /// </summary>
+    /// <param name="reporterUserId">The id of the reporting user.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>200 OK with the reporter's reports (empty list when none exist).</returns>
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<PestSightingReportResource>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetReports(
+        [FromQuery] long reporterUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var reports = await queryService.Handle(new GetPestSightingReportsByUserQuery(reporterUserId), cancellationToken);
+        var resources = reports.Select(PestSightingReportResourceFromEntityAssembler.ToResourceFromEntity);
+        return Ok(resources);
+    }
+
+    [HttpPatch("{reportId}")]
     [ProducesResponseType(typeof(PestSightingReportResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ReviewPestSightingReport(
         [FromRoute] long reportId,
-        [FromBody] ReviewPestSightingReportCommand command,
+        [FromQuery] long reporterUserId,
+        [FromBody] ReviewPestSightingReportResource resource,
         CancellationToken ct = default)
     {
-        if (command.ReportId != reportId)
-        {
-            return BadRequest(new ProblemDetails { Title = "Report ID mismatch." });
-        }
+        var command = ReviewPestSightingReportCommandFromResourceAssembler.ToCommandFromResource(reportId, reporterUserId, resource);
 
         var result = await commandService.Handle(command, ct);
 
