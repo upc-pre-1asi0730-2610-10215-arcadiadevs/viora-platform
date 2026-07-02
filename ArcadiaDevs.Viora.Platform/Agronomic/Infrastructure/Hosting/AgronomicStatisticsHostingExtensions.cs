@@ -1,4 +1,7 @@
+using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFrameworkCore.Adapters;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -32,6 +35,10 @@ public static class AgronomicStatisticsHostingExtensions
 
         // Register the scheduled ingestion background service
         services.AddHostedService<AgronomicStatisticIngestionScheduler>();
+
+        // Register 1.17.1 services
+        services.AddScoped<IPlotDetailMetadataProvider, JpaPlotDetailMetadataProvider>();
+        services.AddScoped<PlotOwnershipValidator>();
 
         return services;
     }
