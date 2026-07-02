@@ -231,6 +231,16 @@ public class RecommendDynamicNutritionPlanCommandService(
                 plan.Rationale.TriggeringRiskLevel.ToString());
             await mediator.PublishAsync(domainEvent, cancellationToken);
 
+            // Step 13: publish the cross-BC DynamicNutritionPlanGeneratedIntegrationEvent
+            // when the plan was triggered by an alert (AlertId present). Manual plan
+            // generation (AlertId null) does not produce this event.
+            if (command.AlertId.HasValue)
+            {
+                var integrationEvent = new DynamicNutritionPlanGeneratedIntegrationEvent(
+                    plan.Id, plan.PlotId, command.AlertId);
+                await mediator.PublishAsync(integrationEvent, cancellationToken);
+            }
+
             logger.LogInformation(
                 "Successfully generated Dynamic Nutrition Plan {PlanId} for plot {PlotId} (risks: {RiskCount})",
                 plan.Id, command.PlotId, risks.Count);
