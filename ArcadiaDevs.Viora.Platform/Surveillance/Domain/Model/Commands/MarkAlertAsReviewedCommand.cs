@@ -12,7 +12,9 @@ public record ConfirmAlertCommand(long AlertId);
 ///     SURV-003: dismiss an alert.
 ///     Wraps <see cref="Surveillance.Domain.Model.Aggregates.Alert.Dismiss"/>.
 /// </summary>
-public record DismissAlertCommand(long AlertId);
+/// <param name="AlertId">The alert id.</param>
+/// <param name="Reason">Optional caller-supplied dismissal reason (REQ-5).</param>
+public record DismissAlertCommand(long AlertId, string? Reason = null);
 
 /// <summary>
 ///     SURV-003: escalate an alert's severity by one level.
@@ -25,3 +27,9 @@ public record EscalateAlertCommand(long AlertId);
 ///     Wraps <see cref="Surveillance.Domain.Model.Aggregates.Alert.LinkReport"/>.
 /// </summary>
 public record LinkAlertReportCommand(long AlertId, long ReportId);
+
+/// <summary>
+///     REQ-4: resolve an alert.
+///     Wraps <see cref="Surveillance.Domain.Model.Aggregates.Alert.Resolve"/>.
+/// </summary>
+public record ResolveAlertCommand(long AlertId);

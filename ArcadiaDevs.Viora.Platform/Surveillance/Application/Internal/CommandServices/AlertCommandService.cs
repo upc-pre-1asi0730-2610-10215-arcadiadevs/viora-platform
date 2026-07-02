@@ -109,7 +109,7 @@ public class AlertCommandService(
         => await ApplyStateMachineAsync(command.AlertId, a => a.ConfirmFromInspection(), cancellationToken);
 
     public async Task<Result<Unit, Error>> Handle(DismissAlertCommand command, CancellationToken cancellationToken = default)
-        => await ApplyStateMachineAsync(command.AlertId, a => a.Dismiss(), cancellationToken);
+        => await ApplyStateMachineAsync(command.AlertId, a => a.Dismiss(command.Reason), cancellationToken);
 
     public async Task<Result<Unit, Error>> Handle(EscalateAlertCommand command, CancellationToken cancellationToken = default)
         => await ApplyStateMachineAsync(command.AlertId, a => a.Escalate(), cancellationToken);
@@ -119,6 +119,9 @@ public class AlertCommandService(
             command.AlertId,
             a => a.LinkReport(new PestSightingReportId(command.ReportId)),
             cancellationToken);
+
+    public async Task<Result<Unit, Error>> Handle(ResolveAlertCommand command, CancellationToken cancellationToken = default)
+        => await ApplyStateMachineAsync(command.AlertId, a => a.Resolve(), cancellationToken);
 
     public async Task<Result<Unit, Error>> Handle(AddAlertTimelineRecordCommand command, CancellationToken cancellationToken = default)
     {

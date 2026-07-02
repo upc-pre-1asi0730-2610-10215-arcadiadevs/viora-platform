@@ -5,6 +5,21 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.21.0] - 2026-07-02
+
+### added
+- `PUT /api/v1/users/{userId}/password` — changes a user's password (`[Authorize]`, any authenticated user); verifies `currentPassword` against the stored BCrypt hash, enforces an 8-character minimum on `newPassword`
+- `ChangePasswordCommand`, `ChangePasswordResource` + `ChangePasswordCommandFromResourceAssembler`
+- `IUserCommandService.Handle(ChangePasswordCommand, ...)` / `UserCommandService` handler impl
+- `IamErrors.InvalidCurrentPassword` (`400`)
+
+### notes
+- WU3 of the `audit/wa-os-backend-parity-closure-2026-07-02` SDD change (WA↔OS backend feature-parity closure) — closes REQ-3 (M2: OS has this endpoint, WA previously did not)
+- **No ownership guard** — matches OS's `UsersController.changePassword` exactly: any authenticated caller may change any `userId`'s password by ID. This is an inherited contract risk from OS, documented and intentionally not fixed here per the exact-parity directive.
+- `IUserCommandService` re-injected into `UsersController`'s constructor (had been removed in 1.19.0 after the `AssignRole` endpoint deletion made it temporarily unused)
+- Features-only implementation (no new tests) — TDD dropped for WU2-WU9 by explicit user decision (tests deferred to a dedicated post-parity testing phase); 1 commit on `feature/iam/change-password`
+- Build green (0 errors); tests 228/229 pass (same pre-existing unrelated failure carried over from 1.19.0/1.20.0: `PlotRepositoryTests` XML-doc reflection test — not introduced by this release, not regressed)
+
 ## [1.20.0] - 2026-07-02
 
 ### added
