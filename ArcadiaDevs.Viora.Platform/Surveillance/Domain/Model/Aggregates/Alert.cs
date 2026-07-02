@@ -143,7 +143,12 @@ public partial class Alert : IHasDomainEvents
     ///     <see cref="Result{TValue, TError}.Failure"/> and leaves state
     ///     unchanged when the alert is already <c>DISMISSED</c>.
     /// </summary>
-    public Result<Unit, Error> Dismiss()
+    /// <param name="reason">
+    ///     Optional caller-supplied dismissal reason, recorded as the
+    ///     timeline entry's description. When omitted or blank, a default
+    ///     description is used instead.
+    /// </param>
+    public Result<Unit, Error> Dismiss(string? reason = null)
     {
         if (Status is "DISMISSED")
         {
@@ -152,10 +157,10 @@ public partial class Alert : IHasDomainEvents
         }
 
         Status = "DISMISSED";
-        AddTimelineRecord(
-            "DISMISSED",
-            "Alert dismissed",
-            "The alert was dismissed without further action.");
+        var description = string.IsNullOrWhiteSpace(reason)
+            ? "The alert was dismissed without further action."
+            : reason;
+        AddTimelineRecord("DISMISSED", "Alert dismissed", description);
         _domainEvents.Add(new AlertUpdatedEvent(Id, PlotId.Value, "DISMISSED"));
         return new Result<Unit, Error>.Success(Unit.Value);
     }

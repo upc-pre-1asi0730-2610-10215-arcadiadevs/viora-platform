@@ -1,10 +1,15 @@
 namespace ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Rest.Resources;
 
 /// <summary>
-///     Resource DTO for partially updating an alert. Currently only the status
-///     transition to <c>UNDER_REVIEW</c> is supported.
+///     Resource DTO for partially updating an alert. Supports transitioning
+///     to <c>UNDER_REVIEW</c>, <c>RESOLVED</c>, or <c>DISMISSED</c>.
 /// </summary>
-/// <param name="Status">The target status (e.g. <c>UNDER_REVIEW</c>).</param>
+/// <param name="Status">The target status (<c>UNDER_REVIEW</c>, <c>RESOLVED</c>, or <c>DISMISSED</c>).</param>
+/// <param name="Reason">
+///     Optional caller-supplied reason, used only when <see cref="Status"/> is
+///     <c>DISMISSED</c> (REQ-5). Ignored for other target statuses.
+/// </param>
 public record UpdateAlertResource(
-    string Status
+    string Status,
+    string? Reason = null
 );

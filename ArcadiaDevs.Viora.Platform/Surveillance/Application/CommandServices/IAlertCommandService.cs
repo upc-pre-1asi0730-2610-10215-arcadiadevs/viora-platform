@@ -26,6 +26,11 @@ public interface IAlertCommandService
     Task<Result<Unit, Error>> Handle(LinkAlertReportCommand command, CancellationToken cancellationToken = default);
 
     /// <summary>
+    ///     REQ-4: resolve an alert (unconditional, always succeeds).
+    /// </summary>
+    Task<Result<Unit, Error>> Handle(ResolveAlertCommand command, CancellationToken cancellationToken = default);
+
+    /// <summary>
     ///     Appends a timeline record to an existing alert.
     /// </summary>
     Task<Result<Unit, Error>> Handle(AddAlertTimelineRecordCommand command, CancellationToken cancellationToken = default);
