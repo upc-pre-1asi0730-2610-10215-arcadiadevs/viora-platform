@@ -242,6 +242,10 @@ builder.Services.AddScoped<IIoTDeviceQueryService, IoTDeviceQueryService>();
 // repositories (Scoped). Resolved via IServiceScopeFactory in the scheduler (D17).
 builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services.IHydricStressDetectedIntegrationEventProducer, ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services.HydricStressDetectedIntegrationEventProducer>();
 builder.Services.AddAgronomicStatisticsHosting(builder.Configuration);
+// 1.18.0: Expense BC slice (THE LAST phase-3 release)
+builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
+builder.Services.AddScoped<IExpenseCommandService, ExpenseCommandService>();
+builder.Services.AddScoped<IExpenseQueryService, ExpenseQueryService>();
 // Surveillance Bounded Context Injection Configuration
 builder.Services.AddScoped<IPestSightingReportRepository, PestSightingReportRepository>();
 builder.Services.AddScoped<IAlertRepository, AlertRepository>();
