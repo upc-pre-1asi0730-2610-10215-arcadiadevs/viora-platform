@@ -36,14 +36,18 @@ public interface ISoilReadingSimulator
     /// </summary>
     /// <param name="code">The device activation code (per-device seed); may be null.</param>
     /// <param name="type">The sensor kind, which decides the reported metrics.</param>
-    /// <param name="location">The plot's representative point (centroid); may be null.</param>
+    /// <param name="location">
+    ///     The plot's representative point as a centroid tuple
+    ///     (<c>(double Latitude, double Longitude)?</c>); may be null when the
+    ///     plot has no usable geometry (default to 0.0/0.0).
+    /// </param>
     /// <param name="latestNdvi">The plot's most recent NDVI (canopy vigor), or null.</param>
     /// <param name="now">The reference instant.</param>
     /// <returns>The simulated readings, with unreported metrics left null.</returns>
     SensorReadings Simulate(
         ActivationCode? code,
         IoTDeviceType type,
-        GeoPoint? location,
+        (double Latitude, double Longitude)? location,
         double? latestNdvi,
         DateTimeOffset now);
 }

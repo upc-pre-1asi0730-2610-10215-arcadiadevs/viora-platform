@@ -22,7 +22,7 @@ public sealed class SoilReadingSimulator : ISoilReadingSimulator
     public SensorReadings Simulate(
         ActivationCode? code,
         IoTDeviceType type,
-        GeoPoint? location,
+        (double Latitude, double Longitude)? location,
         double? latestNdvi,
         DateTimeOffset now)
     {
@@ -32,8 +32,8 @@ public sealed class SoilReadingSimulator : ISoilReadingSimulator
         // per-seed-value level. This is the accepted divergence (spec R10,
         // design D-D10).
         long seed = code != null ? code.Value.GetHashCode() : 0L;
-        double latitude = location != null ? (double)location.Latitude : 0.0;
-        double longitude = location != null ? (double)location.Longitude : 0.0;
+        double latitude = location.HasValue ? location.Value.Latitude : 0.0;
+        double longitude = location.HasValue ? location.Value.Longitude : 0.0;
 
         var utc = now.UtcDateTime;
         int dayOfYear = utc.DayOfYear;
