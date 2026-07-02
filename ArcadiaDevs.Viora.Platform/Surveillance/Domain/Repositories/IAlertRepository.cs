@@ -17,4 +17,9 @@ public interface IAlertRepository : IBaseRepository<Alert>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The active alerts for those plots.</returns>
     Task<IEnumerable<Alert>> FindActiveByPlotIdInAsync(IEnumerable<long> plotIds, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Finds the alert linked to a specific pest sighting report.
+    /// </summary>
+    Task<Alert?> FindByLinkedReportIdAsync(long reportId, CancellationToken cancellationToken = default);
 }

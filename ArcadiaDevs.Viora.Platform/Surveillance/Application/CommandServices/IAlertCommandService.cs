@@ -29,4 +29,7 @@ public interface IAlertCommandService
     ///     Appends a timeline record to an existing alert.
     /// </summary>
     Task<Result<Unit, Error>> Handle(AddAlertTimelineRecordCommand command, CancellationToken cancellationToken = default);
+
+    Task<Result<long, Error>> Handle(ConfirmAlertFromInspectionCommand command, CancellationToken cancellationToken = default);
+    Task<Result<Unit, Error>> Handle(DismissReportAlertCommand command, CancellationToken cancellationToken = default);
 }
