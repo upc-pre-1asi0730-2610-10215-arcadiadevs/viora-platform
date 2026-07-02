@@ -5,6 +5,30 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.0] - 2026-07-01
+
+### added
+- `Expense` aggregate — 12 fields + audit for expense tracking (data holder, no business methods)
+- 4 enums: `ExpenseCategory` (Inputs, Labor, Specialist), `ExpenseType` (ClimateMitigation, PestIntervention), `ExpenseStatus` (Registered, AlertConfirmed), `PaymentStatus` (Paid, Pending)
+- `ExpenseId` value object (long)
+- `CreateExpenseCommand` — command record with validation (GrowerId > 0, PlotId > 0, Amount > 0)
+- `GetGrowerExpensesQuery` — query record with growerId + optional plotId
+- `IExpenseCommandService` + `ExpenseCommandService` — creates and persists expenses
+- `IExpenseQueryService` + `ExpenseQueryService` — queries by grower, plot, or id
+- `IExpenseRepository` + `ExpenseRepository` — EF Core repository (standalone pattern, not BaseRepository<T>)
+- `ExpensesController` — 3 endpoints: GET list, GET by id (WA extension), POST create
+- `ExpenseResource` + `CreateExpenseResource` — REST DTOs
+- `ExpenseResourceFromEntityAssembler` + `CreateExpenseCommandFromResourceAssembler` — conversion assemblers
+- `ExpenseConfiguration` — EF entity configuration for `expenses` table (11 columns + audit)
+- 10th EF migration `AddExpense` — creates `expenses` table (empty for InMemory provider)
+
+### notes
+- 13 implementation commits on `feature/agronomic/expense-bc-slice` + release ceremony + changelog = 15 total
+- ~25 files changed (24 new, 1 modified); ~700 net LOC
+- Build green (0 errors); tests 217/233 pass (16 Docker failures pre-existing)
+- 5 documented deviations: standalone repository pattern, empty migration, WA extension GET by id
+- This is THE LAST release in phase 3 — parity with os-viora-platform is COMPLETE (7 of 7)
+
 ## [1.17.1] - 2026-07-01
 
 ### added
