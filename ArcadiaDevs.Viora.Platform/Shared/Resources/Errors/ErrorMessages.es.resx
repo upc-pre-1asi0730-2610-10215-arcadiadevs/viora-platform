@@ -6,6 +6,9 @@
     <data name="OperationCancelled" xml:space="preserve">
     <value>La operación fue cancelada.</value>
   </data>
+    <data name="DbConflict" xml:space="preserve">
+    <value>No se pudo completar la solicitud debido a un conflicto con un recurso existente.</value>
+  </data>
 
     <data name="ProfilesError.ProfileNotFound" xml:space="preserve">
     <value>Perfil no encontrado.</value>
