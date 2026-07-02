@@ -30,7 +30,7 @@ public class AgronomicStatisticsController(
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType(typeof(AgronomicStatisticResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<AgronomicStatisticResource>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
@@ -59,18 +59,16 @@ public class AgronomicStatisticsController(
             problemDetailsFactory,
             statistics =>
             {
-                var latest = statistics.OrderByDescending(s => s.MeasurementDate).FirstOrDefault();
-                if (latest == null)
-                {
-                    return Ok("");
-                }
+                var resources = statistics
+                    .OrderBy(s => s.MeasurementDate)
+                    .Select(s => new AgronomicStatisticResource(
+                        s.MeasurementDate.ToString("yyyy-MM-dd"),
+                        s.NdviValue,
+                        s.ChillPortions,
+                        s.ChillHours))
+                    .ToList();
 
-                return Ok(new AgronomicStatisticResource(
-                    latest.MeasurementDate.ToString("yyyy-MM-dd"),
-                    latest.NdviValue,
-                    latest.ChillPortions,
-                    latest.ChillHours
-                ));
+                return Ok(resources);
             });
     }
 
@@ -112,7 +110,7 @@ public class AgronomicStatisticsController(
             });
     }
 
-    [HttpPost("ingest")]
+    [HttpPost]
     [ProducesResponseType(typeof(AgronomicStatisticsIngestionReportResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> IngestAgronomicStatistics(
