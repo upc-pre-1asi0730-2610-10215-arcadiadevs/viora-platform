@@ -1,4 +1,3 @@
-using ArcadiaDevs.Viora.Platform.Iam.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Iam.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Queries;
@@ -24,7 +23,6 @@ namespace ArcadiaDevs.Viora.Platform.Iam.Interfaces.Rest.Controllers;
 [Authorize]
 public class UsersController(
     IUserQueryService userQueryService,
-    IUserCommandService userCommandService,
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
@@ -108,27 +106,5 @@ public class UsersController(
         }
 
         return Ok(user.ToResource());
-    }
-
-    /// <summary>
-    ///     Assigns a role to a user. Restricted to Administrators.
-    /// </summary>
-    [HttpPost("{id:int}/roles")]
-    [Authorize(Roles = "Administrator")]
-    [ProducesResponseType(typeof(UserResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> AssignRole(
-        [FromRoute] int id,
-        [FromBody] AssignRoleResource resource,
-        CancellationToken cancellationToken)
-    {
-        var command = AssignRoleCommandFromResourceAssembler.ToCommandFromResource(id, resource);
-        var result = await userCommandService.Handle(command, cancellationToken);
-
-        return IamActionResultAssembler.ToActionResult(this, result, errorLocalizer, problemDetailsFactory,
-            user => Ok(user.ToResource()));
     }
 }

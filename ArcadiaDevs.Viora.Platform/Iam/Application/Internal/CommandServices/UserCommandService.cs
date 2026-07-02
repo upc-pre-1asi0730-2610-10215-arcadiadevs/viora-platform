@@ -91,27 +91,4 @@ public class UserCommandService(
         return new Result<AuthenticatedUser, Error>.Success(
             new AuthenticatedUser(user.Id, user.Username, token));
     }
-
-    /// <inheritdoc />
-    public async Task<Result<User?, Error>> Handle(
-        AssignRoleCommand command,
-        CancellationToken cancellationToken)
-    {
-        // Load user by id
-        var user = await userRepository.FindByIdAsync(command.UserId, cancellationToken);
-        if (user == null)
-            return new Result<User?, Error>.Failure(IamErrors.UserNotFound);
-
-        // Find role by name
-        var role = await roleRepository.FindByNameAsync(command.RoleName, cancellationToken);
-        if (role == null)
-            return new Result<User?, Error>.Failure(IamErrors.InvalidRoleName);
-
-        // Add role to user's navigation collection
-        user.Roles.Add(role);
-
-        await unitOfWork.CompleteAsync(cancellationToken);
-
-        return new Result<User?, Error>.Success(user);
-    }
 }
