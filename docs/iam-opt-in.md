@@ -24,7 +24,7 @@ public class SomeSurveillanceService(IIamContextFacade iam)
             return Result.Failure(SomeError.UnknownUser);
 
         var roles = await iam.GetUserRolesAsync(userId, ct);
-        if (!roles.Contains("Administrator"))
+        if (!roles.Contains("Specialist"))
             return Result.Failure(SomeError.InsufficientPrivileges);
 
         // … proceed
@@ -43,7 +43,7 @@ if (!await _iam.ExistsUserAsync(request.UserId, ct))
 
 ```csharp
 var roles = await _iam.GetUserRolesAsync(currentUserId, ct);
-if (!roles.Contains("PhytosanitarySpecialist"))
+if (!roles.Contains("Specialist"))
     return Forbid();
 ```
 
@@ -52,7 +52,7 @@ if (!roles.Contains("PhytosanitarySpecialist"))
 The custom `AuthorizeAttribute` supports role filtering:
 
 ```csharp
-[Authorize(Roles = "Administrator")]
+[Authorize(Roles = "Specialist")]
 [HttpPost("some-sensitive-action")]
 public async Task<IActionResult> SomeSensitiveAction() { … }
 ```

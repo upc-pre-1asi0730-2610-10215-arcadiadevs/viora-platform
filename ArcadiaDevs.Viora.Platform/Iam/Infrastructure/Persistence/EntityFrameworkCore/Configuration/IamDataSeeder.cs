@@ -13,14 +13,13 @@ namespace ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Persistence.EntityFramew
 public static class IamDataSeeder
 {
     /// <summary>
-    ///     Seeds the roles table with the three first-class roles.
+    ///     Seeds the roles table with the two first-class roles.
     /// </summary>
     /// <param name="context">The application database context.</param>
     public static async Task SeedAsync(AppDbContext context)
     {
-        await SeedRoleAsync(context, "OliveProducer", "Olive oil producer with plot management access.");
-        await SeedRoleAsync(context, "PhytosanitarySpecialist", "Specialist in plant health and pest surveillance.");
-        await SeedRoleAsync(context, "Administrator", "System administrator with full access.");
+        await SeedRoleAsync(context, "Grower", "Olive oil producer with plot management access.");
+        await SeedRoleAsync(context, "Specialist", "Specialist in plant health and pest surveillance.");
     }
 
     private static async Task SeedRoleAsync(AppDbContext context, string name, string description)

@@ -35,14 +35,4 @@ public interface IUserCommandService
      * <returns>A result containing the authenticated user and token, or an error</returns>
      */
     Task<Result<AuthenticatedUser, Error>> Handle(SignInCommand command, CancellationToken cancellationToken);
-
-    /**
-     * <summary>
-     *     Handle assign role command
-     * </summary>
-     * <param name="command">The assign role command</param>
-     * <param name="cancellationToken">The cancellation token</param>
-     * <returns>A result containing the updated user or an error</returns>
-     */
-    Task<Result<User?, Error>> Handle(AssignRoleCommand command, CancellationToken cancellationToken);
 }
