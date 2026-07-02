@@ -31,12 +31,8 @@ public static class IamErrors
     public static readonly Error TokenExpired =
         new("Iam.TokenExpired", "The authorization token has expired.");
 
-    // Reserved for S2
     public static readonly Error InvalidRoleName =
         new("Iam.InvalidRoleName", "The specified role name is not valid.");
-
-    public static readonly Error SignUpRequiresAdmin =
-        new("Iam.SignUpRequiresAdmin", "User sign-up requires administrator privileges in production.");
 
     // Reserved for cross-slice
     public static readonly Error InsufficientRole =

@@ -6,7 +6,8 @@ namespace ArcadiaDevs.Viora.Platform.Iam.Interfaces.Rest.Resources;
  * </summary>
  * <remarks>
  *     This resource represents the data required to sign up a new user.
- *     S1: no roles — role assignment is a separate S2 operation.
+ *     Role is optional and defaults to "Grower" when omitted or blank,
+ *     mirroring OS's SignUpResource.role + Role.getDefaultRole() contract.
  * </remarks>
  */
-public record SignUpResource(string Username, string Password);
+public record SignUpResource(string Username, string Password, string? Role = null);
