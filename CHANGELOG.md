@@ -5,6 +5,20 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.23.0] - 2026-07-02
+
+### added
+- `GET /api/v1/pest-sighting-reports?reporterUserId=` — lists a reporter's submitted pest sighting reports, newest first (`200 OK` with `[]` when none exist); new `IPestSightingReportQueryService` + `GetPestSightingReportsByUserQuery` + `PestSightingReportRepository.FindByReporterUserIdAsync`
+
+### breaking
+- `POST /api/v1/pest-sighting-reports/{reportId}/review` → `PATCH /api/v1/pest-sighting-reports/{reportId}?reporterUserId=` — `reporterUserId` moves from the request body to a query parameter; the request body now carries only `outcome` (new `ReviewPestSightingReportResource` + `ReviewPestSightingReportCommandFromResourceAssembler`); the route-vs-body `reportId` mismatch guard is removed as structurally moot (no body-level `reportId` remains to compare); the reporter-ownership check is preserved unchanged at the command-handler level. Existing callers of the old `POST {id}/review` route MUST migrate to the new `PATCH` shape.
+
+### notes
+- WU5 of the `audit/wa-os-backend-parity-closure-2026-07-02` SDD change (WA↔OS backend feature-parity closure) — closes REQ-6 (pest report history) and REQ-7 (review route replace)
+- Pre-check confirmed the old `POST {id}/review` route had zero internal callers outside `PestSightingReportsController` itself, and no existing tests reference it — no stale-test cleanup was needed
+- Features-only implementation (no new tests) — TDD dropped for WU2-WU9 by explicit user decision (tests deferred to a dedicated post-parity testing phase); 2 commits on `feature/surveillance/pest-report-contract`
+- Build green (0 errors); tests 228/229 pass (same pre-existing unrelated failure carried over from prior releases: `PlotRepositoryTests` XML-doc reflection test — not introduced by this release, not regressed)
+
 ## [1.22.0] - 2026-07-02
 
 ### added
