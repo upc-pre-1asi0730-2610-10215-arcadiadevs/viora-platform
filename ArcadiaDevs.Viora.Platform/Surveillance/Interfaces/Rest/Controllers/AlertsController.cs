@@ -114,13 +114,17 @@ public class AlertsController(
     ///     Update alert status
     /// </summary>
     /// <remarks>
-    ///     Partially updates an alert. Pass <c>{"status": "UNDER_REVIEW"}</c> to mark it
-    ///     as reviewed and append a record to its timeline.
+    ///     Partially updates an alert. Supported target <c>status</c> values:
+    ///     <c>UNDER_REVIEW</c> (marks the alert as reviewed), <c>RESOLVED</c>
+    ///     (unconditional terminal transition), and <c>DISMISSED</c> (terminal
+    ///     transition; optionally pass <c>{"reason": "..."}</c> to record a
+    ///     caller-supplied dismissal reason on the timeline, REQ-5). Any other
+    ///     status value returns 400.
     /// </remarks>
     /// <param name="alertId">The ID of the alert.</param>
     /// <param name="resource">The update payload.</param>
     /// <response code="200">Alert updated successfully</response>
-    /// <response code="400">Alert is already reviewed or invalid status</response>
+    /// <response code="400">Alert is already dismissed/invalid status</response>
     /// <response code="404">Alert not found</response>
     [HttpPatch("{alertId:long}")]
     [ProducesResponseType(typeof(AlertResource), StatusCodes.Status200OK)]
@@ -130,14 +134,27 @@ public class AlertsController(
         [FromRoute] long alertId,
         [FromBody] UpdateAlertResource resource)
     {
-        if (!string.Equals(resource.Status, "UNDER_REVIEW", StringComparison.OrdinalIgnoreCase))
+        Result<long, Error> result;
+
+        if (string.Equals(resource.Status, "UNDER_REVIEW", StringComparison.OrdinalIgnoreCase))
         {
-            // Only the transition to UNDER_REVIEW is supported for now.
+            result = await alertCommandService.Handle(new MarkAlertAsReviewedCommand(alertId));
+        }
+        else if (string.Equals(resource.Status, "RESOLVED", StringComparison.OrdinalIgnoreCase))
+        {
+            var unitResult = await alertCommandService.Handle(new ResolveAlertCommand(alertId));
+            result = unitResult.Map(_ => alertId);
+        }
+        else if (string.Equals(resource.Status, "DISMISSED", StringComparison.OrdinalIgnoreCase))
+        {
+            var unitResult = await alertCommandService.Handle(new DismissAlertCommand(alertId, resource.Reason));
+            result = unitResult.Map(_ => alertId);
+        }
+        else
+        {
+            // Only UNDER_REVIEW, RESOLVED, and DISMISSED are supported.
             return BadRequest(new EmptyResource());
         }
-
-        var command = new MarkAlertAsReviewedCommand(alertId);
-        var result = await alertCommandService.Handle(command);
 
         if (result is Result<long, Error>.Failure failure)
         {
@@ -200,6 +217,11 @@ public class AlertsController(
     ///     Dismiss an alert (SURV-003).
     /// </summary>
     /// <param name="alertId">The alert id.</param>
+    /// <param name="resource">
+    ///     Optional payload. Omit the request body entirely to dismiss without a
+    ///     caller-supplied reason, or pass <c>{"reason": "..."}</c> to record one
+    ///     on the timeline (REQ-5).
+    /// </param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <response code="200">Alert dismissed.</response>
     /// <response code="400">Alert is already dismissed (RFC 7807 ProblemDetails).</response>
@@ -210,9 +232,11 @@ public class AlertsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Dismiss(
         [FromRoute] long alertId,
+        [FromBody] DismissAlertResource? resource,
         CancellationToken cancellationToken)
     {
-        var result = await alertCommandService.Handle(new DismissAlertCommand(alertId), cancellationToken);
+        var command = DismissAlertCommandFromResourceAssembler.ToCommandFromResource(alertId, resource);
+        var result = await alertCommandService.Handle(command, cancellationToken);
         if (result.IsFailure)
         {
             return MapTransitionFailureToResult(result);
