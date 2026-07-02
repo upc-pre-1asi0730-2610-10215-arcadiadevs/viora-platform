@@ -59,7 +59,7 @@ public class CertifyNutritionApplicationCommandService(
         }
         catch (InvalidOperationException ex)
         {
-            return new Result<DynamicNutritionPlan, Error>.Failure(AgronomicErrors.InvalidState);
+            return new Result<DynamicNutritionPlan, Error>.Failure(AgronomicErrors.PlanNotCertifiable);
         }
         catch (ArgumentException ex)
         {
