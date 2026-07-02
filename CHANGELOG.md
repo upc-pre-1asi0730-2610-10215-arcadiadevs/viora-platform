@@ -5,6 +5,17 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.24.0] - 2026-07-02
+
+### added
+- `GET /api/v1/iot-devices?userId=` — lists every IoT device across all plots owned by a user, enriched with simulated telemetry and derived health, backing the dashboard's aggregate Water Stress view (`200 OK` with `[]` when the user owns no active plots); new `IoTDevicesQueryController`, distinct from the plot-scoped `PlotIoTDevicesController` which is unchanged
+
+### notes
+- WU6 of the `audit/wa-os-backend-parity-closure-2026-07-02` SDD change (WA↔OS backend feature-parity closure) — closes REQ-8 (cross-plot IoT devices)
+- The underlying `GetIoTDevicesByUserIdQuery`, `IIoTDeviceQueryService.Handle(GetIoTDevicesByUserIdQuery, ...)` overload, and `IIoTDeviceRepository.FindAllByPlotIdsAsync` were already present in the codebase from prior porting work (unwired dead code); this release's only change is exposing them via a new controller
+- Features-only implementation (no new tests) — TDD dropped for WU2-WU9 by explicit user decision (tests deferred to a dedicated post-parity testing phase); 1 commit on `feature/agronomic/cross-plot-iot-devices`
+- Build green (0 errors); tests 228/229 pass (same pre-existing unrelated failure carried over from prior releases: `PlotRepositoryTests` XML-doc reflection test — not introduced by this release, not regressed)
+
 ## [1.23.0] - 2026-07-02
 
 ### added
