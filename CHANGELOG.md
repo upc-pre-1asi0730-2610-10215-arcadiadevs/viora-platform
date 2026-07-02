@@ -5,6 +5,17 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.26.0] - 2026-07-02
+
+### added
+- DB unique-constraint violations map to 409 Conflict — `GlobalExceptionHandlerMiddleware` now catches `DbUpdateException` (before the generic exception handler) and returns a `409 Conflict` `ProblemDetails` response with a localized `DbConflict` message (en/es)
+
+### notes
+- WU9 of the `audit/wa-os-backend-parity-closure-2026-07-02` SDD change (WA↔OS backend feature-parity closure) — closes REQ-13 (DB conflict → 409 mapping), Shared bounded context, fully independent of all other WUs
+- This is the last active WU in the change; WU8 (REQ-12, plots `?view=` consolidation) remains formally deferred to a separate future SDD change
+- Features-only implementation (no new tests) — TDD dropped for WU2-WU9 by explicit user decision (tests deferred to a dedicated post-parity testing phase); the Postgres-tagged integration test forcing a real unique-constraint violation was skipped entirely (Docker unavailable), not just its RED half; 1 commit on `feature/shared/conflict-mapping`
+- Build green (0 errors); tests 228/229 pass (same pre-existing unrelated failure carried over from prior releases: `PlotRepositoryTests` XML-doc reflection test — not introduced by this release, not regressed)
+
 ## [1.25.0] - 2026-07-02
 
 ### breaking
