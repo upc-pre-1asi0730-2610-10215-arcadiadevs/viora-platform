@@ -24,4 +24,9 @@ public interface IAlertCommandService
     Task<Result<Unit, Error>> Handle(DismissAlertCommand command, CancellationToken cancellationToken = default);
     Task<Result<Unit, Error>> Handle(EscalateAlertCommand command, CancellationToken cancellationToken = default);
     Task<Result<Unit, Error>> Handle(LinkAlertReportCommand command, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Appends a timeline record to an existing alert.
+    /// </summary>
+    Task<Result<Unit, Error>> Handle(AddAlertTimelineRecordCommand command, CancellationToken cancellationToken = default);
 }

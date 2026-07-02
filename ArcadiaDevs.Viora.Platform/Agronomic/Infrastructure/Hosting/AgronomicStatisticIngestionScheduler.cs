@@ -3,10 +3,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.CommandServices;
+using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Events;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using Cortex.Mediator;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -43,6 +45,7 @@ public class AgronomicStatisticIngestionScheduler : BackgroundService
     private readonly IChillDeficitEvaluator _chillDeficitEvaluator;
     private readonly ChillRequirementResolver _chillRequirementResolver;
     private readonly IMediator _mediator;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IOptions<AgronomicStatisticsOptions> _options;
     private readonly ILogger<AgronomicStatisticIngestionScheduler> _logger;
 
@@ -56,6 +59,7 @@ public class AgronomicStatisticIngestionScheduler : BackgroundService
         IChillDeficitEvaluator chillDeficitEvaluator,
         ChillRequirementResolver chillRequirementResolver,
         IMediator mediator,
+        IServiceScopeFactory serviceScopeFactory,
         IOptions<AgronomicStatisticsOptions> options,
         ILogger<AgronomicStatisticIngestionScheduler> logger)
     {
@@ -65,6 +69,7 @@ public class AgronomicStatisticIngestionScheduler : BackgroundService
         _chillDeficitEvaluator = chillDeficitEvaluator;
         _chillRequirementResolver = chillRequirementResolver;
         _mediator = mediator;
+        _serviceScopeFactory = serviceScopeFactory;
         _options = options;
         _logger = logger;
     }
@@ -135,6 +140,13 @@ public class AgronomicStatisticIngestionScheduler : BackgroundService
                     "Published AgronomicChillDeficitIntegrationEvent for PlotId={PlotId}.",
                     plot.Id);
             }
+        }
+
+        // 3. Run hydric stress producer (1.16.2 — D17: scoped via IServiceScopeFactory)
+        using (var scope = _serviceScopeFactory.CreateScope())
+        {
+            var producer = scope.ServiceProvider.GetRequiredService<IHydricStressDetectedIntegrationEventProducer>();
+            await producer.ProduceHydricStressEventsAsync(ct);
         }
     }
 }

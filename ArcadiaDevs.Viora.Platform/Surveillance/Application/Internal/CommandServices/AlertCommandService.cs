@@ -120,6 +120,32 @@ public class AlertCommandService(
             a => a.LinkReport(new PestSightingReportId(command.ReportId)),
             cancellationToken);
 
+    public async Task<Result<Unit, Error>> Handle(AddAlertTimelineRecordCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var alert = await alertRepository.FindByIdAsync((int)command.AlertId, cancellationToken);
+            if (alert is null)
+            {
+                return new Result<Unit, Error>.Failure(SurveillanceErrors.NotFound);
+            }
+
+            alert.AddTimelineRecord(command.Tag, command.Title, command.Description);
+            alertRepository.Update(alert);
+            await unitOfWork.CompleteAsync(cancellationToken);
+
+            return new Result<Unit, Error>.Success(Unit.Value);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            return new Result<Unit, Error>.Failure(SurveillanceErrors.InternalServerError);
+        }
+    }
+
     /// <summary>
     ///     Loads the alert, applies the state-machine transition, and
     ///     persists the result. Returns <see cref="SurveillanceErrors.NotFound"/>
