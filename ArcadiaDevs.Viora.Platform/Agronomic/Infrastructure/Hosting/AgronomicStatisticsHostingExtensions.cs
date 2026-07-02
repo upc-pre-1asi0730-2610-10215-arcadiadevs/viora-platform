@@ -28,6 +28,7 @@ public static class AgronomicStatisticsHostingExtensions
         services.AddSingleton<NdviTrendAnalyzer>();
         services.AddSingleton<PlotHealthEvaluator>();
         services.AddSingleton<IMitigationRecommendationGenerator, MitigationRecommendationGenerator>();
+        services.AddSingleton<IWeatherForecastAdvisor, WeatherForecastAdvisor>();
 
         // Register the scheduled ingestion background service
         services.AddHostedService<AgronomicStatisticIngestionScheduler>();
