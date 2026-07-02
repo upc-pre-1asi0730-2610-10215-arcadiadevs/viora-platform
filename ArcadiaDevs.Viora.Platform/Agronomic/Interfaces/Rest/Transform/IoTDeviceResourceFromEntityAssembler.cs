@@ -14,43 +14,65 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Transform;
 ///     <para>
 ///         Two paths:
 ///         <list type="bullet">
-///             <item><see cref="ToResourceFromEntity"/> — write responses (POST / PATCH / DELETE)
-///             where telemetry is not relevant; the 5 base fields + <c>CreatedAt</c>.</item>
-///             <item><see cref="ToResourceFromReadout"/> — read responses (GET) with the
-///             current simulated telemetry. In 1.17.0-6 the resource still has the
-///             5-field shape (CreatedAt = UtcNow placeholder); 1.17.0-9 (D15
-///             BREAKING) rewrites the resource to 10 fields and this method to
-///             populate them.</item>
+///             <item>
+///                 <see cref="ToResourceFromEntity"/> — write responses (POST / PATCH / DELETE)
+///                 where telemetry is not relevant. The 5 base fields are populated
+///                 from the aggregate; the 5 telemetry fields are <c>null</c>; the
+///                 <c>LastUpdate</c> field is set to <c>DateTime.UtcNow</c> as a
+///                 write-path fallback (N14). On the write path the simulator is
+///                 NOT invoked, so the response deliberately does not carry
+///                 telemetry — write operations are administrative.
+///             </item>
+///             <item>
+///                 <see cref="ToResourceFromReadout"/> — read responses (GET) with
+///                 the current simulated telemetry. All 10 fields are populated
+///                 from the readmodel; <c>LastUpdate</c> is the simulator's
+///                 <c>CapturedAt</c> serialized as ISO-8601 (N10).
+///             </item>
 ///         </list>
 ///     </para>
 /// </remarks>
 public static class IoTDeviceResourceFromEntityAssembler
 {
+    /// <summary>
+    ///     Converts a device aggregate (without telemetry) to its REST resource,
+    ///     used for write responses where readings are not yet relevant.
+    /// </summary>
+    /// <param name="device">The domain aggregate.</param>
+    /// <returns>The REST resource with null telemetry and a <c>LastUpdate</c> fallback.</returns>
     public static IoTDeviceResource ToResourceFromEntity(this IoTDevice device) =>
         new(
             (int)device.Id,
             (int)device.PlotId,
             device.DeviceName,
             device.Status,
-            DateTime.UtcNow);
+            Health: null,
+            DeviceType: device.ActivationCode?.DeviceType().ToString(),
+            SoilMoisture: null,
+            Temperature: null,
+            LeafHumidity: null,
+            LastUpdate: DateTime.UtcNow.ToString("O"));
 
     /// <summary>
     ///     Converts a device readout (device + current telemetry) to its REST resource.
-    ///     <para>
-    ///         Added in T1.17.0-6 so the controller's <c>readouts.Select(r =&gt; r.ToResourceFromReadout())</c>
-    ///         call compiles. In 1.17.0-6 the resource still has the 5-field shape
-    ///         (the 6 new fields are added in 1.17.0-9, D15 BREAKING). For now
-    ///         the telemetry is dropped (the readmodel's readouts are intentionally
-    ///         not serialized — the endpoint returns the same 5-field JSON as before
-    ///         1.17.0, but resolved from a readmodel rather than a raw aggregate,
-    ///         so the 1.17.0-6 fix closes R1 (DI failure) without breaking clients).
-    ///     </para>
     /// </summary>
-    public static IoTDeviceResource ToResourceFromReadout(this IoTDeviceReadout readout) =>
-        new(
-            (int)readout.Device.Id,
-            (int)readout.Device.PlotId,
-            readout.Device.DeviceName,
-            readout.Device.Status,
-            DateTime.UtcNow);
+    /// <param name="readout">The device with its simulated readings.</param>
+    /// <returns>The REST resource including telemetry, with <c>LastUpdate</c> as the simulator's <c>CapturedAt</c> ISO-8601 string.</returns>
+    public static IoTDeviceResource ToResourceFromReadout(this IoTDeviceReadout readout)
+    {
+        var device = readout.Device;
+        var readings = readout.Readings;
+
+        return new IoTDeviceResource(
+            (int)device.Id,
+            (int)device.PlotId,
+            device.DeviceName,
+            device.Status,
+            Health: readout.Health.ToString(),
+            DeviceType: device.ActivationCode?.DeviceType().ToString(),
+            SoilMoisture: readings?.SoilMoisture,
+            Temperature: readings?.SoilTemperature,
+            LeafHumidity: readings?.LeafHumidity,
+            LastUpdate: readings?.CapturedAt.ToString("O"));
+    }
 }
