@@ -186,4 +186,67 @@ public class AlertCommandService(
             return new Result<Unit, Error>.Failure(SurveillanceErrors.InternalServerError);
         }
     }
+
+    public async Task<Result<long, Error>> Handle(ConfirmAlertFromInspectionCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var alert = await alertRepository.FindByLinkedReportIdAsync(command.ReportId, cancellationToken);
+            if (alert is null)
+            {
+                return new Result<long, Error>.Success(0L);
+            }
+
+            var result = alert.ConfirmFromInspection();
+            if (result.IsFailure)
+            {
+                return new Result<long, Error>.Failure(((Result<Unit, Error>.Failure)result).Error);
+            }
+
+            alertRepository.Update(alert);
+            await unitOfWork.CompleteAsync(cancellationToken);
+
+            return new Result<long, Error>.Success(alert.Id);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            return new Result<long, Error>.Failure(SurveillanceErrors.InternalServerError);
+        }
+    }
+
+    public async Task<Result<Unit, Error>> Handle(DismissReportAlertCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var alert = await alertRepository.FindByLinkedReportIdAsync(command.ReportId, cancellationToken);
+            if (alert is null)
+            {
+                return new Result<Unit, Error>.Failure(SurveillanceErrors.NotFound);
+            }
+
+            var result = alert.Dismiss();
+            if (result.IsFailure)
+            {
+                return result;
+            }
+
+            alert.AddTimelineRecord("INSPECTION", "Report dismissed", command.DismissalReason);
+            alertRepository.Update(alert);
+            await unitOfWork.CompleteAsync(cancellationToken);
+
+            return new Result<Unit, Error>.Success(Unit.Value);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            return new Result<Unit, Error>.Failure(SurveillanceErrors.InternalServerError);
+        }
+    }
 }

@@ -30,4 +30,10 @@ public class AlertRepository(AppDbContext context)
             .Where(a => plotIdsList.Contains(a.PlotId.Value) && a.Status == "ACTIVE")
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<Alert?> FindByLinkedReportIdAsync(long reportId, CancellationToken cancellationToken = default)
+    {
+        return await Context.Set<Alert>()
+            .FirstOrDefaultAsync(a => a.LinkedReportId != null && a.LinkedReportId.Value == reportId, cancellationToken);
+    }
 }

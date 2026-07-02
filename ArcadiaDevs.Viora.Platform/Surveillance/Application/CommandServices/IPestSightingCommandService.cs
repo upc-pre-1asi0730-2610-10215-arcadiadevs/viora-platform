@@ -17,4 +17,5 @@ public interface IPestSightingCommandService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A result containing the created report or an error.</returns>
     Task<Result<PestSightingReport, Error>> Handle(CreatePestSightingReportCommand command, CancellationToken cancellationToken = default);
+    Task<Result<PestSightingReport, Error>> Handle(ReviewPestSightingReportCommand command, CancellationToken cancellationToken = default);
 }

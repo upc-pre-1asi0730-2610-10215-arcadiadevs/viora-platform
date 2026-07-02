@@ -20,5 +20,9 @@ public enum EReportStatus
     /// <summary>
     /// Weak signal: recorded for community epidemiology, no alert raised.
     /// </summary>
-    LOGGED
+    LOGGED,
+    /// <summary>
+    /// Report was ruled out as a false positive after a field inspection.
+    /// </summary>
+    RULED_OUT
 }

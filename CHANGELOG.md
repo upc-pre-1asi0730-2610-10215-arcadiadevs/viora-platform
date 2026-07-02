@@ -5,6 +5,34 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.3] - 2026-07-01
+
+### added
+- `MitigationRecommendationGenerator` domain service (`Agronomic/Domain/Model/Services/`) — pure function, 5-case switch on `AgronomicClimateRiskLevel`, returns `List<MitigationRecommendation>` (OS parity byte-for-byte)
+- `WeatherForecastAdvisor` domain service (`Agronomic/Domain/Model/Services/`) — pure function, groups hourly readings by UTC day, computes daily summaries, generates warnings (FROST/HEAT_STRESS/STORM/HIGH_WIND/HEAVY_RAIN), computes thermal anomaly and overall risk (OS parity byte-for-byte)
+- 5 `AdvisorValueObjects` (`AgronomicClimateRiskLevel`, `MitigationActionType`, `MitigationRecommendation`, `NutritionInputRecommendation`, `TimeWindow`) in `Agronomic/Domain/Model/AdvisorValueObjects/`
+- 6 weather VOs (`WeatherStatus`, `WeatherWarningType`, `WeatherForecast`, `WeatherForecastAnalysis`, `DailyWeather`, `AgronomicWeatherWarning`) in `Agronomic/Domain/Model/ValueObjects/`
+- `PlotImageryTilesController` (`Agronomic/Interfaces/Rest/Controllers/`) — raster NDVI tile endpoint at `api/v1/plots/{plotId}/images`, 30-min cache, delegates to `IGetPlotNdviTileQueryService`
+- `MitigationRecommendationResource` + `WeatherForecastAnalysisResource` in `Agronomic/Interfaces/Rest/Resources/`
+- 9th EF migration `AddSnowyAndUnknownToWeatherStatus` — extends `WeatherStatus` enum with `Snowy` and `Unknown` values
+
+### changed
+- `WeatherStatus` enum replaced: removed `Windy`, added `Snowy` and `Unknown` (6 values total) — breaking change mitigated by case-insensitive `Enum.Parse`
+- `MonitoringSummaryQueryService` refactored to call 4 domain services (`PlotHealthEvaluator`, `NdviTrendAnalyzer`, `MitigationRecommendationGenerator`, `WeatherForecastAdvisor`) — additive, existing API contract preserved
+- `MonitoringSummaryResource` extended with 2 new fields: `MitigationRecommendations`, `WeatherForecastAnalysis`
+- `MonitoringSummaryQueryService` constructor: 11 → 13 parameters (additive)
+
+### fixed
+- D24: `WeatherStatus.Windy` removal pre-check (0 references confirmed)
+
+### notes
+- 7 implementation commits (T1.16.3-2+3 combined due to same-namespace enum CS0101 conflict) + release ceremony + changelog = 9 total
+- ~1200 net LOC across 18 files (14 new, 4 modified)
+- Build green (0 errors, 72 warnings baseline); tests 217/233 pass (16 Docker failures pre-existing)
+- `WeatherForecastAdvisor.Analyze` call TODO-marked in `MonitoringSummaryQueryService` (needs `WeatherForecast` input — deferred to future release)
+- EF migration is a no-op (WeatherStatus stored as `varchar` via `HasConversion<string>()`)
+- Locked decisions: A1, A2, A5, A6, D7-D8, D11-D12, D18-D26, N1
+
 ## [1.16.2] - 2026-07-01
 
 ### added
