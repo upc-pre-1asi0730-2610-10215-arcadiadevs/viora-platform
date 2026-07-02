@@ -5,6 +5,31 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.1] - 2026-07-01
+
+### added
+- `ReviewPestSightingReportCommand` — user reviews a pest sighting report after inspection (CONFIRM or RULED_OUT)
+- `PestSightingReport.ConfirmAfterInspection()` + `DismissAfterInspection()` — aggregate methods in 4th partial file `PestSightingReportReview.cs`
+- `ConfirmAlertFromInspectionCommand` + `DismissReportAlertCommand` — 2 new alert commands for mirroring resolution onto alert system
+- 2 new alert handlers in `IAlertCommandService` / `AlertCommandService` — escalates or dismisses linked alert
+- `PestSightingCommandService.Handle(ReviewPestSightingReportCommand)` — 90+ line handler (find, validate ownership, parse outcome, call aggregate, mirror to alert)
+- Review endpoint: `POST /api/v1/pest-sighting-reports/{reportId}/review`
+- `IPlotDetailMetadataProvider` interface + 3 records (`PlotMetadata`, `MonitoringIntegrationMetadata`, `DeviceMetadata`)
+- `JpaPlotDetailMetadataProvider` — EF implementation of `IPlotDetailMetadataProvider`
+- `PlotOwnershipValidator` — validates plot exists, is active, and belongs to user
+- `Plot.BelongsTo(int userId)` — new method in partial file `PlotOwnership.cs`
+- `IAlertRepository.FindByLinkedReportIdAsync` — finds alert linked to a pest sighting report
+
+### changed
+- `EReportStatus` enum extended with `RULED_OUT` value (additive, no breaking change)
+
+### notes
+- 11 implementation commits on `feature/surveillance/pest-sighting-review-flow` + release ceremony + changelog = 13 total
+- 17 files changed (8 new, 9 modified); ~330 net LOC
+- Build green (0 errors, 72 warnings baseline); tests 217/233 pass (16 Docker failures pre-existing)
+- Deviations: Plot.BelongsTo added in new partial file; IAlertRepository.FindByLinkedReportIdAsync added (was missing); JpaPlotDetailMetadataProvider uses null for MonitoringIntegration
+- Locked decisions: A1, A2, D7-D36
+
 ## [1.16.3] - 2026-07-01
 
 ### added
