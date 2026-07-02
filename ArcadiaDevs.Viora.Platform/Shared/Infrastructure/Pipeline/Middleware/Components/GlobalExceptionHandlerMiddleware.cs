@@ -3,6 +3,7 @@ using System.Text.Json;
 using ArcadiaDevs.Viora.Platform.Shared.Resources.Errors;
 using ArcadiaDevs.Viora.Platform.Shared.Resources;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
 // For OperationCanceledException
@@ -43,6 +44,11 @@ public class GlobalExceptionHandlerMiddleware(
             logger.LogWarning(ex, "Request was cancelled: {Message}", ex.Message);
             await HandleOperationCanceledExceptionAsync(context, ex);
         }
+        catch (DbUpdateException ex)
+        {
+            logger.LogWarning(ex, "A database update conflict occurred: {Message}", ex.Message);
+            await HandleDbUpdateExceptionAsync(context, ex);
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "An unhandled exception occurred: {Message}", ex.Message);
@@ -68,6 +74,34 @@ public class GlobalExceptionHandlerMiddleware(
             Status = StatusCodes.Status409Conflict,
             Title = _errorLocalizer["OperationCancelled"], // Localized title
             Detail = _errorLocalizer["OperationCancelled"], // Localized detail
+            Instance = context.Request.Path
+        };
+
+        var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        var result = JsonSerializer.Serialize(problemDetails, jsonOptions);
+
+        await context.Response.WriteAsync(result);
+    }
+
+    /**
+     * <summary>
+     *     Handle the DbUpdateException, mapping database update conflicts (e.g. unique-constraint
+     *     violations) to a 409 Conflict response.
+     * </summary>
+     * <param name="context">The http context</param>
+     * <param name="exception">The exception</param>
+     * <returns>A task</returns>
+     */
+    private async Task HandleDbUpdateExceptionAsync(HttpContext context, DbUpdateException exception)
+    {
+        context.Response.ContentType = MediaTypeNames.Application.Json;
+        context.Response.StatusCode = StatusCodes.Status409Conflict;
+
+        var problemDetails = new ProblemDetails
+        {
+            Status = StatusCodes.Status409Conflict,
+            Title = _errorLocalizer["DbConflict"], // Localized title
+            Detail = _errorLocalizer["DbConflict"], // Localized detail
             Instance = context.Request.Path
         };
 
