@@ -5,6 +5,19 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.20.0] - 2026-07-02
+
+### added
+- `GET /api/v1/roles` — lists all roles (`[Authorize]`, any authenticated user); returns exactly `{Grower, Specialist}` given the current seed data
+- `GetAllRolesQuery` + `IRoleQueryService`/`RoleQueryService` (uses `IRoleRepository.ListAsync`)
+- `RoleResource`(`Id`, `Name`, `Description`) + `RoleResourceFromEntityAssembler`
+- `RolesController.cs` (new, separate from `UsersController`)
+
+### notes
+- WU2 of the `audit/wa-os-backend-parity-closure-2026-07-02` SDD change (WA↔OS backend feature-parity closure) — closes REQ-2 (OS has this endpoint, WA previously did not)
+- Features-only implementation (no new tests) — TDD dropped for WU2-WU9 by explicit user decision (tests deferred to a dedicated post-parity testing phase); 2 commits on `feature/iam/roles-query-endpoint`
+- Build green (0 errors); tests 228/229 pass (same pre-existing unrelated failure carried over from 1.19.0: `PlotRepositoryTests` XML-doc reflection test — not introduced by this release, not regressed)
+
 ## [1.19.0] - 2026-07-02
 
 ### breaking
