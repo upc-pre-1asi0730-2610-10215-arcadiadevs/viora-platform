@@ -54,4 +54,42 @@ public record PolygonCoordinates
         return new Result<PolygonCoordinates, Error>.Success(
             new PolygonCoordinates { Points = points.ToList().AsReadOnly() });
     }
+
+    /// <summary>
+    ///     Computes the centroid (mean of the distinct boundary vertices,
+    ///     dropping the repeated closing vertex) of this polygon, or <c>null</c>
+    ///     when no coordinates are available.
+    ///     <para>
+    ///         Promoted from the private <c>AgronomicContextFacade.Centroid</c>
+    ///         helper (<c>AgronomicContextFacade.cs:108-135</c>) so the
+    ///         soil-reading simulator can read the plot's representative point.
+    ///         Behaviour is identical to the private helper: a closed polygon
+    ///         (first point == last point) drops the closing vertex before
+    ///         averaging; an unclosed polygon averages all of its points.
+    ///     </para>
+    ///     <para>
+    ///         Returns the centroid as <c>(double Latitude, double Longitude)</c>
+    ///         — <see cref="GeoPoint.Latitude"/> and <see cref="GeoPoint.Longitude"/>
+    ///         are persisted as <see cref="decimal"/> but the simulator works
+    ///         in <see cref="double"/> space, so the conversion is explicit
+    ///         (no precision loss at the simulator's tolerances).
+    ///     </para>
+    /// </summary>
+    public (double Latitude, double Longitude)? Centroid()
+    {
+        if (Points is null || Points.Count == 0) return null;
+
+        // Drop the closing vertex (a closed ring repeats the first point as the last).
+        var vertices = Points.Count >= 2
+                       && Points[0].Latitude == Points[^1].Latitude
+                       && Points[0].Longitude == Points[^1].Longitude
+            ? Points.Take(Points.Count - 1).ToList()
+            : Points.ToList();
+
+        if (vertices.Count == 0) return null;
+
+        var lat = vertices.Average(p => (double)p.Latitude);
+        var lon = vertices.Average(p => (double)p.Longitude);
+        return (lat, lon);
+    }
 }
