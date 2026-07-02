@@ -2,15 +2,6 @@ using System;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 
-public enum WeatherStatus
-{
-    Sunny,
-    Rainy,
-    Cloudy,
-    Windy,
-    Stormy
-}
-
 public enum ClimateRiskLevel
 {
     Low,
