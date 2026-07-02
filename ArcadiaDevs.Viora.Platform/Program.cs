@@ -238,6 +238,9 @@ builder.Services.AddScoped<ICertifyNutritionApplicationCommandService, CertifyNu
 builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.ISoilReadingSimulator, ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.SoilReadingSimulator>();
 builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.ISensorHealthEvaluator, ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.SensorHealthEvaluator>();
 builder.Services.AddScoped<IIoTDeviceQueryService, IoTDeviceQueryService>();
+// 1.16.2: HydricStressDetectedIntegrationEvent producer — Scoped because it uses
+// repositories (Scoped). Resolved via IServiceScopeFactory in the scheduler (D17).
+builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services.IHydricStressDetectedIntegrationEventProducer, ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services.HydricStressDetectedIntegrationEventProducer>();
 builder.Services.AddAgronomicStatisticsHosting(builder.Configuration);
 // Surveillance Bounded Context Injection Configuration
 builder.Services.AddScoped<IPestSightingReportRepository, PestSightingReportRepository>();
