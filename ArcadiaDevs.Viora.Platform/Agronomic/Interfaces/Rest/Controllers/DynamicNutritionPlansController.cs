@@ -52,9 +52,10 @@ public class DynamicNutritionPlansController(
     /// <summary>
     ///     Certifies a dynamic nutrition plan application.
     /// </summary>
-    [HttpPost("{planId}/certification")]
+    [HttpPatch("{planId}")]
     [ProducesResponseType(typeof(DynamicNutritionPlanResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> CertifyDynamicNutritionPlan(
         [FromQuery] int userId,
         long planId,
