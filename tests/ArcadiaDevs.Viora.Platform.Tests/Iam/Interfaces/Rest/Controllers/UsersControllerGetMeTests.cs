@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Security.Claims;
+using ArcadiaDevs.Viora.Platform.Iam.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Iam.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Queries;
@@ -28,6 +29,7 @@ namespace ArcadiaDevs.Viora.Platform.Tests.Iam.Interfaces.Rest.Controllers;
 public class UsersControllerGetMeTests
 {
     private readonly IUserQueryService _userQueryService = Substitute.For<IUserQueryService>();
+    private readonly IUserCommandService _userCommandService = Substitute.For<IUserCommandService>();
     private readonly IStringLocalizer<ArcadiaDevs.Viora.Platform.Shared.Resources.Errors.ErrorMessages> _errorLocalizer =
         StubLocalizer();
     private readonly ProblemDetailsFactory _problemDetailsFactory = new TestProblemDetailsFactory();
@@ -124,6 +126,7 @@ public class UsersControllerGetMeTests
     {
         var controller = new UsersController(
             _userQueryService,
+            _userCommandService,
             _errorLocalizer,
             ProblemDetailsFactorySafe);
 

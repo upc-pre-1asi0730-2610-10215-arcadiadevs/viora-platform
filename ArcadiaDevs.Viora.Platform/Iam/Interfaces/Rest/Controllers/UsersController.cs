@@ -1,3 +1,4 @@
+using ArcadiaDevs.Viora.Platform.Iam.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Iam.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Queries;
@@ -23,6 +24,7 @@ namespace ArcadiaDevs.Viora.Platform.Iam.Interfaces.Rest.Controllers;
 [Authorize]
 public class UsersController(
     IUserQueryService userQueryService,
+    IUserCommandService userCommandService,
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
@@ -106,5 +108,36 @@ public class UsersController(
         }
 
         return Ok(user.ToResource());
+    }
+
+    /// <summary>
+    ///     Changes a user's password.
+    /// </summary>
+    /// <remarks>
+    ///     Matches OS's <c>PUT /{userId}/password</c> exactly: bearerAuth-only,
+    ///     no self-only/ownership guard on <paramref name="userId"/> — any
+    ///     authenticated caller may change any user's password. This is an
+    ///     inherited contract risk from OS, not fixed here per the exact-parity
+    ///     directive (see spec REQ-3).
+    /// </remarks>
+    [HttpPut("{userId:int}/password")]
+    [ProducesResponseType(typeof(UserResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ChangePassword(
+        [FromRoute] int userId,
+        [FromBody] ChangePasswordResource resource,
+        CancellationToken cancellationToken)
+    {
+        var command = resource.ToCommand(userId);
+        var result = await userCommandService.Handle(command, cancellationToken);
+
+        return IamActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            user => Ok(user!.ToResource()));
     }
 }

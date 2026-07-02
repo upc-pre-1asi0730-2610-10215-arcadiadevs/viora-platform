@@ -35,4 +35,14 @@ public interface IUserCommandService
      * <returns>A result containing the authenticated user and token, or an error</returns>
      */
     Task<Result<AuthenticatedUser, Error>> Handle(SignInCommand command, CancellationToken cancellationToken);
+
+    /**
+     * <summary>
+     *     Handle change password command
+     * </summary>
+     * <param name="command">The change password command</param>
+     * <param name="cancellationToken">The cancellation token</param>
+     * <returns>A result containing the updated user, or an error</returns>
+     */
+    Task<Result<User?, Error>> Handle(ChangePasswordCommand command, CancellationToken cancellationToken);
 }
