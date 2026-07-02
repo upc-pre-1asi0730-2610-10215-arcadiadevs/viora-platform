@@ -73,7 +73,7 @@ public class AgronomicContextFacade(
             return [];
         }
 
-        var referenceCentroid = Centroid(reference.PolygonCoordinates);
+        var referenceCentroid = reference.PolygonCoordinates?.Centroid();
         if (referenceCentroid is null)
         {
             return [];
@@ -94,7 +94,7 @@ public class AgronomicContextFacade(
     /// </summary>
     private static NeighborPlot? ToNeighbor(Plot plot, (double Lat, double Lon) referenceCentroid)
     {
-        var centroid = Centroid(plot.PolygonCoordinates);
+        var centroid = plot.PolygonCoordinates?.Centroid();
         if (centroid is null)
         {
             return null;
@@ -103,35 +103,6 @@ public class AgronomicContextFacade(
         var distanceKm = HaversineKilometers(referenceCentroid, centroid.Value);
         var roundedKm = Math.Round(distanceKm * 10.0) / 10.0;
         return new NeighborPlot(plot.Id, roundedKm);
-    }
-
-    /// <summary>
-    ///     Computes the centroid (mean of the distinct boundary vertices, dropping the repeated
-    ///     closing vertex) of a plot polygon, or null when no coordinates are available.
-    /// </summary>
-    private static (double Lat, double Lon)? Centroid(PolygonCoordinates? polygon)
-    {
-        var points = polygon?.Points;
-        if (points is null || points.Count == 0)
-        {
-            return null;
-        }
-
-        // Drop the closing vertex (a closed ring repeats the first point as the last).
-        var vertices = points.Count >= 2 &&
-                       points[0].Latitude == points[^1].Latitude &&
-                       points[0].Longitude == points[^1].Longitude
-            ? points.Take(points.Count - 1).ToList()
-            : points.ToList();
-
-        if (vertices.Count == 0)
-        {
-            return null;
-        }
-
-        var lat = vertices.Average(point => (double)point.Latitude);
-        var lon = vertices.Average(point => (double)point.Longitude);
-        return (lat, lon);
     }
 
     /// <summary>
