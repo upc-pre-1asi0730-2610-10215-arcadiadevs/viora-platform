@@ -5,6 +5,20 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.0] - 2026-07-02
+
+### added
+- `PATCH /api/v1/alerts/{id}` accepts `RESOLVED` and `DISMISSED` target statuses in addition to `UNDER_REVIEW` — PATCH surface expanded (previously-400 payloads now succeed)
+- `Alert.Resolve()` — unconditional transition to `RESOLVED` from any source status; `ResolveAlertCommand` + handler
+- Dismiss reason is now caller-suppliable on both entry points: `PATCH /api/v1/alerts/{id}` (`{"status": "DISMISSED", "reason": "..."}`) and `POST /api/v1/alerts/{id}/dismiss` (optional `{"reason": "..."}` body, new `DismissAlertResource` + `DismissAlertCommandFromResourceAssembler`)
+- `Alert.Dismiss(string? reason = null)` — records the caller-supplied reason on the timeline entry, falling back to a default description when omitted
+
+### notes
+- WU4 of the `audit/wa-os-backend-parity-closure-2026-07-02` SDD change (WA↔OS backend feature-parity closure) — closes REQ-4 (RESOLVED transition) and REQ-5 (dismiss reason)
+- **SURV-003 POST endpoints (`confirm`/`dismiss`/`escalate`/`link-report`) unchanged** — kept per the locked reconciliation directive (WA-only extras are not gaps); only the PATCH endpoint's accepted status values expand to match OS
+- Features-only implementation (no new tests) — TDD dropped for WU2-WU9 by explicit user decision (tests deferred to a dedicated post-parity testing phase); 2 commits on `feature/surveillance/alert-transitions`
+- Build green (0 errors); tests 228/229 pass (same pre-existing unrelated failure carried over from prior releases: `PlotRepositoryTests` XML-doc reflection test — not introduced by this release, not regressed)
+
 ## [1.21.0] - 2026-07-02
 
 ### added
