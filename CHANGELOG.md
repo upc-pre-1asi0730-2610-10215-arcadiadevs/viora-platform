@@ -5,6 +5,29 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.0] - 2026-07-02
+
+### breaking
+- IAM role taxonomy: `OliveProducer`/`PhytosanitarySpecialist` renamed to `Grower`/`Specialist` (PascalCase, no `ROLE_` prefix — deliberate divergence from OS's Java enum casing)
+- `Administrator` role **removed entirely** (DB row deleted, not renamed) — WA now has exactly 2 roles, matching OS 1:1
+- `AuthenticationController.SignUp` production admin-gate **removed** — `POST /api/v1/authentication/sign-up` is now unconditionally open in every environment (was Production-only, admin-gated — an unresolvable deadlock, since no seeder ever assigned the Administrator role to any user)
+- `SignUpResource`/`SignUpCommand` gain an optional `role` field, defaulting to `Grower` when omitted or blank (mirrors OS's `Role.getDefaultRole()`); an unresolvable role string returns `400 Iam.InvalidRoleName`
+- `UsersController.AssignRole` endpoint **removed entirely** — `POST /api/v1/users/{id}/roles` no longer exists (now `404`); OS has no equivalent endpoint. Its command/resource/assembler/handler are deleted as dead code.
+
+### added
+- 11th EF migration `AlignRolesToOsTaxonomy` — renames the 2 surviving roles, deletes the `Administrator` role row (cascades `user_roles`); `Down()` restores the row (documented data-loss on `user_roles` links)
+- `AuthorizeAttributeTests` — new regression coverage for the custom `[Authorize(Roles=...)]` pipeline against the renamed role strings (previously untested)
+
+### removed
+- `IamErrors.SignUpRequiresAdmin` (dead code once the production gate is gone) and its `.resx`/`.es.resx` entries and 403 mapping arm
+
+### notes
+- WU1 of the `audit/wa-os-backend-parity-closure-2026-07-02` SDD change (WA↔OS backend feature-parity closure) — role taxonomy alignment, landed first due to highest blast radius
+- 8 implementation commits on `feature/iam/role-taxonomy-alignment` + release ceremony + changelog
+- Build green (0 errors); tests 228/229 pass (1 pre-existing unrelated failure: `PlotRepositoryTests` XML-doc reflection test, fails because `GenerateDocumentationFile` isn't configured — not introduced by this release)
+- `RoleMigrationTests` (2 Postgres-tagged tests covering the migration's `Up()`/`Down()`) written but not executed — Docker unavailable in the development environment; compile-verified only
+- Frontend (Vue) impact flagged, not addressed here (backend-only change): stale role-string literals, the now-open self-service sign-up (previously admin-gated), and the removed `AssignRole` route
+
 ## [1.18.0] - 2026-07-01
 
 ### added
