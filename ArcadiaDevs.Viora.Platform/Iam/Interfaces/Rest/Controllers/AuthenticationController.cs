@@ -2,7 +2,6 @@ using ArcadiaDevs.Viora.Platform.Iam.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Iam.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Aggregates;
-using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Pipeline.Middleware.Attributes;
 using ArcadiaDevs.Viora.Platform.Iam.Interfaces.Rest.Resources;
@@ -25,12 +24,18 @@ namespace ArcadiaDevs.Viora.Platform.Iam.Interfaces.Rest.Controllers;
 public class AuthenticationController(
     IUserCommandService userCommandService,
     IStringLocalizer<ErrorMessages> errorLocalizer,
-    ProblemDetailsFactory problemDetailsFactory,
-    IWebHostEnvironment env) : ControllerBase
+    ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
     /// <summary>
     ///     Registers a new user.
     /// </summary>
+    /// <remarks>
+    ///     Sign-up is unconditionally open in every environment, matching OS's
+    ///     ungated <c>POST /api/v1/auth/sign-up</c>. There is no admin-gate here:
+    ///     no seeder anywhere assigns the Administrator role to any user, so a
+    ///     production admin-only gate would be an unconditional deadlock (see
+    ///     spec REQ-1).
+    /// </remarks>
     [HttpPost("sign-up")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(UserResource), StatusCodes.Status201Created)]
@@ -39,19 +44,6 @@ public class AuthenticationController(
         [FromBody] SignUpResource resource,
         CancellationToken cancellationToken)
     {
-        // In Production, only administrators can create new accounts
-        if (env.IsProduction())
-        {
-            var isAdmin = HttpContext.User.IsInRole("Administrator");
-            if (!isAdmin)
-                return IamActionResultAssembler.ToActionResult<UserResource>(
-                    this,
-                    new Result<UserResource, Error>.Failure(IamErrors.SignUpRequiresAdmin),
-                    errorLocalizer,
-                    problemDetailsFactory,
-                    _ => Created(string.Empty, null));
-        }
-
         var command = resource.ToCommand();
         var result = await userCommandService.Handle(command, cancellationToken);
 

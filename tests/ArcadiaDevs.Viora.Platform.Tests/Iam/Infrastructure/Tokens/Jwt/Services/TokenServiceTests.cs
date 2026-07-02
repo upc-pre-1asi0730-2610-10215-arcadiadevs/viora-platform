@@ -34,10 +34,10 @@ public class TokenServiceTests
     {
         // GIVEN a user with id, username, and two roles
         var user = new User("alice", "irrelevant-hash");
-        var olive = ((Result<Role, Error>.Success)Role.Create("OliveProducer")).Value;
-        var phyto = ((Result<Role, Error>.Success)Role.Create("PhytosanitarySpecialist")).Value;
-        user.Roles.Add(olive);
-        user.Roles.Add(phyto);
+        var grower = ((Result<Role, Error>.Success)Role.Create("Grower")).Value;
+        var specialist = ((Result<Role, Error>.Success)Role.Create("Specialist")).Value;
+        user.Roles.Add(grower);
+        user.Roles.Add(specialist);
 
         // WHEN generating a token
         var before = DateTime.UtcNow;
@@ -52,8 +52,8 @@ public class TokenServiceTests
 
         var roleClaims = jwt.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToList();
         Assert.Equal(2, roleClaims.Count);
-        Assert.Contains("OliveProducer", roleClaims);
-        Assert.Contains("PhytosanitarySpecialist", roleClaims);
+        Assert.Contains("Grower", roleClaims);
+        Assert.Contains("Specialist", roleClaims);
 
         // AND the exp claim falls within [now + 6d23h, now + 7d + 5s]
         var expSeconds = long.Parse(jwt.Claims.First(c => c.Type == "exp").Value);

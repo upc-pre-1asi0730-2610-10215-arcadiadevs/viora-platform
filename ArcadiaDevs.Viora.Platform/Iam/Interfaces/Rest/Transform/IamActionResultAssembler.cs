@@ -29,7 +29,6 @@ public static class IamActionResultAssembler
             "Iam.TokenInvalid" => StatusCodes.Status401Unauthorized,
             "Iam.TokenExpired" => StatusCodes.Status401Unauthorized,
             "Iam.InvalidRoleName" => StatusCodes.Status400BadRequest,
-            "Iam.SignUpRequiresAdmin" => StatusCodes.Status403Forbidden,
             "Iam.InsufficientRole" => StatusCodes.Status403Forbidden,
             "Iam.UserDisabled" => StatusCodes.Status403Forbidden,
             _ when code.StartsWith("Iam.") => StatusCodes.Status500InternalServerError,
