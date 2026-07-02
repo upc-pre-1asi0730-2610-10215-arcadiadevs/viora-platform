@@ -30,4 +30,8 @@ public record MonitoringSummaryResource
     public string MitigationActionType { get; init; } = string.Empty;
     public string MitigationSuggestedInputs { get; init; } = string.Empty;
     public string MitigationRecommendedWindow { get; init; } = string.Empty;
+
+    // Advisor Fields (1.16.3)
+    public List<MitigationRecommendationResource> MitigationRecommendations { get; init; } = new();
+    public WeatherForecastAnalysisResource? WeatherForecastAnalysis { get; init; }
 }

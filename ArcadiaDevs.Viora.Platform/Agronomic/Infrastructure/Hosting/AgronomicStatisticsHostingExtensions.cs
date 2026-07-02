@@ -27,6 +27,8 @@ public static class AgronomicStatisticsHostingExtensions
         // Register domain services as singletons (pure functions, no I/O)
         services.AddSingleton<NdviTrendAnalyzer>();
         services.AddSingleton<PlotHealthEvaluator>();
+        services.AddSingleton<IMitigationRecommendationGenerator, MitigationRecommendationGenerator>();
+        services.AddSingleton<IWeatherForecastAdvisor, WeatherForecastAdvisor>();
 
         // Register the scheduled ingestion background service
         services.AddHostedService<AgronomicStatisticIngestionScheduler>();
