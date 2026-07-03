@@ -3,6 +3,7 @@ using ArcadiaDevs.Viora.Platform.Intervention.Application.QueryServices.Dtos;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Services;
+using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Profile.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
@@ -19,6 +20,7 @@ namespace ArcadiaDevs.Viora.Platform.Intervention.Application.Internal.QueryServ
 /// </summary>
 public class SpecialistQueryService(
     ISpecialistRepository specialistRepository,
+    IInterventionRequestRepository interventionRequestRepository,
     IProfileContextFacade profileContextFacade,
     SpecialistMatchingPolicy matchingPolicy,
     ILogger<SpecialistQueryService> logger)
@@ -66,15 +68,15 @@ public class SpecialistQueryService(
     /// <remarks>
     ///     REQ-SPEC-2 requires <c>InterventionRequest(requestId).status ==
     ///     ACCEPTED &amp;&amp; InterventionRequest(requestId).specialistId ==
-    ///     id</c>. The <c>InterventionRequest</c> aggregate does not exist
-    ///     yet — it ships in WU3 of this 8-work-unit change (design
-    ///     sequencing, obs #267). Until then NO request can ever be
-    ///     ACCEPTED, so denying contact unconditionally is spec-correct for
-    ///     the current codebase state (matches the "Contact denied on
-    ///     unaccepted request" scenario), not a shortcut. This method MUST
-    ///     be revisited in WU3 to inject the real
-    ///     <c>IInterventionRequestRepository</c> lookup once that aggregate
-    ///     exists.
+    ///     id</c>. WU3 (obs #268/#272) adds the real
+    ///     <see cref="IInterventionRequestRepository" /> lookup, replacing
+    ///     WU1's interim always-deny stub. Per WU1 fix pass item #10, the
+    ///     gating ALSO verifies that <c>query.CallerUserId</c> owns the
+    ///     referenced request (<c>request.GrowerId == CallerUserId</c>) —
+    ///     status+specialist-id matching alone is not sufficient to
+    ///     authorize the caller, since any authenticated user could
+    ///     otherwise guess a valid <c>requestId</c>/<c>specialistId</c>
+    ///     pair belonging to someone else.
     /// </remarks>
     public async Task<Result<SpecialistContact, Error>> Handle(
         GetSpecialistContactQuery query,
@@ -88,8 +90,26 @@ public class SpecialistQueryService(
                 return new Result<SpecialistContact, Error>.Failure(InterventionErrors.NotFound);
             }
 
-            // TODO(WU3): replace with a real InterventionRequest ACCEPTED + specialist-match check.
-            return new Result<SpecialistContact, Error>.Failure(InterventionErrors.ContactNotUnlocked);
+            var request = await interventionRequestRepository.FindByIdAsync(query.RequestId, cancellationToken);
+            if (request is null ||
+                request.Status != InterventionStatus.ACCEPTED ||
+                request.SpecialistId != query.SpecialistId ||
+                request.GrowerId != query.CallerUserId)
+            {
+                return new Result<SpecialistContact, Error>.Failure(InterventionErrors.ContactNotUnlocked);
+            }
+
+            var profileSummary = await profileContextFacade.GetProfileSummaryAsync(specialist.ProfileUserId, cancellationToken);
+            if (profileSummary is null)
+            {
+                logger.LogWarning(
+                    "Specialist {SpecialistId} references ProfileUserId {ProfileUserId}, but no matching Profile was found.",
+                    specialist.Id, specialist.ProfileUserId);
+                return new Result<SpecialistContact, Error>.Failure(InterventionErrors.NotFound);
+            }
+
+            return new Result<SpecialistContact, Error>.Success(
+                new SpecialistContact(specialist.Id, profileSummary.Email, profileSummary.Phone, specialist.Whatsapp));
         }
         catch (OperationCanceledException)
         {

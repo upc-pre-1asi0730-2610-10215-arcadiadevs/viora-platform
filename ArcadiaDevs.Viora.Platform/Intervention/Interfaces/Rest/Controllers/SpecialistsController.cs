@@ -1,4 +1,6 @@
 using System.Net.Mime;
+using System.Security.Claims;
+using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Pipeline.Middleware.Attributes;
 using ArcadiaDevs.Viora.Platform.Intervention.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Queries;
@@ -53,23 +55,24 @@ public class SpecialistsController(
     /// </summary>
     /// <remarks>
     ///     Only unlocked if the referenced intervention request is
-    ///     <c>ACCEPTED</c> and matches the requested specialist (REQ-SPEC-2).
-    ///     WU1 always denies (the <c>InterventionRequest</c> aggregate does
-    ///     not exist yet, see <c>SpecialistQueryService.Handle(GetSpecialistContactQuery)</c>).
-    ///     IMPORTANT for the WU3 implementer: the real check MUST verify
-    ///     BOTH <c>status == ACCEPTED</c> AND <c>specialistId == id</c> AND
-    ///     that the authenticated caller owns/is a party to the referenced
-    ///     <c>InterventionRequest</c> — status+specialist-id matching alone
-    ///     is not sufficient to authorize the caller.
+    ///     <c>ACCEPTED</c>, matches the requested specialist, AND the
+    ///     authenticated caller owns the request (REQ-SPEC-2, WU1 fix pass
+    ///     item #10) — status+specialist-id matching alone is not
+    ///     sufficient to authorize the caller. The caller id is read from
+    ///     the <c>sid</c>/<c>sub</c> claim populated by
+    ///     <c>RequestAuthorizationMiddleware</c>, same pattern as
+    ///     <c>UsersController.GetMe</c>.
     /// </remarks>
     /// <param name="id">The specialist id.</param>
     /// <param name="requestId">The intervention request id gating access.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <response code="200">Contact info returned.</response>
+    /// <response code="401">Caller identity could not be resolved from the token.</response>
     /// <response code="403">Contact not unlocked for this request.</response>
     /// <response code="404">Specialist not found.</response>
     [HttpGet("{id:int}/contact")]
     [ProducesResponseType(typeof(SpecialistContactResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetSpecialistContact(
@@ -77,7 +80,19 @@ public class SpecialistsController(
         [FromQuery] int requestId,
         CancellationToken cancellationToken = default)
     {
-        var result = await specialistQueryService.Handle(new GetSpecialistContactQuery(id, requestId), cancellationToken);
+        var sub = User.FindFirstValue(ClaimTypes.Sid) ?? User.FindFirstValue("sub");
+        if (!int.TryParse(sub, out var callerUserId))
+        {
+            var unauthorized = problemDetailsFactory.CreateProblemDetails(
+                HttpContext,
+                StatusCodes.Status401Unauthorized,
+                IamErrors.TokenRequired.Code,
+                errorLocalizer[IamErrors.TokenRequired.Code].Value ?? IamErrors.TokenRequired.Message);
+            return Unauthorized(unauthorized);
+        }
+
+        var result = await specialistQueryService.Handle(
+            new GetSpecialistContactQuery(id, requestId, callerUserId), cancellationToken);
 
         return InterventionActionResultAssembler.ToActionResult(
             this,
