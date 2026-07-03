@@ -1,11 +1,12 @@
-﻿using ArcadiaDevs.Viora.Platform.Shared.Domain.Model.Entities;
+﻿using ArcadiaDevs.Viora.Platform.Shared.Domain;
+using ArcadiaDevs.Viora.Platform.Shared.Domain.Model.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
 
 namespace ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 
-public sealed class AuditableEntityInterceptor : SaveChangesInterceptor
+public sealed class AuditableEntityInterceptor(IClock clock) : SaveChangesInterceptor
 {
     /// <inheritdoc />
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
@@ -24,11 +25,11 @@ public sealed class AuditableEntityInterceptor : SaveChangesInterceptor
         return base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 
-    private static void ApplyAuditTimestamps(DbContext? context)
+    private void ApplyAuditTimestamps(DbContext? context)
     {
         if (context is null) return;
 
-        var now = DateTimeOffset.UtcNow;
+        var now = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero);
 
         foreach (var entry in context.ChangeTracker.Entries<IAuditableEntity>())
         {
