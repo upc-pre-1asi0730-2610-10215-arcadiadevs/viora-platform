@@ -118,44 +118,118 @@ public class AlertsController(
     ///     <c>UNDER_REVIEW</c> (marks the alert as reviewed), <c>RESOLVED</c>
     ///     (unconditional terminal transition), and <c>DISMISSED</c> (terminal
     ///     transition; optionally pass <c>{"reason": "..."}</c> to record a
-    ///     caller-supplied dismissal reason on the timeline, REQ-5). Any other
-    ///     status value returns 400.
+    ///     caller-supplied dismissal reason on the timeline, REQ-5). Pass
+    ///     <c>{"raiseSeverity": true}</c> to raise the alert's severity by one
+    ///     level: combined with <c>status: "UNDER_REVIEW"</c> this confirms
+    ///     the alert from inspection (severity +1, status becomes
+    ///     <c>UNDER_REVIEW</c>); with <c>status</c> omitted, it escalates
+    ///     severity only, with no status change. Omitting both <c>status</c>
+    ///     and <c>raiseSeverity</c> (or passing an unsupported status)
+    ///     returns 400.
     /// </remarks>
     /// <param name="alertId">The ID of the alert.</param>
     /// <param name="resource">The update payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <response code="200">Alert updated successfully</response>
-    /// <response code="400">Alert is already dismissed/invalid status</response>
+    /// <response code="400">Nothing to do, invalid status, or the transition failed (RFC 7807 ProblemDetails when raising severity)</response>
     /// <response code="404">Alert not found</response>
     [HttpPatch("{alertId:long}")]
     [ProducesResponseType(typeof(AlertResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(EmptyResource), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(EmptyResource), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateAlert(
         [FromRoute] long alertId,
-        [FromBody] UpdateAlertResource resource)
+        [FromBody] UpdateAlertResource resource,
+        CancellationToken cancellationToken = default)
     {
-        Result<long, Error> result;
+        var hasStatus = !string.IsNullOrWhiteSpace(resource.Status);
 
-        if (string.Equals(resource.Status, "UNDER_REVIEW", StringComparison.OrdinalIgnoreCase))
+        if (hasStatus && string.Equals(resource.Status, "UNDER_REVIEW", StringComparison.OrdinalIgnoreCase))
         {
-            result = await alertCommandService.Handle(new MarkAlertAsReviewedCommand(alertId));
-        }
-        else if (string.Equals(resource.Status, "RESOLVED", StringComparison.OrdinalIgnoreCase))
-        {
-            var unitResult = await alertCommandService.Handle(new ResolveAlertCommand(alertId));
-            result = unitResult.Map(_ => alertId);
-        }
-        else if (string.Equals(resource.Status, "DISMISSED", StringComparison.OrdinalIgnoreCase))
-        {
-            var unitResult = await alertCommandService.Handle(new DismissAlertCommand(alertId, resource.Reason));
-            result = unitResult.Map(_ => alertId);
-        }
-        else
-        {
-            // Only UNDER_REVIEW, RESOLVED, and DISMISSED are supported.
-            return BadRequest(new EmptyResource());
+            if (resource.RaiseSeverity)
+            {
+                var confirmResult = await alertCommandService.Handle(new ConfirmAlertCommand(alertId), cancellationToken);
+                if (confirmResult.IsFailure)
+                {
+                    return MapTransitionFailureToResult(confirmResult);
+                }
+                return await BuildOkWithAlertAsync(alertId, cancellationToken);
+            }
+
+            var reviewedResult = await alertCommandService.Handle(new MarkAlertAsReviewedCommand(alertId), cancellationToken);
+            return await HandleLegacyResultAsync(reviewedResult);
         }
 
+        if (!hasStatus && resource.RaiseSeverity)
+        {
+            var escalateResult = await alertCommandService.Handle(new EscalateAlertCommand(alertId), cancellationToken);
+            if (escalateResult.IsFailure)
+            {
+                return MapTransitionFailureToResult(escalateResult);
+            }
+            return await BuildOkWithAlertAsync(alertId, cancellationToken);
+        }
+
+        if (hasStatus && string.Equals(resource.Status, "RESOLVED", StringComparison.OrdinalIgnoreCase))
+        {
+            var unitResult = await alertCommandService.Handle(new ResolveAlertCommand(alertId), cancellationToken);
+            return await HandleLegacyResultAsync(unitResult.Map(_ => alertId));
+        }
+
+        if (hasStatus && string.Equals(resource.Status, "DISMISSED", StringComparison.OrdinalIgnoreCase))
+        {
+            var unitResult = await alertCommandService.Handle(new DismissAlertCommand(alertId, resource.Reason), cancellationToken);
+            return await HandleLegacyResultAsync(unitResult.Map(_ => alertId));
+        }
+
+        // Only UNDER_REVIEW, RESOLVED, DISMISSED, and raiseSeverity-only requests are supported.
+        return BadRequest(new EmptyResource());
+    }
+
+    // confirm/dismiss/escalate/link-report folded into PATCH+PUT below for REST uniformity (no verb-in-URL actions)
+
+    /// <summary>
+    ///     Link a pest sighting report to an alert
+    /// </summary>
+    /// <remarks>
+    ///     Idempotently sets the alert's linked report to <paramref name="reportId"/>;
+    ///     no status or severity change (SURV-003).
+    /// </remarks>
+    /// <param name="alertId">The alert id.</param>
+    /// <param name="reportId">The pest sighting report id to attach.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Report linked; no state change.</response>
+    /// <response code="404">Alert not found.</response>
+    [HttpPut("{alertId:long}/report/{reportId:long}")]
+    [ProducesResponseType(typeof(AlertResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> LinkReport(
+        [FromRoute] long alertId,
+        [FromRoute] long reportId,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await alertCommandService.Handle(new LinkAlertReportCommand(alertId, reportId), cancellationToken);
+        if (result.IsFailure)
+        {
+            return MapTransitionFailureToResult(result);
+        }
+        return await BuildOkWithAlertAsync(alertId, cancellationToken);
+    }
+
+    // ----------------------------------------------------------------
+    // shared helpers: load alert, map Result<Unit,Error> -> 4xx
+    // ProblemDetails (CC-6).
+    // ----------------------------------------------------------------
+
+    /// <summary>
+    ///     Maps a <see cref="Result{TValue, TError}"/> using the legacy
+    ///     (pre-SURV-003) <see cref="EmptyResource"/> failure-body style used
+    ///     by the original status-only PATCH branches, then loads and
+    ///     returns the updated alert on success.
+    /// </summary>
+    private async Task<IActionResult> HandleLegacyResultAsync(Result<long, Error> result)
+    {
         if (result is Result<long, Error>.Failure failure)
         {
             if (failure.Error?.Code == SurveillanceErrors.NotFound.Code)
@@ -174,126 +248,6 @@ public class AlertsController(
         return Ok(updated);
     }
 
-    // ============================================================
-    // SURV-003 state-transition endpoints
-    //   POST /api/v1/alerts/{id}/confirm   (state machine: any non-terminal -> UNDER_REVIEW; severity +1)
-    //   POST /api/v1/alerts/{id}/dismiss    (any non-DISMISSED -> DISMISSED; terminal)
-    //   POST /api/v1/alerts/{id}/escalate   (severity +1; no state change)
-    //   POST /api/v1/alerts/{id}/link-report (attach a PestSightingReportId; no state change)
-    // Each endpoint:
-    //   * is [Authorize]-protected (class-level)
-    //   * loads the alert, calls the matching state-machine method
-    //   * persists via IAlertCommandService (existing MarkAlertAsReviewedCommand path
-    //     will be generalised in a follow-up; for now, the state machine is invoked
-    //     in-process against the loaded aggregate and the result is mapped to
-    //     RFC 7807 ProblemDetails on failure (CC-6)
-    // ============================================================
-
-    /// <summary>
-    ///     Confirm an alert from inspection (SURV-003).
-    /// </summary>
-    /// <param name="alertId">The alert id.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Alert confirmed; status <c>UNDER_REVIEW</c>, severity raised one level.</response>
-    /// <response code="400">Alert is in a terminal state (RFC 7807 ProblemDetails).</response>
-    /// <response code="404">Alert not found.</response>
-    [HttpPost("{alertId:long}/confirm")]
-    [ProducesResponseType(typeof(AlertResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Confirm(
-        [FromRoute] long alertId,
-        CancellationToken cancellationToken)
-    {
-        var result = await alertCommandService.Handle(new ConfirmAlertCommand(alertId), cancellationToken);
-        if (result.IsFailure)
-        {
-            return MapTransitionFailureToResult(result);
-        }
-        return await BuildOkWithAlertAsync(alertId, cancellationToken);
-    }
-
-    /// <summary>
-    ///     Dismiss an alert (SURV-003).
-    /// </summary>
-    /// <param name="alertId">The alert id.</param>
-    /// <param name="resource">
-    ///     Optional payload. Omit the request body entirely to dismiss without a
-    ///     caller-supplied reason, or pass <c>{"reason": "..."}</c> to record one
-    ///     on the timeline (REQ-5).
-    /// </param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Alert dismissed.</response>
-    /// <response code="400">Alert is already dismissed (RFC 7807 ProblemDetails).</response>
-    /// <response code="404">Alert not found.</response>
-    [HttpPost("{alertId:long}/dismiss")]
-    [ProducesResponseType(typeof(AlertResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Dismiss(
-        [FromRoute] long alertId,
-        [FromBody] DismissAlertResource? resource,
-        CancellationToken cancellationToken)
-    {
-        var command = DismissAlertCommandFromResourceAssembler.ToCommandFromResource(alertId, resource);
-        var result = await alertCommandService.Handle(command, cancellationToken);
-        if (result.IsFailure)
-        {
-            return MapTransitionFailureToResult(result);
-        }
-        return await BuildOkWithAlertAsync(alertId, cancellationToken);
-    }
-
-    /// <summary>
-    ///     Escalate an alert's severity (SURV-003).
-    /// </summary>
-    /// <param name="alertId">The alert id.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Alert severity raised one level.</response>
-    /// <response code="404">Alert not found.</response>
-    [HttpPost("{alertId:long}/escalate")]
-    [ProducesResponseType(typeof(AlertResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Escalate(
-        [FromRoute] long alertId,
-        CancellationToken cancellationToken)
-    {
-        var result = await alertCommandService.Handle(new EscalateAlertCommand(alertId), cancellationToken);
-        if (result.IsFailure)
-        {
-            return MapTransitionFailureToResult(result);
-        }
-        return await BuildOkWithAlertAsync(alertId, cancellationToken);
-    }
-
-    /// <summary>
-    ///     Link a pest sighting report to an alert (SURV-003).
-    /// </summary>
-    /// <param name="alertId">The alert id.</param>
-    /// <param name="reportId">The pest sighting report id to attach.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Report linked; no state change.</response>
-    /// <response code="404">Alert not found.</response>
-    [HttpPost("{alertId:long}/link-report")]
-    [ProducesResponseType(typeof(AlertResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> LinkReport(
-        [FromRoute] long alertId,
-        [FromQuery] long reportId,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await alertCommandService.Handle(new LinkAlertReportCommand(alertId, reportId), cancellationToken);
-        if (result.IsFailure)
-        {
-            return MapTransitionFailureToResult(result);
-        }
-        return await BuildOkWithAlertAsync(alertId, cancellationToken);
-    }
-
-    // ----------------------------------------------------------------
-    // shared helpers: load alert, map Result<Unit,Error> -> 4xx
-    // ProblemDetails (CC-6).
-    // ----------------------------------------------------------------
     private IActionResult MapTransitionFailureToResult(Result<Unit, Error> failure)
     {
         var failureCase = (Result<Unit, Error>.Failure)failure;

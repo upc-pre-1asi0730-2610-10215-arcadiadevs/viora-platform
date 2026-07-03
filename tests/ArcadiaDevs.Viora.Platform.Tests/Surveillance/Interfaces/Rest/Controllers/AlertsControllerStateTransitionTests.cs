@@ -23,10 +23,11 @@ namespace ArcadiaDevs.Viora.Platform.Tests.Surveillance.Interfaces.Rest.Controll
 
 /// <summary>
 /// SURV-003 tests for the <see cref="AlertsController"/> state-transition
-/// endpoints (<c>/confirm</c>, <c>/dismiss</c>, <c>/escalate</c>,
-/// <c>/link-report</c>) and the sort-placeholder fix. Each new endpoint
-/// must map <see cref="Result{TValue, TError}"/> failures to RFC 7807
-/// <see cref="ProblemDetails"/> (CC-6) and return 200 on success.
+/// behavior, folded into <c>PATCH /api/v1/alerts/{id}</c> (confirm, dismiss,
+/// escalate) and <c>PUT /api/v1/alerts/{id}/report/{reportId}</c>
+/// (link-report), plus the sort-placeholder fix. Each transition maps
+/// <see cref="Result{TValue, TError}"/> failures to RFC 7807
+/// <see cref="ProblemDetails"/> (CC-6) and returns 200 on success.
 /// </summary>
 public class AlertsControllerStateTransitionTests
 {
@@ -104,7 +105,7 @@ public class AlertsControllerStateTransitionTests
     }
 
     [Fact]
-    public async Task Confirm_OnValid_Returns200()
+    public async Task Patch_ConfirmAction_UnderReviewWithRaiseSeverity_Returns200()
     {
         // GIVEN a command service that returns a successful confirm
         _alertCommandService.Handle(Arg.Any<ConfirmAlertCommand>(), Arg.Any<CancellationToken>())
@@ -117,18 +118,24 @@ public class AlertsControllerStateTransitionTests
 
         var controller = CreateController();
 
-        // WHEN the controller confirms the alert
-        var result = await controller.Confirm(42L, CancellationToken.None);
+        // WHEN the controller PATCHes the alert with status UNDER_REVIEW and raiseSeverity=true
+        var resource = new UpdateAlertResource(Status: "UNDER_REVIEW", RaiseSeverity: true);
+        var result = await controller.UpdateAlert(42L, resource, CancellationToken.None);
 
         // THEN the result is 200 OK with the updated alert resource
         var ok = Assert.IsType<OkObjectResult>(result);
-        var resource = Assert.IsType<AlertResource>(ok.Value);
-        Assert.Equal(42L, resource.Id);
-        Assert.Equal("UNDER_REVIEW", resource.Status);
+        var alertResource = Assert.IsType<AlertResource>(ok.Value);
+        Assert.Equal(42L, alertResource.Id);
+        Assert.Equal("UNDER_REVIEW", alertResource.Status);
+
+        // AND the command service received a ConfirmAlertCommand (not MarkAlertAsReviewedCommand)
+        await _alertCommandService.Received(1).Handle(
+            Arg.Is<ConfirmAlertCommand>(c => c.AlertId == 42L),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Confirm_OnDismissed_Returns400ProblemDetails()
+    public async Task Patch_ConfirmAction_OnDismissed_Returns400ProblemDetails()
     {
         // GIVEN a command service that returns a failure (ALERT_TERMINAL)
         _alertCommandService.Handle(Arg.Any<ConfirmAlertCommand>(), Arg.Any<CancellationToken>())
@@ -137,13 +144,124 @@ public class AlertsControllerStateTransitionTests
 
         var controller = CreateController();
 
-        // WHEN the controller confirms the alert
-        var result = await controller.Confirm(42L, CancellationToken.None);
+        // WHEN the controller PATCHes the alert with status UNDER_REVIEW and raiseSeverity=true
+        var resource = new UpdateAlertResource(Status: "UNDER_REVIEW", RaiseSeverity: true);
+        var result = await controller.UpdateAlert(42L, resource, CancellationToken.None);
 
         // THEN the result is 400 with a ProblemDetails body (CC-6);
         // the state machine's ALERT_TERMINAL failure is mapped to 400.
         var objectResult = Assert.IsAssignableFrom<ObjectResult>(result);
         Assert.Equal(StatusCodes.Status400BadRequest, objectResult.StatusCode);
+        Assert.IsType<ProblemDetails>(objectResult.Value);
+    }
+
+    [Fact]
+    public async Task Patch_EscalateAction_StatusOmittedWithRaiseSeverity_Returns200()
+    {
+        // GIVEN a command service that returns a successful escalate
+        _alertCommandService.Handle(Arg.Any<EscalateAlertCommand>(), Arg.Any<CancellationToken>())
+                           .Returns(new Result<Unit, Error>.Success(Unit.Value));
+
+        // AND a query service that returns the just-escalated alert (no status change)
+        _alertQueryService.Handle(Arg.Any<ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Queries.GetAlertByIdQuery>(),
+                                  Arg.Any<CancellationToken>())
+                          .Returns(BuildAlert(id: 43L, status: "ACTIVE", severity: EAlertSeverity.HIGH));
+
+        var controller = CreateController();
+
+        // WHEN the controller PATCHes the alert with status omitted and raiseSeverity=true
+        var resource = new UpdateAlertResource(Status: null, RaiseSeverity: true);
+        var result = await controller.UpdateAlert(43L, resource, CancellationToken.None);
+
+        // THEN the result is 200 OK with the updated alert resource
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var alertResource = Assert.IsType<AlertResource>(ok.Value);
+        Assert.Equal(43L, alertResource.Id);
+        Assert.Equal("ACTIVE", alertResource.Status);
+
+        // AND the command service received an EscalateAlertCommand
+        await _alertCommandService.Received(1).Handle(
+            Arg.Is<EscalateAlertCommand>(c => c.AlertId == 43L),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Patch_EscalateAction_AlertNotFound_Returns404ProblemDetails()
+    {
+        // GIVEN a command service that returns NotFound
+        _alertCommandService.Handle(Arg.Any<EscalateAlertCommand>(), Arg.Any<CancellationToken>())
+                           .Returns(new Result<Unit, Error>.Failure(SurveillanceErrors.NotFound));
+
+        var controller = CreateController();
+
+        // WHEN the controller PATCHes a non-existent alert with raiseSeverity=true
+        var resource = new UpdateAlertResource(Status: null, RaiseSeverity: true);
+        var result = await controller.UpdateAlert(999L, resource, CancellationToken.None);
+
+        // THEN the result is 404 with a ProblemDetails body (CC-6)
+        var objectResult = Assert.IsAssignableFrom<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status404NotFound, objectResult.StatusCode);
+        Assert.IsType<ProblemDetails>(objectResult.Value);
+    }
+
+    [Fact]
+    public async Task Patch_StatusAndRaiseSeverityBothOmitted_Returns400EmptyResource()
+    {
+        var controller = CreateController();
+
+        // WHEN the controller PATCHes with nothing to do
+        var resource = new UpdateAlertResource(Status: null);
+        var result = await controller.UpdateAlert(1L, resource, CancellationToken.None);
+
+        // THEN the result is 400 with the legacy EmptyResource body (no transition attempted)
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.IsType<EmptyResource>(badRequest.Value);
+        await _alertCommandService.DidNotReceiveWithAnyArgs().Handle(Arg.Any<ConfirmAlertCommand>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Put_LinkReport_Valid_Returns200()
+    {
+        // GIVEN a command service that returns a successful link
+        _alertCommandService.Handle(Arg.Any<LinkAlertReportCommand>(), Arg.Any<CancellationToken>())
+                           .Returns(new Result<Unit, Error>.Success(Unit.Value));
+
+        // AND a query service that returns the alert with the report linked
+        _alertQueryService.Handle(Arg.Any<ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Queries.GetAlertByIdQuery>(),
+                                  Arg.Any<CancellationToken>())
+                          .Returns(BuildAlert(id: 44L, status: "ACTIVE", severity: EAlertSeverity.LOW));
+
+        var controller = CreateController();
+
+        // WHEN the controller PUTs the linked report onto the alert
+        var result = await controller.LinkReport(44L, 900L, CancellationToken.None);
+
+        // THEN the result is 200 OK with the updated alert resource
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var alertResource = Assert.IsType<AlertResource>(ok.Value);
+        Assert.Equal(44L, alertResource.Id);
+
+        // AND the command service received a LinkAlertReportCommand with the route reportId
+        await _alertCommandService.Received(1).Handle(
+            Arg.Is<LinkAlertReportCommand>(c => c.AlertId == 44L && c.ReportId == 900L),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Put_LinkReport_AlertNotFound_Returns404ProblemDetails()
+    {
+        // GIVEN a command service that returns NotFound
+        _alertCommandService.Handle(Arg.Any<LinkAlertReportCommand>(), Arg.Any<CancellationToken>())
+                           .Returns(new Result<Unit, Error>.Failure(SurveillanceErrors.NotFound));
+
+        var controller = CreateController();
+
+        // WHEN the controller PUTs a linked report onto a non-existent alert
+        var result = await controller.LinkReport(999L, 900L, CancellationToken.None);
+
+        // THEN the result is 404 with a ProblemDetails body (CC-6)
+        var objectResult = Assert.IsAssignableFrom<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status404NotFound, objectResult.StatusCode);
         Assert.IsType<ProblemDetails>(objectResult.Value);
     }
 
