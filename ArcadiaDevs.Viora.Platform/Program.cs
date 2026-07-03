@@ -23,6 +23,10 @@ using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.OutboundServices.Acl;
 using ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.OutboundServices.Acl;
 using ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using ArcadiaDevs.Viora.Platform.Surveillance.Application.Acl;
+using ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Acl;
+using ArcadiaDevs.Viora.Platform.Intervention.Application.OutboundServices.Acl;
+using ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.OutboundServices.Acl;
 using Cortex.Mediator;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
@@ -283,6 +287,9 @@ builder.Services.AddScoped<ICommunityRiskQueryService, CommunityRiskQueryService
 builder.Services.AddScoped<IPestSightingReportQueryService, PestSightingReportQueryService>();
 
 builder.Services.AddScoped<IExternalAgronomicService, ExternalAgronomicService>();
+// WU2 of Intervention parity (surveillance-acl-facade, obs #268): outward-facing
+// facade so other bounded contexts (Intervention) can read Alert data via the ACL.
+builder.Services.AddScoped<ISurveillanceContextFacade, SurveillanceContextFacade>();
 builder.Services.AddScoped<ThreatInferenceService>();
 builder.Services.AddScoped<IDynamicNutritionPlanRepository, DynamicNutritionPlanRepository>();
 
@@ -301,6 +308,14 @@ builder.Services.AddScoped<IUserCommandService, UserCommandService>();
 builder.Services.AddScoped<IHashingService, HashingService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IIamContextFacade, IamContextFacade>();
+
+// Intervention Bounded Context Injection Configuration
+// WU2 of 8 (surveillance-acl-facade, obs #268): only the Intervention-owned
+// adapter that consumes Surveillance's new outward-facing
+// ISurveillanceContextFacade is registered here (this branch is cut from
+// develop and does not include WU1's Specialist slice, per design's stated
+// independence). WU1 and WU3-WU8 extend this block once merged/landed.
+builder.Services.AddScoped<IExternalSurveillanceService, ExternalSurveillanceService>();
 
 // Profile Bounded Context Injection Configuration
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
