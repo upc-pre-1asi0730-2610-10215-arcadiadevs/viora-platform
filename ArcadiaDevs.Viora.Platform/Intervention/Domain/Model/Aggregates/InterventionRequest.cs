@@ -13,11 +13,11 @@ namespace ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Aggregates;
 ///     Ctor-set FK fields (<see cref="GrowerId" />, <see cref="PlotId" />,
 ///     <see cref="SpecialistId" />, <see cref="AlertId" />) are immutable
 ///     post-creation (REQ-CC-3). <see cref="Status" /> and
-///     <see cref="DeclineReason" /> mutate only via <see cref="Decline" />
-///     in WU3 — later work units (e.g. <c>ServiceProposal</c>, WU4) extend
-///     this aggregate with additional side-effect transitions
-///     (<c>PROPOSAL_RECEIVED</c>/<c>ACCEPTED</c>) as their own commands
-///     land; that is out of WU3's scope.
+///     <see cref="DeclineReason" /> mutate via <see cref="Decline" /> (WU3),
+///     and via <see cref="MarkProposalReceived" />/<see cref="MarkAccepted" />
+///     (WU4, <c>ServiceProposal</c> side-effects) — none of these are
+///     self-guarded against the current status, per REQ-IREQ-3's
+///     established no-guard convention for this aggregate.
 /// </remarks>
 public class InterventionRequest
 {
@@ -112,5 +112,26 @@ public class InterventionRequest
 
         Status = InterventionStatus.DECLINED;
         DeclineReason = declineReason;
+    }
+
+    /// <summary>
+    ///     Marks the request as having received a service proposal
+    ///     (REQ-SP-1 side-effect of <c>SubmitServiceProposalCommand</c>).
+    ///     No self-guard, mirrors <see cref="Decline" />'s no-guard
+    ///     convention — WU4 (<c>ServiceProposal</c>) owns this transition.
+    /// </summary>
+    public void MarkProposalReceived()
+    {
+        Status = InterventionStatus.PROPOSAL_RECEIVED;
+    }
+
+    /// <summary>
+    ///     Marks the request as accepted (REQ-SP-2 side-effect of
+    ///     <c>AcceptServiceProposalCommand</c>). No self-guard, mirrors
+    ///     <see cref="Decline" />'s no-guard convention.
+    /// </summary>
+    public void MarkAccepted()
+    {
+        Status = InterventionStatus.ACCEPTED;
     }
 }
