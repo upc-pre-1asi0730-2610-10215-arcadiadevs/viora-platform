@@ -7,6 +7,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
@@ -17,7 +18,11 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryService
 public class PlotQueryService(
     IPlotRepository plotRepository,
     IIoTDeviceRepository ioTDeviceRepository,
-    ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock) : IPlotQueryService
+    ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock,
+    IAgronomicStatisticRepository agronomicStatisticRepository,
+    PlotHealthEvaluator plotHealthEvaluator,
+    PhenologicalRiskEvaluator phenologicalRiskEvaluator,
+    ChillRequirementResolver chillRequirementResolver) : IPlotQueryService
 {
     public async Task<Result<PlotResource, Error>> Handle(GetPlotByIdQuery query, CancellationToken cancellationToken = default)
     {
@@ -43,11 +48,17 @@ public class PlotQueryService(
     public async Task<Result<IEnumerable<PlotWithCurrentImageryResource>, Error>> Handle(GetPlotsWithCurrentImageryQuery query, CancellationToken cancellationToken = default)
     {
         var plots = await plotRepository.ListAsync(cancellationToken);
-        var userPlots = plots.Where(p => p.OwnerUserId == query.UserId && !p.IsDeleted)
-                             .Select(p => MapToPlotWithImageryResource(p, clock))
-                             .ToList();
+        var userPlots = plots.Where(p => p.OwnerUserId == query.UserId && !p.IsDeleted).ToList();
 
-        return new Result<IEnumerable<PlotWithCurrentImageryResource>, Error>.Success(userPlots);
+        // Fetch latest agronomic statistics for imagery data.
+        var results = new List<PlotWithCurrentImageryResource>();
+        foreach (var p in userPlots)
+        {
+            var statistic = await agronomicStatisticRepository.FindLatestByPlotIdAsync(p.Id, cancellationToken);
+            results.Add(MapToPlotWithImageryResource(p, clock, statistic));
+        }
+
+        return new Result<IEnumerable<PlotWithCurrentImageryResource>, Error>.Success(results);
     }
 
     public async Task<Result<MyPlotsOverviewResource, Error>> Handle(GetMyPlotsOverviewQuery query, CancellationToken cancellationToken = default)
@@ -63,6 +74,16 @@ public class PlotQueryService(
 
         var activeDevices = devices.Count(d => d.Status == Domain.Model.ValueObjects.IoTDeviceStatus.Active);
 
+        // Fetch latest agronomic statistics for all user plots (single batch query).
+        var plotStats = new Dictionary<long, AgronomicStatistic?>();
+        foreach (var p in userPlots)
+        {
+            var stat = await agronomicStatisticRepository.FindLatestByPlotIdAsync(p.Id, cancellationToken);
+            plotStats[p.Id] = stat;
+        }
+
+        var now = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero);
+
         var overviewPlots = userPlots.Select(p =>
         {
             var polygon = p.PolygonCoordinates.Points
@@ -70,6 +91,15 @@ public class PlotQueryService(
                 .ToList();
 
             var plotDevicesCount = devices.Count(d => d.PlotId == p.Id && d.Status == Domain.Model.ValueObjects.IoTDeviceStatus.Active);
+
+            var statistic = plotStats.GetValueOrDefault(p.Id);
+            var ndvi = statistic?.NdviValue;
+            var chillPortions = statistic?.ChillPortions ?? 0.0;
+
+            var healthStatus = plotHealthEvaluator.Evaluate(ndvi, p.CropType);
+            var chillRequirement = chillRequirementResolver.ResolveFor(p);
+            var phenologicalRisk = phenologicalRiskEvaluator.Evaluate(
+                ndvi, chillRequirement, (decimal)chillPortions, p.CropType);
 
             return new OverviewPlotResource(
                 p.Id,
@@ -81,13 +111,13 @@ public class PlotQueryService(
                 p.Variety,
                 polygon,
                 p.AreaSize,
-                0.65,
-                120.5,
-                "Healthy",
-                "Low",
+                ndvi ?? 0.0,
+                chillPortions,
+                healthStatus.ToString(),
+                phenologicalRisk.ToString(),
                 plotDevicesCount,
                 0,
-                new DateTimeOffset(clock.UtcNow, TimeSpan.Zero),
+                now,
                 "active",
                 "active"
             );
@@ -121,7 +151,8 @@ public class PlotQueryService(
         );
     }
 
-    private static PlotWithCurrentImageryResource MapToPlotWithImageryResource(Plot plot, ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock)
+    private static PlotWithCurrentImageryResource MapToPlotWithImageryResource(
+        Plot plot, ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock, AgronomicStatistic? statistic)
     {
         var polygon = plot.PolygonCoordinates.Points
             .Select(p => (IEnumerable<double>)new double[] { (double)p.Longitude, (double)p.Latitude })
@@ -129,13 +160,20 @@ public class PlotQueryService(
 
         var now = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero);
 
+        // Real NDVI from the latest agronomic statistic; 0.0 when no data available
+        // (no fabricated fallback — CC-8).
+        var ndviMean = statistic?.NdviValue ?? 0.0;
+        // Cloud percentage is not available from the statistic; default to 0.0
+        // until satellite imagery metadata is wired separately.
+        var cloudPercentage = 0.0;
+
         var imagery = new CurrentImageryResource(
             "img-" + plot.Id,
             plot.Id,
             "https://satellite.viora.local/tiles/" + plot.Id,
             now.AddDays(-1),
-            0.65,
-            0.05
+            ndviMean,
+            cloudPercentage
         );
 
         return new PlotWithCurrentImageryResource(
