@@ -45,7 +45,7 @@ public class SpecialistsController(
             result,
             errorLocalizer,
             problemDetailsFactory,
-            dto => Ok(SpecialistResourceFromEntityAssembler.ToResourceFromDto(dto)));
+            dto => Ok(SpecialistResourceFromDtoAssembler.ToResourceFromDto(dto)));
     }
 
     /// <summary>
@@ -54,6 +54,13 @@ public class SpecialistsController(
     /// <remarks>
     ///     Only unlocked if the referenced intervention request is
     ///     <c>ACCEPTED</c> and matches the requested specialist (REQ-SPEC-2).
+    ///     WU1 always denies (the <c>InterventionRequest</c> aggregate does
+    ///     not exist yet, see <c>SpecialistQueryService.Handle(GetSpecialistContactQuery)</c>).
+    ///     IMPORTANT for the WU3 implementer: the real check MUST verify
+    ///     BOTH <c>status == ACCEPTED</c> AND <c>specialistId == id</c> AND
+    ///     that the authenticated caller owns/is a party to the referenced
+    ///     <c>InterventionRequest</c> — status+specialist-id matching alone
+    ///     is not sufficient to authorize the caller.
     /// </remarks>
     /// <param name="id">The specialist id.</param>
     /// <param name="requestId">The intervention request id gating access.</param>
@@ -77,6 +84,6 @@ public class SpecialistsController(
             result,
             errorLocalizer,
             problemDetailsFactory,
-            dto => Ok(SpecialistResourceFromEntityAssembler.ToResourceFromDto(dto)));
+            dto => Ok(SpecialistResourceFromDtoAssembler.ToResourceFromDto(dto)));
     }
 }

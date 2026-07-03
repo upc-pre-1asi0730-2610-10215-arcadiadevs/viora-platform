@@ -3,7 +3,14 @@ using ArcadiaDevs.Viora.Platform.Intervention.Interfaces.Rest.Resources;
 
 namespace ArcadiaDevs.Viora.Platform.Intervention.Interfaces.Rest.Transform;
 
-public static class SpecialistResourceFromEntityAssembler
+/// <summary>
+///     Assembles Specialist REST resources from application-layer DTOs (not
+///     entities — inputs are already read-model DTOs composed by
+///     <c>SpecialistQueryService</c>, hence the <c>FromDto</c> naming rather
+///     than the <c>FromEntity</c> convention used by sibling assemblers
+///     whose inputs are genuine aggregate/entity instances).
+/// </summary>
+public static class SpecialistResourceFromDtoAssembler
 {
     public static SpecialistResource ToResourceFromDto(SpecialistPublicProfile dto)
     {
