@@ -46,6 +46,14 @@ using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Tokens.Jwt.Configuration;
 using ArcadiaDevs.Viora.Platform.Iam.Application.Acl;
 using ArcadiaDevs.Viora.Platform.Iam.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Tokens.Jwt.Services;
+using ArcadiaDevs.Viora.Platform.Profile.Application.Acl;
+using ArcadiaDevs.Viora.Platform.Profile.Application.CommandServices;
+using ArcadiaDevs.Viora.Platform.Profile.Application.Internal.CommandServices;
+using ArcadiaDevs.Viora.Platform.Profile.Application.Internal.QueryServices;
+using ArcadiaDevs.Viora.Platform.Profile.Application.QueryServices;
+using ArcadiaDevs.Viora.Platform.Profile.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Profile.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using ArcadiaDevs.Viora.Platform.Profile.Interfaces.Acl;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -293,6 +301,12 @@ builder.Services.AddScoped<IUserCommandService, UserCommandService>();
 builder.Services.AddScoped<IHashingService, HashingService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IIamContextFacade, IamContextFacade>();
+
+// Profile Bounded Context Injection Configuration
+builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
+builder.Services.AddScoped<IProfileQueryService, ProfileQueryService>();
+builder.Services.AddScoped<IProfileCommandService, ProfileCommandService>();
+builder.Services.AddScoped<IProfileContextFacade, ProfileContextFacade>();
 
 // Cortex Mediator
 builder.Services.AddCortexMediator([typeof(Program)]);

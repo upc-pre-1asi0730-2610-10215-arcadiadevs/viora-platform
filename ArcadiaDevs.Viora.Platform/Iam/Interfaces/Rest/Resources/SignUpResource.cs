@@ -10,4 +10,4 @@ namespace ArcadiaDevs.Viora.Platform.Iam.Interfaces.Rest.Resources;
  *     mirroring OS's SignUpResource.role + Role.getDefaultRole() contract.
  * </remarks>
  */
-public record SignUpResource(string Username, string Password, string? Role = null);
+public record SignUpResource(string Username, string Password, string Email, string FullName, string? Role = null);

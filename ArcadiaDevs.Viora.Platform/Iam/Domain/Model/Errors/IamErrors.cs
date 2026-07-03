@@ -16,6 +16,12 @@ public static class IamErrors
     public static readonly Error WeakPassword =
         new("Iam.WeakPassword", "The password must be at least 8 characters long.");
 
+    public static readonly Error EmailRequired =
+        new("Iam.EmailRequired", "Email is required.");
+
+    public static readonly Error FullNameRequired =
+        new("Iam.FullNameRequired", "Full name is required.");
+
     public static readonly Error UserNotFound =
         new("Iam.UserNotFound", "The specified user was not found.");
 

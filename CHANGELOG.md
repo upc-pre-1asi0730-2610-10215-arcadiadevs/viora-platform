@@ -5,6 +5,24 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.31.0] - 2026-07-03
+
+### added
+- `Profile` bounded context — full hexagonal architecture port from os-viora-platform (Domain/Application/Infrastructure/Interfaces layers)
+- `GET /api/v1/profiles/{userId}` — read profile by user id (200 with data, 404 if not found)
+- `PUT /api/v1/profiles/{userId}` — upsert profile (201 on create with `role=Producer` default, 200 on partial update; `role` immutable after creation)
+- `IProfileContextFacade.EnsureProfile` — ACL facade for cross-boundary profile provisioning, invoked by IAM's sign-up flow
+- EF Core `Profile` table with unique `UserId` constraint (`AddProfile` migration)
+
+### breaking
+- `POST /api/v1/authentication/sign-up` — `SignUpResource` now requires `email` and `fullName` fields (both required strings). Existing callers must be updated to send these fields.
+
+### notes
+- SDD change `profile-bounded-context-parity` — faithful port of os-viora-platform's Profile BC with corrected PUT-as-upsert semantics
+- Role immutability enforced at both DTO level (absent from `CreateOrUpdateProfileResource`) and aggregate level (compile-time: no public setter, `ApplyUpdate` excludes `Role`)
+- Features-only release per explicit user decision — no tests written or run for this change
+- Build green (0 errors)
+
 ## [1.30.0] - 2026-07-03
 
 ### fixed

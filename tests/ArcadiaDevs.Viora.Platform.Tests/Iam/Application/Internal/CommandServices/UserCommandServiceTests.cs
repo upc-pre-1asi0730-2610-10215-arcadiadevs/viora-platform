@@ -5,6 +5,7 @@ using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Profile.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
@@ -20,6 +21,7 @@ public class UserCommandServiceTests
     private readonly ITokenService      _tokenService      = Substitute.For<ITokenService>();
     private readonly IHashingService    _hashingService    = Substitute.For<IHashingService>();
     private readonly IRoleRepository    _roleRepository    = Substitute.For<IRoleRepository>();
+    private readonly IProfileContextFacade _profileContextFacade = Substitute.For<IProfileContextFacade>();
     private readonly IStringLocalizer<ErrorMessages> _errorLocalizer =
         Substitute.For<IStringLocalizer<ErrorMessages>>();
     private readonly UserCommandService _sut;
@@ -27,7 +29,7 @@ public class UserCommandServiceTests
     public UserCommandServiceTests()
     {
         _sut = new UserCommandService(
-            _userRepository, _unitOfWork, _tokenService, _hashingService, _roleRepository, _errorLocalizer);
+            _userRepository, _unitOfWork, _tokenService, _hashingService, _roleRepository, _profileContextFacade, _errorLocalizer);
     }
 
     [Fact]
@@ -39,7 +41,7 @@ public class UserCommandServiceTests
         _userRepository.ExistsByUsernameAsync("alice", Arg.Any<CancellationToken>())
                        .Returns(false);
 
-        var command = new SignUpCommand("alice", "short");   // 5 chars; < 8
+        var command = new SignUpCommand("alice", "short", "alice@example.com", "Alice Smith");   // 5 chars; < 8
 
         var result = await _sut.Handle(command, CancellationToken.None);
 
@@ -63,7 +65,7 @@ public class UserCommandServiceTests
         _userRepository.ExistsByUsernameAsync("alice", Arg.Any<CancellationToken>())
                        .Returns(true);   // note: TRUE — the opposite of the weak-password test
 
-        var command = new SignUpCommand("alice", "long-enough-password");   // 18 chars; >= 8
+        var command = new SignUpCommand("alice", "long-enough-password", "alice@example.com", "Alice Smith");   // 18 chars; >= 8
 
         var result = await _sut.Handle(command, CancellationToken.None);
 
@@ -116,7 +118,7 @@ public class UserCommandServiceTests
                        .Returns(growerRole);
         _hashingService.HashPassword(Arg.Any<string>()).Returns("hashed");
 
-        var command = new SignUpCommand("alice", "long-enough-password", Role: null);
+        var command = new SignUpCommand("alice", "long-enough-password", "alice@example.com", "Alice Smith", Role: null);
 
         var result = await _sut.Handle(command, CancellationToken.None);
 
@@ -139,7 +141,7 @@ public class UserCommandServiceTests
                        .Returns(specialistRole);
         _hashingService.HashPassword(Arg.Any<string>()).Returns("hashed");
 
-        var command = new SignUpCommand("bob", "long-enough-password", Role: "Specialist");
+        var command = new SignUpCommand("bob", "long-enough-password", "bob@example.com", "Bob Jones", Role: "Specialist");
 
         var result = await _sut.Handle(command, CancellationToken.None);
 
@@ -159,7 +161,7 @@ public class UserCommandServiceTests
         _roleRepository.FindByNameAsync("Administrator", Arg.Any<CancellationToken>())
                        .Returns((Role?)null);
 
-        var command = new SignUpCommand("carol", "long-enough-password", Role: "Administrator");
+        var command = new SignUpCommand("carol", "long-enough-password", "carol@example.com", "Carol Davis", Role: "Administrator");
 
         var result = await _sut.Handle(command, CancellationToken.None);
 

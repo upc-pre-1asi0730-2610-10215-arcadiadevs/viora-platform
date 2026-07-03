@@ -11,4 +11,4 @@ namespace ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Commands;
  *     Role.getDefaultRole() -> ROLE_GROWER).
  * </remarks>
  */
-public record SignUpCommand(string Username, string Password, string? Role = null);
+public record SignUpCommand(string Username, string Password, string Email, string FullName, string? Role = null);

@@ -88,7 +88,7 @@ public class UsersControllerAssignRoleRemovalTests : IAsyncLifetime
 
         var signUpResponse = await _client.PostAsJsonAsync(
             "/api/v1/authentication/sign-up",
-            new { username, password });
+            new { username, password, email = $"{username}@example.com", fullName = "Route Removal Test User" });
         Assert.Equal(HttpStatusCode.Created, signUpResponse.StatusCode);
 
         var signInResponse = await _client.PostAsJsonAsync(

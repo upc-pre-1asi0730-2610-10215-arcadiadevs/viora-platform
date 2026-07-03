@@ -5,6 +5,7 @@ using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Profile.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
@@ -23,6 +24,7 @@ public class UserCommandServiceChangePasswordTests
     private readonly ITokenService      _tokenService      = Substitute.For<ITokenService>();
     private readonly IHashingService    _hashingService    = Substitute.For<IHashingService>();
     private readonly IRoleRepository    _roleRepository    = Substitute.For<IRoleRepository>();
+    private readonly IProfileContextFacade _profileContextFacade = Substitute.For<IProfileContextFacade>();
     private readonly IStringLocalizer<ErrorMessages> _errorLocalizer =
         Substitute.For<IStringLocalizer<ErrorMessages>>();
     private readonly UserCommandService _sut;
@@ -30,7 +32,7 @@ public class UserCommandServiceChangePasswordTests
     public UserCommandServiceChangePasswordTests()
     {
         _sut = new UserCommandService(
-            _userRepository, _unitOfWork, _tokenService, _hashingService, _roleRepository, _errorLocalizer);
+            _userRepository, _unitOfWork, _tokenService, _hashingService, _roleRepository, _profileContextFacade, _errorLocalizer);
     }
 
     /// <summary>
