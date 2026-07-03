@@ -18,8 +18,10 @@ and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0
 
 ### notes
 - WU8 (REQ-12) of the `audit/wa-os-backend-parity-closure-2026-07-02` SDD change — plots views consolidation to OS parity, 3 sequential slices (A structural / B route reshape / C real-data wiring)
+- `GET /api/v1/plots` and `GET /api/v1/plots/{plotId}` now document a `oneOf` 200 response schema in Swagger, one shape per `?view=` value, via `PlotViewResponseOperationFilter`
 - `BoundaryStatus`, `MonitoringLinksResource`, IoT `LastActivityAt` fabrications in `GetPlotDetailQueryService` are explicitly out of scope (documented follow-up)
 - `ActiveAlertCount=0` in overview is intentional (matches OS)
+- Known limitation: `GetPlotMonitoringSummaryQueryService`'s NDVI trend series and chill weekly-delta are derived approximations from a single current reading (`currentNdvi * 0.9/1.1`, `chillSeason.ProgressRatio * 10.0`), not real historical time-series data — accurate current values, synthetic trend shape. Revisit once historical NDVI/chill measurements are tracked.
 - Features-only implementation (no new tests) — TDD dropped for WU2-WU9; build green (0 errors)
 
 ## [1.26.0] - 2026-07-02

@@ -74,7 +74,9 @@ public class PlotQueryService(
 
         var activeDevices = devices.Count(d => d.Status == Domain.Model.ValueObjects.IoTDeviceStatus.Active);
 
-        // Fetch latest agronomic statistics for all user plots (single batch query).
+        // Fetch latest agronomic statistics per plot. IAgronomicStatisticRepository
+        // has no batch-by-ids lookup (same per-plot pattern used elsewhere in this
+        // BC, e.g. IoTDeviceQueryService) — N queries for N plots, not a single batch.
         var plotStats = new Dictionary<long, AgronomicStatistic?>();
         foreach (var p in userPlots)
         {

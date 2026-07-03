@@ -1,4 +1,5 @@
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.Acl;
+using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Swagger;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.CommandServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices;
@@ -77,7 +78,11 @@ builder.Services.AddCors(options =>
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options => options.EnableAnnotations());
+builder.Services.AddSwaggerGen(options =>
+{
+    options.EnableAnnotations();
+    options.OperationFilter<PlotViewResponseOperationFilter>();
+});
 
 // Add Database Connection
 var useEnvironmentVariables =
