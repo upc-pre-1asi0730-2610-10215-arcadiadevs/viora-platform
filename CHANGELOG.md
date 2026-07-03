@@ -5,6 +5,23 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.27.0] - 2026-07-02
+
+### breaking
+- `GET /api/v1/plots/overview`, `GET /api/v1/plots/{plotId}/detail`, `GET /api/v1/plots/{plotId}/monitoring-summary`, `GET /api/v1/plots/{plotId}/weather-forecast` sub-paths removed (return 404); replaced by `GET /api/v1/plots?view=overview`, `GET /api/v1/plots/{plotId}?view=detail|monitoring|weather` query-parameter dispatch
+- `PlotResource` trimmed to 12 fields (11 OS-parity + `LastUpdate`); `HealthStatus`, `PhenologicalRisk`, `CurrentImagery` removed; use `PlotWithCurrentImageryResource` when `includeCurrentImagery=true`
+- `GetPlotDetailQueryService` and `GetPlotWeatherForecastQueryService` now enforce plot-ownership check (403 for non-owners)
+
+### changed
+- Plot overview, monitoring summary, and imagery views now compute `HealthStatus`, `PhenologicalRisk`, `CurrentNdvi`, `ChillPortions`, and `YieldForecastTonnes` from real domain evaluators (`PlotHealthEvaluator`, `PhenologicalRiskEvaluator`, `ChillSeasonEvaluator`, `YieldForecastEstimator`) instead of hardcoded constants
+- New `PhenologicalRiskEvaluator` and `ChillSeasonEvaluator` domain services under `Agronomic/Domain/Model/Services/`
+
+### notes
+- WU8 (REQ-12) of the `audit/wa-os-backend-parity-closure-2026-07-02` SDD change — plots views consolidation to OS parity, 3 sequential slices (A structural / B route reshape / C real-data wiring)
+- `BoundaryStatus`, `MonitoringLinksResource`, IoT `LastActivityAt` fabrications in `GetPlotDetailQueryService` are explicitly out of scope (documented follow-up)
+- `ActiveAlertCount=0` in overview is intentional (matches OS)
+- Features-only implementation (no new tests) — TDD dropped for WU2-WU9; build green (0 errors)
+
 ## [1.26.0] - 2026-07-02
 
 ### added
