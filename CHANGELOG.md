@@ -5,6 +5,18 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.29.0] - 2026-07-03
+
+### breaking
+- `POST /api/v1/alerts/{alertId}/confirm`, `.../dismiss`, `.../escalate` removed — folded into `PATCH /api/v1/alerts/{alertId}` via a new optional `raiseSeverity` field (combined with `status: "UNDER_REVIEW"` for confirm, alone for escalate; `DISMISSED` status already covered dismiss)
+- `POST /api/v1/alerts/{alertId}/link-report?reportId={id}` removed — replaced by `PUT /api/v1/alerts/{alertId}/report/{reportId}` (idempotent set of the linked report)
+
+### notes
+- REST-compliance audit of the live Swagger surface (`/swagger/index.html`) found the only verb-in-URL action endpoints in the whole API were on `AlertsController`; every other controller already followed resource-oriented conventions
+- Presentation-layer only — no domain/command-service changes; `ConfirmAlertCommand`, `EscalateAlertCommand`, `MarkAlertAsReviewedCommand`, `DismissAlertCommand`, `LinkAlertReportCommand` all unchanged
+- `DismissAlertResource` and `DismissAlertCommandFromResourceAssembler` deleted (dead code once dismiss folded into the existing `DISMISSED` PATCH branch)
+- Build green (0 errors); tests 350/351 pass (`RoleMigrationTests` pre-existing unrelated failure, same as prior releases)
+
 ## [1.28.0] - 2026-07-03
 
 ### security
