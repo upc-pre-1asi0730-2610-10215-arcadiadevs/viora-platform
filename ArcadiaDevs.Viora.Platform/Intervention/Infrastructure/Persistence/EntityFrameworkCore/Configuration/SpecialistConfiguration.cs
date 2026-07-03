@@ -1,6 +1,7 @@
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
@@ -51,10 +52,14 @@ public class SpecialistConfiguration : IEntityTypeConfiguration<Specialist>
             .HasColumnName("whatsapp")
             .HasMaxLength(50);
 
-        var tagsComparer = new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<IReadOnlyList<string>>(
-            (c1, c2) => c1!.SequenceEqual(c2!),
-            c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
-            c => c.ToList());
+        // Compares by tag content, not by SpecialistTags record reference — the
+        // record's auto-generated equality would otherwise fall back to
+        // reference equality on the underlying IReadOnlyList<string>, causing
+        // EF's change tracker to always see the property as "modified".
+        var tagsComparer = new ValueComparer<SpecialistTags>(
+            (c1, c2) => c1 == c2 || (c1 != null && c2 != null && c1.Items.SequenceEqual(c2.Items)),
+            c => c.Items.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+            c => new SpecialistTags(c.Items.ToList()));
 
         builder.Property(s => s.Tags)
             .HasColumnName("tags")
@@ -62,6 +67,7 @@ public class SpecialistConfiguration : IEntityTypeConfiguration<Specialist>
                 v => System.Text.Json.JsonSerializer.Serialize(v.Items, (System.Text.Json.JsonSerializerOptions?)null),
                 v => new SpecialistTags(
                     System.Text.Json.JsonSerializer.Deserialize<List<string>>(v, (System.Text.Json.JsonSerializerOptions?)null)
-                    ?? new List<string>()));
+                    ?? new List<string>()),
+                tagsComparer);
     }
 }

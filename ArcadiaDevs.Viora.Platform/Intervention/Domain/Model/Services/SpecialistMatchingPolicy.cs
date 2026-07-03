@@ -31,17 +31,26 @@ public class SpecialistMatchingPolicy(ISpecialistRepository specialistRepository
 
     /// <summary>
     ///     Ranks all specialists by availability rank → successRate desc →
-    ///     distanceKm asc, capped to <paramref name="limit" />.
+    ///     distanceKm asc → id asc (deterministic final tie-breaker).
     /// </summary>
+    /// <remarks>
+    ///     Returns the FULL ranked repository, uncapped — the underlying
+    ///     <c>ISpecialistRepository.ListAsync</c> issues no
+    ///     <c>ORDER BY</c>, so the id tie-breaker also guarantees a
+    ///     deterministic result across calls. Capping to a caller-requested
+    ///     limit is intentionally NOT done here; it is the caller's
+    ///     responsibility (see <c>SpecialistQueryService</c>), since the
+    ///     caller may need to filter ranked results (e.g. by
+    ///     profile-resolvability) before trimming to the requested size —
+    ///     capping here first could silently under-fill the final result.
+    /// </remarks>
     /// <param name="alertId">
     ///     Reserved, unused parameter (REQ-SPEC-3) — kept for API/contract
     ///     parity with OS; accepted but not consulted for ranking today.
     /// </param>
-    /// <param name="limit">The maximum number of candidates to return (default 3).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<IReadOnlyList<Specialist>> MatchSpecialistsForAlertAsync(
         long? alertId,
-        int limit = 3,
         CancellationToken cancellationToken = default)
     {
         var all = await specialistRepository.ListAsync(cancellationToken);
@@ -50,7 +59,7 @@ public class SpecialistMatchingPolicy(ISpecialistRepository specialistRepository
             .OrderBy(s => AvailabilityRank.TryGetValue(s.Availability, out var rank) ? rank : int.MaxValue)
             .ThenByDescending(s => s.SuccessRate)
             .ThenBy(s => s.DistanceKm)
-            .Take(limit)
+            .ThenBy(s => s.Id)
             .ToList()
             .AsReadOnly();
     }

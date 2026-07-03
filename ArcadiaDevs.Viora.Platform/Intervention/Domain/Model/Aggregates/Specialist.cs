@@ -60,6 +60,24 @@ public class Specialist
         EAvailabilityStatus availability,
         string? whatsapp = null)
     {
+        if (successRate is < 0 or > 100)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(successRate), successRate, "Success rate must be between 0 and 100.");
+        }
+
+        if (distanceKm < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(distanceKm), distanceKm, "Distance cannot be negative.");
+        }
+
+        if (caseCount < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(caseCount), caseCount, "Case count cannot be negative.");
+        }
+
         ProfileUserId = profileUserId;
         SuccessRate = successRate;
         CaseCount = caseCount;

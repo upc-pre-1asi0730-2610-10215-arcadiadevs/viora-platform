@@ -7,6 +7,8 @@ using ArcadiaDevs.Viora.Platform.Intervention.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Profile.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace ArcadiaDevs.Viora.Platform.Intervention.Application.Internal.QueryServices;
 
@@ -18,7 +20,8 @@ namespace ArcadiaDevs.Viora.Platform.Intervention.Application.Internal.QueryServ
 public class SpecialistQueryService(
     ISpecialistRepository specialistRepository,
     IProfileContextFacade profileContextFacade,
-    SpecialistMatchingPolicy matchingPolicy)
+    SpecialistMatchingPolicy matchingPolicy,
+    ILogger<SpecialistQueryService> logger)
     : ISpecialistQueryService
 {
     /// <inheritdoc />
@@ -26,19 +29,37 @@ public class SpecialistQueryService(
         GetSpecialistByIdQuery query,
         CancellationToken cancellationToken = default)
     {
-        var specialist = await specialistRepository.FindByIdAsync(query.Id, cancellationToken);
-        if (specialist is null)
+        try
         {
-            return new Result<SpecialistPublicProfile, Error>.Failure(InterventionErrors.NotFound);
-        }
+            var specialist = await specialistRepository.FindByIdAsync(query.Id, cancellationToken);
+            if (specialist is null)
+            {
+                return new Result<SpecialistPublicProfile, Error>.Failure(InterventionErrors.NotFound);
+            }
 
-        var profileSummary = await profileContextFacade.GetProfileSummaryAsync(specialist.ProfileUserId, cancellationToken);
-        if (profileSummary is null)
+            var profileSummary = await profileContextFacade.GetProfileSummaryAsync(specialist.ProfileUserId, cancellationToken);
+            if (profileSummary is null)
+            {
+                logger.LogWarning(
+                    "Specialist {SpecialistId} references ProfileUserId {ProfileUserId}, but no matching Profile was found.",
+                    specialist.Id, specialist.ProfileUserId);
+                return new Result<SpecialistPublicProfile, Error>.Failure(InterventionErrors.NotFound);
+            }
+
+            return new Result<SpecialistPublicProfile, Error>.Success(ToPublicProfile(specialist, profileSummary));
+        }
+        catch (OperationCanceledException)
         {
-            return new Result<SpecialistPublicProfile, Error>.Failure(InterventionErrors.NotFound);
+            return new Result<SpecialistPublicProfile, Error>.Failure(InterventionErrors.OperationCancelled);
         }
-
-        return new Result<SpecialistPublicProfile, Error>.Success(ToPublicProfile(specialist, profileSummary));
+        catch (DbUpdateException)
+        {
+            return new Result<SpecialistPublicProfile, Error>.Failure(InterventionErrors.DatabaseError);
+        }
+        catch (Exception)
+        {
+            return new Result<SpecialistPublicProfile, Error>.Failure(InterventionErrors.InternalServerError);
+        }
     }
 
     /// <inheritdoc />
@@ -59,29 +80,64 @@ public class SpecialistQueryService(
         GetSpecialistContactQuery query,
         CancellationToken cancellationToken = default)
     {
-        var specialist = await specialistRepository.FindByIdAsync(query.SpecialistId, cancellationToken);
-        if (specialist is null)
+        try
         {
-            return new Result<SpecialistContact, Error>.Failure(InterventionErrors.NotFound);
-        }
+            var specialist = await specialistRepository.FindByIdAsync(query.SpecialistId, cancellationToken);
+            if (specialist is null)
+            {
+                return new Result<SpecialistContact, Error>.Failure(InterventionErrors.NotFound);
+            }
 
-        // TODO(WU3): replace with a real InterventionRequest ACCEPTED + specialist-match check.
-        return new Result<SpecialistContact, Error>.Failure(InterventionErrors.ContactNotUnlocked);
+            // TODO(WU3): replace with a real InterventionRequest ACCEPTED + specialist-match check.
+            return new Result<SpecialistContact, Error>.Failure(InterventionErrors.ContactNotUnlocked);
+        }
+        catch (OperationCanceledException)
+        {
+            return new Result<SpecialistContact, Error>.Failure(InterventionErrors.OperationCancelled);
+        }
+        catch (DbUpdateException)
+        {
+            return new Result<SpecialistContact, Error>.Failure(InterventionErrors.DatabaseError);
+        }
+        catch (Exception)
+        {
+            return new Result<SpecialistContact, Error>.Failure(InterventionErrors.InternalServerError);
+        }
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    ///     Ranks the FULL specialist repository first (uncapped via
+    ///     <see cref="SpecialistMatchingPolicy" />), THEN filters out any
+    ///     candidate whose Profile can't be resolved, THEN trims to
+    ///     <see cref="GetSpecialistCandidatesQuery.Limit" />. Order matters:
+    ///     capping before filtering would silently under-fill the result
+    ///     whenever a ranked specialist's Profile is missing. This handler
+    ///     intentionally does not participate in the Result/ProblemDetails
+    ///     error contract (its interface returns a bare list, mirroring
+    ///     OS parity) — unhandled infra failures here still bubble to the
+    ///     global exception middleware, same as before this fix pass.
+    /// </remarks>
     public async Task<IReadOnlyList<SpecialistPublicProfile>> Handle(
         GetSpecialistCandidatesQuery query,
         CancellationToken cancellationToken = default)
     {
-        var ranked = await matchingPolicy.MatchSpecialistsForAlertAsync(query.AlertId, query.Limit, cancellationToken);
+        var ranked = await matchingPolicy.MatchSpecialistsForAlertAsync(query.AlertId, cancellationToken);
 
-        var results = new List<SpecialistPublicProfile>(ranked.Count);
+        var results = new List<SpecialistPublicProfile>(Math.Min(ranked.Count, query.Limit));
         foreach (var specialist in ranked)
         {
+            if (results.Count >= query.Limit)
+            {
+                break;
+            }
+
             var profileSummary = await profileContextFacade.GetProfileSummaryAsync(specialist.ProfileUserId, cancellationToken);
             if (profileSummary is null)
             {
+                logger.LogWarning(
+                    "Specialist {SpecialistId} references ProfileUserId {ProfileUserId}, but no matching Profile was found; excluded from candidates.",
+                    specialist.Id, specialist.ProfileUserId);
                 continue;
             }
 
