@@ -1,6 +1,7 @@
 ﻿using ArcadiaDevs.Viora.Platform.Agronomic.Application.ReadModels;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
+using ArcadiaDevs.Viora.Platform.Shared.Domain;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Transform;
 
@@ -40,7 +41,7 @@ public static class IoTDeviceResourceFromEntityAssembler
     /// </summary>
     /// <param name="device">The domain aggregate.</param>
     /// <returns>The REST resource with null telemetry and a <c>LastUpdate</c> fallback.</returns>
-    public static IoTDeviceResource ToResourceFromEntity(this IoTDevice device) =>
+    public static IoTDeviceResource ToResourceFromEntity(this IoTDevice device, IClock clock) =>
         new(
             (int)device.Id,
             (int)device.PlotId,
@@ -51,7 +52,7 @@ public static class IoTDeviceResourceFromEntityAssembler
             SoilMoisture: null,
             Temperature: null,
             LeafHumidity: null,
-            LastUpdate: DateTime.UtcNow.ToString("O"));
+            LastUpdate: clock.UtcNow.ToString("O"));
 
     /// <summary>
     ///     Converts a device readout (device + current telemetry) to its REST resource.

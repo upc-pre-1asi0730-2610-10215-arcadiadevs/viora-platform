@@ -6,6 +6,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Events;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Shared.Domain;
 using Cortex.Mediator;
 using Microsoft.Extensions.Logging;
 
@@ -24,7 +25,8 @@ public class HydricStressDetectedIntegrationEventProducer(
     ISoilReadingSimulator soilReadingSimulator,
     ISensorHealthEvaluator sensorHealthEvaluator,
     IMediator mediator,
-    ILogger<HydricStressDetectedIntegrationEventProducer> logger)
+    ILogger<HydricStressDetectedIntegrationEventProducer> logger,
+    IClock clock)
     : IHydricStressDetectedIntegrationEventProducer
 {
     private const double CriticalMoistureThreshold = 20.0;
@@ -42,7 +44,7 @@ public class HydricStressDetectedIntegrationEventProducer(
         }
 
         var plotsById = plots.ToDictionary(p => (long)p.Id);
-        var now = new DateTimeOffset(DateTime.UtcNow, TimeSpan.Zero);
+        var now = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero);
 
         var devices = (await ioTDeviceRepository.FindAllByPlotIdsAsync(plotsById.Keys, ct))
             .Where(d => d.Status == IoTDeviceStatus.Active)

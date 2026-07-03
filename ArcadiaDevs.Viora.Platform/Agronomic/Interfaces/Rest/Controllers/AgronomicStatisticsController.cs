@@ -6,6 +6,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Transform;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Pipeline.Middleware.Attributes;
+using ArcadiaDevs.Viora.Platform.Shared.Domain;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Resources.Errors;
 using Microsoft.AspNetCore.Http;
@@ -27,7 +28,8 @@ public class AgronomicStatisticsController(
     IAgronomicStatisticSeriesQueryService agronomicStatisticSeriesQueryService,
     IAgronomicStatisticIngestionService agronomicStatisticIngestionService,
     IStringLocalizer<ErrorMessages> errorLocalizer,
-    ProblemDetailsFactory problemDetailsFactory) : ControllerBase
+    ProblemDetailsFactory problemDetailsFactory,
+    IClock clock) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<AgronomicStatisticResource>), StatusCodes.Status200OK)]
@@ -41,13 +43,24 @@ public class AgronomicStatisticsController(
         [FromHeader(Name = "X-Authenticated-User-Id")] long? authenticatedUserId = null,
         CancellationToken cancellationToken = default)
     {
+        // Validate explicitly instead of Enum.Parse: an unrecognized timeRange value
+        // used to throw an unhandled ArgumentException that GlobalExceptionHandlerMiddleware's
+        // catch-all mapped to 500. Mirrors the invalid-?view= handling in PlotsController.
+        if (!Enum.TryParse<ETimeRange>(timeRange, ignoreCase: true, out var parsedTimeRange))
+        {
+            return BadRequest(new
+            {
+                error = $"Invalid timeRange '{timeRange}'. Valid values: {string.Join(", ", Enum.GetNames<ETimeRange>())}."
+            });
+        }
+
         var effectiveAuthenticatedUserId = authenticatedUserId ?? userId;
 
         var query = new GetAgronomicStatisticsQuery(
             userId,
             effectiveAuthenticatedUserId,
             plotId,
-            Enum.Parse<ETimeRange>(timeRange, ignoreCase: true)
+            parsedTimeRange
         );
 
         var result = await agronomicStatisticsQueryService.Handle(query, cancellationToken);
@@ -84,13 +97,22 @@ public class AgronomicStatisticsController(
         [FromHeader(Name = "X-Authenticated-User-Id")] long? authenticatedUserId = null,
         CancellationToken cancellationToken = default)
     {
+        // Same invalid-input guard as GetAgronomicStatistics above — see comment there.
+        if (!Enum.TryParse<ETimeRange>(timeRange, ignoreCase: true, out var parsedTimeRange))
+        {
+            return BadRequest(new
+            {
+                error = $"Invalid timeRange '{timeRange}'. Valid values: {string.Join(", ", Enum.GetNames<ETimeRange>())}."
+            });
+        }
+
         var effectiveAuthenticatedUserId = authenticatedUserId ?? userId;
 
         var query = new GetAgronomicStatisticSeriesQuery(
             userId,
             effectiveAuthenticatedUserId,
             plotId,
-            Enum.Parse<ETimeRange>(timeRange, ignoreCase: true)
+            parsedTimeRange
         );
 
         var result = await agronomicStatisticSeriesQueryService.Handle(query, cancellationToken);
@@ -117,7 +139,7 @@ public class AgronomicStatisticsController(
         [FromQuery] long userId,
         CancellationToken cancellationToken = default)
     {
-        var command = new IngestAgronomicStatisticsCommand(userId, DateTimeOffset.UtcNow);
+        var command = new IngestAgronomicStatisticsCommand(userId, new DateTimeOffset(clock.UtcNow, TimeSpan.Zero));
         var result = await agronomicStatisticIngestionService.Handle(command, cancellationToken);
 
         return AgronomicActionResultAssembler.ToActionResult(

@@ -139,7 +139,8 @@ public class AgroMonitoringWeatherDataService : IWeatherDataService
             currentTemperature: (decimal)temperatureCelsius,
             weatherStatus: WeatherStatus.Sunny,
             lastValidatedReadingAt: lastValidatedReadingAt,
-            climateRiskLevel: ClimateRiskLevel.Low);
+            climateRiskLevel: ClimateRiskLevel.Low,
+            clock: _clock);
     }
 
     /// <inheritdoc />
