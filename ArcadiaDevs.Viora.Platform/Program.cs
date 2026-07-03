@@ -334,7 +334,7 @@ app.UseAuthorization();
 
 app.UseRequestAuthorization();
 
-app.MapHealthChecks("/healthz");
+app.MapHealthChecks("/healthz").AllowAnonymous();
 
 app.MapControllers();
 
