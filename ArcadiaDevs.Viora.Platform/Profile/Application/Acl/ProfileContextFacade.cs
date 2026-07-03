@@ -42,4 +42,13 @@ public class ProfileContextFacade(
         await profileRepository.AddAsync(profile, ct);
         await unitOfWork.CompleteAsync(ct);
     }
+
+    /// <inheritdoc />
+    public async Task<ProfileSummary?> GetProfileSummaryAsync(int userId, CancellationToken ct = default)
+    {
+        var profile = await profileRepository.FindByUserIdAsync(userId, ct);
+        return profile is null
+            ? null
+            : new ProfileSummary(profile.FullName, profile.Email, profile.Phone, profile.Role);
+    }
 }

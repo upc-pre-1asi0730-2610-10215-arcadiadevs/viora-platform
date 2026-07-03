@@ -27,4 +27,17 @@ public interface IProfileContextFacade
         string email,
         string? phone = null,
         CancellationToken ct = default);
+
+    /// <summary>
+    ///     Reads a read-only cross-boundary projection of the profile for the
+    ///     given user id. Added to support the Intervention BC's
+    ///     <c>Specialist</c> aggregate (which resolves identity/contact live
+    ///     from the referenced Profile instead of duplicating it — design
+    ///     decision 1, obs #267), but usable by any BC needing a read-only
+    ///     Profile projection.
+    /// </summary>
+    /// <param name="userId">The user id.</param>
+    /// <param name="ct">The cancellation token.</param>
+    /// <returns>The profile summary if a profile exists for the user; otherwise null.</returns>
+    Task<ProfileSummary?> GetProfileSummaryAsync(int userId, CancellationToken ct = default);
 }
