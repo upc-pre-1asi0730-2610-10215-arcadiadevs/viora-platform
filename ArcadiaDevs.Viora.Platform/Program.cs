@@ -345,7 +345,11 @@ builder.Services.AddScoped<
     ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.OutboundServices.Acl.ExternalAgronomicService>();
 builder.Services.AddScoped<IInterventionRequestCommandService, InterventionRequestCommandService>();
 builder.Services.AddScoped<IInterventionRequestQueryService, InterventionRequestQueryService>();
-// WU4-WU8 extend this block as their aggregates land.
+// WU4 of 8 (service-proposal, obs #268): ServiceProposal slice.
+builder.Services.AddScoped<IServiceProposalRepository, ServiceProposalRepository>();
+builder.Services.AddScoped<IServiceProposalCommandService, ServiceProposalCommandService>();
+builder.Services.AddScoped<IServiceProposalQueryService, ServiceProposalQueryService>();
+// WU5-WU8 extend this block as their aggregates land.
 
 // Profile Bounded Context Injection Configuration
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
