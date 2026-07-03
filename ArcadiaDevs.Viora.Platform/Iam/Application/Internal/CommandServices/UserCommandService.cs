@@ -5,6 +5,7 @@ using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Profile.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
@@ -25,6 +26,7 @@ public class UserCommandService(
     ITokenService tokenService,
     IHashingService hashingService,
     IRoleRepository roleRepository,
+    IProfileContextFacade profileContextFacade,
     IStringLocalizer<ErrorMessages> errorLocalizer) : IUserCommandService
 {
     /// <inheritdoc />
@@ -40,6 +42,13 @@ public class UserCommandService(
         var exists = await userRepository.ExistsByUsernameAsync(command.Username, cancellationToken);
         if (exists)
             return new Result<User?, Error>.Failure(IamErrors.UsernameAlreadyTaken);
+
+        // Validate required fields for profile provisioning
+        if (string.IsNullOrWhiteSpace(command.Email))
+            return new Result<User?, Error>.Failure(IamErrors.EmailRequired);
+
+        if (string.IsNullOrWhiteSpace(command.FullName))
+            return new Result<User?, Error>.Failure(IamErrors.FullNameRequired);
 
         // Resolve the role to assign. Omitted/blank defaults to "Grower"
         // (mirrors OS's Role.getDefaultRole() -> ROLE_GROWER). An explicit
@@ -66,6 +75,13 @@ public class UserCommandService(
         {
             return new Result<User?, Error>.Failure(IamErrors.UserCreationFailed);
         }
+
+        // Provision profile after user is durably persisted.
+        // This is outside the try/catch — if profile creation fails, the user
+        // still exists; EnsureProfile is idempotent so callers can retry.
+        await profileContextFacade.EnsureProfile(
+            user.Id, command.FullName, command.Email,
+            ct: cancellationToken);
 
         return new Result<User?, Error>.Success(user);
     }

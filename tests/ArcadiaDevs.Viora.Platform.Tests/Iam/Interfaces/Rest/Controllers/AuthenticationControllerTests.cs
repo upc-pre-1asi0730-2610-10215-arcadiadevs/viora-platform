@@ -111,7 +111,7 @@ public class AuthenticationControllerTests
             .Returns(new Result<User?, Error>.Success(user));
 
         var controller = CreateProductionControllerWithNoAuthHeader();
-        var resource = new SignUpResource("newgrower", "long-enough-password");
+        var resource = new SignUpResource("newgrower", "long-enough-password", "newgrower@example.com", "New Grower");
 
         // WHEN calling SignUp
         var result = await controller.SignUp(resource, CancellationToken.None);

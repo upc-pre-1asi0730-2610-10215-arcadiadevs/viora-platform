@@ -6,6 +6,12 @@
     <data name="Iam.WeakPassword" xml:space="preserve">
     <value>Password must be at least 8 characters.</value>
   </data>
+    <data name="Iam.EmailRequired" xml:space="preserve">
+    <value>Email is required.</value>
+  </data>
+    <data name="Iam.FullNameRequired" xml:space="preserve">
+    <value>Full name is required.</value>
+  </data>
     <data name="Iam.InvalidRoleName" xml:space="preserve">
     <value>The specified role does not exist.</value>
   </data>
