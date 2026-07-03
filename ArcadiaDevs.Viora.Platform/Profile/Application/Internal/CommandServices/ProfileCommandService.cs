@@ -1,11 +1,11 @@
 using ArcadiaDevs.Viora.Platform.Profile.Application.CommandServices;
-using ArcadiaDevs.Viora.Platform.Profile.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Profile.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Profile.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Profile.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
+using ProfileAggregate = ArcadiaDevs.Viora.Platform.Profile.Domain.Model.Aggregates.Profile;
 
 namespace ArcadiaDevs.Viora.Platform.Profile.Application.Internal.CommandServices;
 
@@ -17,7 +17,7 @@ public class ProfileCommandService(
     IUnitOfWork unitOfWork) : IProfileCommandService
 {
     /// <inheritdoc />
-    public async Task<Result<(Profile Profile, bool Created), Error>> Handle(
+    public async Task<Result<(ProfileAggregate Profile, bool Created), Error>> Handle(
         CreateOrUpdateProfileCommand command,
         CancellationToken ct)
     {
@@ -26,7 +26,7 @@ public class ProfileCommandService(
         if (existing is null)
         {
             // Create path — default role to Producer per spec REQ.
-            var profile = new Profile(
+            var profile = new ProfileAggregate(
                 command.UserId,
                 ProfileRole.Producer,
                 command.FullName ?? string.Empty,
@@ -40,7 +40,7 @@ public class ProfileCommandService(
             await profileRepository.AddAsync(profile, ct);
             await unitOfWork.CompleteAsync(ct);
 
-            return new Result<(Profile Profile, bool Created), Error>.Success((profile, true));
+            return new Result<(ProfileAggregate Profile, bool Created), Error>.Success((profile, true));
         }
 
         // Update path — null-safe partial update, Role untouched.
@@ -56,6 +56,6 @@ public class ProfileCommandService(
         profileRepository.Update(existing);
         await unitOfWork.CompleteAsync(ct);
 
-        return new Result<(Profile Profile, bool Created), Error>.Success((existing, false));
+        return new Result<(ProfileAggregate Profile, bool Created), Error>.Success((existing, false));
     }
 }

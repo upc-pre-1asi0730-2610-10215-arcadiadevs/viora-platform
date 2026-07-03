@@ -1,7 +1,7 @@
-using ArcadiaDevs.Viora.Platform.Profile.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Profile.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
+using ProfileAggregate = ArcadiaDevs.Viora.Platform.Profile.Domain.Model.Aggregates.Profile;
 
 namespace ArcadiaDevs.Viora.Platform.Profile.Application.CommandServices;
 
@@ -19,7 +19,7 @@ public interface IProfileCommandService
     ///     A result containing the profile and a boolean indicating whether it
     ///     was newly created (true) or updated (false).
     /// </returns>
-    Task<Result<(Profile Profile, bool Created), Error>> Handle(
+    Task<Result<(ProfileAggregate Profile, bool Created), Error>> Handle(
         CreateOrUpdateProfileCommand command,
         CancellationToken ct);
 }

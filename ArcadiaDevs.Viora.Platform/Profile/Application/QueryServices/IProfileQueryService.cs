@@ -1,5 +1,5 @@
-using ArcadiaDevs.Viora.Platform.Profile.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Profile.Domain.Model.Queries;
+using ProfileAggregate = ArcadiaDevs.Viora.Platform.Profile.Domain.Model.Aggregates.Profile;
 
 namespace ArcadiaDevs.Viora.Platform.Profile.Application.QueryServices;
 
@@ -14,5 +14,5 @@ public interface IProfileQueryService
     /// <param name="query">The query.</param>
     /// <param name="ct">The cancellation token.</param>
     /// <returns>The profile if found, otherwise null.</returns>
-    Task<Profile?> Handle(GetProfileByUserIdQuery query, CancellationToken ct);
+    Task<ProfileAggregate?> Handle(GetProfileByUserIdQuery query, CancellationToken ct);
 }

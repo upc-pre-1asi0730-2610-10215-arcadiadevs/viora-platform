@@ -1,8 +1,8 @@
-using ArcadiaDevs.Viora.Platform.Profile.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Profile.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Profile.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Profile.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
+using ProfileAggregate = ArcadiaDevs.Viora.Platform.Profile.Domain.Model.Aggregates.Profile;
 
 namespace ArcadiaDevs.Viora.Platform.Profile.Application.Acl;
 
@@ -32,7 +32,7 @@ public class ProfileContextFacade(
         if (existing is not null)
             return;
 
-        var profile = new Profile(
+        var profile = new ProfileAggregate(
             userId,
             ProfileRole.Producer,
             fullName,
