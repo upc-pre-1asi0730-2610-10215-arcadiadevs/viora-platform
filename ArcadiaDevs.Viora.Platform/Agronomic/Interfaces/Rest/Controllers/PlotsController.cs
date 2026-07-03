@@ -21,12 +21,10 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Controllers;
 [Authorize]
 public class PlotsController(
     IPlotCommandService plotCommandService,
-    IGetMyPlotsOverviewQueryService getMyPlotsOverviewQueryService,
+    IPlotQueryService plotQueryService,
     IGetPlotDetailQueryService getPlotDetailQueryService,
     IGetPlotMonitoringSummaryQueryService getPlotMonitoringSummaryQueryService,
     IGetPlotWeatherForecastQueryService getPlotWeatherForecastQueryService,
-    IGetPlotsByUserIdQueryService getPlotsByUserIdQueryService,
-    IGetPlotByIdQueryService getPlotByIdQueryService,
     IGetPlotNdviTileQueryService getPlotNdviTileQueryService,
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
@@ -157,7 +155,7 @@ public class PlotsController(
         CancellationToken cancellationToken)
     {
         var query = new GetMyPlotsOverviewQuery(userId);
-        var result = await getMyPlotsOverviewQueryService.Handle(query, cancellationToken);
+        var result = await plotQueryService.Handle(query, cancellationToken);
 
         return AgronomicActionResultAssembler.ToActionResult(
             this,
@@ -268,7 +266,7 @@ public class PlotsController(
         CancellationToken cancellationToken = default)
     {
         var query = new GetPlotsByUserIdQuery(userId, includeCurrentImagery);
-        var result = await getPlotsByUserIdQueryService.Handle(query, cancellationToken);
+        var result = await plotQueryService.Handle(query, cancellationToken);
 
         return AgronomicActionResultAssembler.ToActionResult(
             this,
@@ -289,7 +287,7 @@ public class PlotsController(
         CancellationToken cancellationToken)
     {
         var query = new GetPlotByIdQuery(plotId);
-        var result = await getPlotByIdQueryService.Handle(query, cancellationToken);
+        var result = await plotQueryService.Handle(query, cancellationToken);
 
         return AgronomicActionResultAssembler.ToActionResult(
             this,
