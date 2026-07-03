@@ -54,9 +54,47 @@ An example request is available in
 
 ## PostgreSQL
 
-To use PostgreSQL, set `Database:Provider` to `PostgreSql` and configure
-`ConnectionStrings:DefaultConnection` in the appropriate appsettings file or
-through environment variables.
+The app falls back to the EF Core in-memory provider unless `DATABASE_URL` is
+set (`Program.cs`). This is read through `IConfiguration`, so it can come from
+an OS environment variable OR from `dotnet user-secrets` — no in-repo `.env`
+file needed. User secrets is the recommended path for local dev (same
+mechanism already used for `Jwt:Secret`):
+
+```powershell
+cd ArcadiaDevs.Viora.Platform
+dotnet user-secrets set "DATABASE_URL" "localhost"
+dotnet user-secrets set "DATABASE_PORT" "5432"
+dotnet user-secrets set "DATABASE_NAME" "viora_platform"
+dotnet user-secrets set "DATABASE_SCHEMA" "public"
+dotnet user-secrets set "DATABASE_USER" "postgres"
+dotnet user-secrets set "DATABASE_PASSWORD" "postgres"
+```
+
+Equivalently, via real environment variables:
+
+```powershell
+$env:DATABASE_URL = "localhost"
+$env:DATABASE_PORT = "5432"
+$env:DATABASE_NAME = "viora_platform"
+$env:DATABASE_SCHEMA = "public"
+$env:DATABASE_USER = "postgres"
+$env:DATABASE_PASSWORD = "postgres"
+```
+
+Use `setup-local.ps1` to provision a locally installed PostgreSQL instance and
+create the `viora_platform` database:
+
+```powershell
+.\setup-local.ps1 -PostgresPassword "postgres"
+```
+
+Then apply migrations:
+
+```powershell
+dotnet ef database update --project ArcadiaDevs.Viora.Platform
+```
+
+In production the API is hosted on Render, with the database on Filess.
 
 ## Weather Provider (AgroMonitoring)
 
