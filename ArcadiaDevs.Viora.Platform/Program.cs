@@ -295,7 +295,13 @@ builder.Services.AddScoped<IAlertQueryService, AlertQueryService>();
 builder.Services.AddScoped<ICommunityRiskQueryService, CommunityRiskQueryService>();
 builder.Services.AddScoped<IPestSightingReportQueryService, PestSightingReportQueryService>();
 
-builder.Services.AddScoped<IExternalAgronomicService, ExternalAgronomicService>();
+// Fully-qualified: WU3 of Intervention parity (obs #268) registers its own
+// same-named IExternalAgronomicService/ExternalAgronomicService pair below
+// in a different namespace, which makes the short names ambiguous once
+// both `using` directives are in scope.
+builder.Services.AddScoped<
+    ArcadiaDevs.Viora.Platform.Surveillance.Application.OutboundServices.Acl.IExternalAgronomicService,
+    ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.OutboundServices.Acl.ExternalAgronomicService>();
 // WU2 of Intervention parity (surveillance-acl-facade, obs #268): outward-facing
 // facade so other bounded contexts (Intervention) can read Alert data via the ACL.
 builder.Services.AddScoped<ISurveillanceContextFacade, SurveillanceContextFacade>();
@@ -327,7 +333,19 @@ builder.Services.AddScoped<SpecialistMatchingPolicy>();
 // WU2 of 8 (surveillance-acl-facade, obs #268): Intervention-owned adapter
 // consuming Surveillance's outward-facing ISurveillanceContextFacade.
 builder.Services.AddScoped<IExternalSurveillanceService, ExternalSurveillanceService>();
-// WU3-WU8 extend this block as their aggregates land.
+// WU3 of 8 (intervention-request, obs #268): InterventionRequest slice +
+// Intervention-owned adapter consuming Agronomic's IAgronomicContextFacade.
+// Fully-qualified here: Surveillance already registers its own same-named
+// IExternalAgronomicService/ExternalAgronomicService pair (line above,
+// design's Cross-BC ACL Wiring table) in a different namespace — the
+// `using` for that namespace makes the short names ambiguous.
+builder.Services.AddScoped<IInterventionRequestRepository, InterventionRequestRepository>();
+builder.Services.AddScoped<
+    ArcadiaDevs.Viora.Platform.Intervention.Application.OutboundServices.Acl.IExternalAgronomicService,
+    ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.OutboundServices.Acl.ExternalAgronomicService>();
+builder.Services.AddScoped<IInterventionRequestCommandService, InterventionRequestCommandService>();
+builder.Services.AddScoped<IInterventionRequestQueryService, InterventionRequestQueryService>();
+// WU4-WU8 extend this block as their aggregates land.
 
 // Profile Bounded Context Injection Configuration
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
