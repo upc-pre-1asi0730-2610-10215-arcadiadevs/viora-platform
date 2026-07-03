@@ -7,6 +7,7 @@ using ArcadiaDevs.Viora.Platform.Surveillance.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Commands;
+using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Rest.Controllers;
 using ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Rest.Resources;
@@ -196,6 +197,83 @@ public class AlertsControllerStateTransitionTests
         Assert.Equal(StatusCodes.Status200OK, ok.StatusCode);
         var returned = Assert.IsAssignableFrom<IEnumerable<AlertSummaryResource>>(ok.Value);
         Assert.Empty(returned);
+    }
+
+    // ============================================================
+    // WU4: PATCH /api/v1/alerts/{id} — RESOLVED and DISMISSED actions
+    // ============================================================
+
+    [Fact]
+    public async Task Patch_ResolveAction_Returns200()
+    {
+        // GIVEN a command service that returns a successful resolve
+        _alertCommandService.Handle(Arg.Any<ResolveAlertCommand>(), Arg.Any<CancellationToken>())
+                           .Returns(new Result<Unit, Error>.Success(Unit.Value));
+
+        // AND a query service that returns the just-resolved alert
+        _alertQueryService.Handle(Arg.Any<ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Queries.GetAlertByIdQuery>(),
+                                  Arg.Any<CancellationToken>())
+                          .Returns(BuildAlert(id: 55L, status: "RESOLVED", severity: EAlertSeverity.MEDIUM));
+
+        var controller = CreateController();
+
+        // WHEN the controller PATCHes the alert with status RESOLVED
+        var resource = new UpdateAlertResource(Status: "RESOLVED");
+        var result = await controller.UpdateAlert(55L, resource);
+
+        // THEN the result is 200 OK with the resolved alert resource
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var alertResource = Assert.IsType<AlertResource>(ok.Value);
+        Assert.Equal(55L, alertResource.Id);
+        Assert.Equal("RESOLVED", alertResource.Status);
+    }
+
+    [Fact]
+    public async Task Patch_ResolveAction_AlertNotFound_Returns404()
+    {
+        // GIVEN a command service that returns NotFound
+        _alertCommandService.Handle(Arg.Any<ResolveAlertCommand>(), Arg.Any<CancellationToken>())
+                           .Returns(new Result<Unit, Error>.Failure(SurveillanceErrors.NotFound));
+
+        var controller = CreateController();
+
+        // WHEN the controller PATCHes a non-existent alert with status RESOLVED
+        var resource = new UpdateAlertResource(Status: "RESOLVED");
+        var result = await controller.UpdateAlert(999L, resource);
+
+        // THEN the result is 404
+        var objectResult = Assert.IsAssignableFrom<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status404NotFound, objectResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task Patch_DismissAction_WithReason_StoresReason()
+    {
+        // GIVEN a command service that returns a successful dismiss
+        _alertCommandService.Handle(Arg.Any<DismissAlertCommand>(), Arg.Any<CancellationToken>())
+                           .Returns(new Result<Unit, Error>.Success(Unit.Value));
+
+        // AND a query service that returns the just-dismissed alert
+        _alertQueryService.Handle(Arg.Any<ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Queries.GetAlertByIdQuery>(),
+                                  Arg.Any<CancellationToken>())
+                          .Returns(BuildAlert(id: 60L, status: "DISMISSED", severity: EAlertSeverity.LOW));
+
+        var controller = CreateController();
+
+        // WHEN the controller PATCHes the alert with status DISMISSED and a reason
+        var resource = new UpdateAlertResource(Status: "DISMISSED", Reason: "False positive after field inspection.");
+        var result = await controller.UpdateAlert(60L, resource);
+
+        // THEN the result is 200 OK
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var alertResource = Assert.IsType<AlertResource>(ok.Value);
+        Assert.Equal(60L, alertResource.Id);
+        Assert.Equal("DISMISSED", alertResource.Status);
+
+        // AND the command service received a DismissAlertCommand with the reason
+        await _alertCommandService.Received(1).Handle(
+            Arg.Is<DismissAlertCommand>(c => c.AlertId == 60L && c.Reason == "False positive after field inspection."),
+            Arg.Any<CancellationToken>());
     }
 
     // ---- helpers ----
