@@ -34,10 +34,20 @@ public class PlotQueryService(
     {
         var plots = await plotRepository.ListAsync(cancellationToken);
         var userPlots = plots.Where(p => p.OwnerUserId == query.UserId && !p.IsDeleted)
-                             .Select(p => MapToPlotResource(p, clock, query.IncludeCurrentImagery))
+                             .Select(p => MapToPlotResource(p, clock))
                              .ToList();
 
         return new Result<IEnumerable<PlotResource>, Error>.Success(userPlots);
+    }
+
+    public async Task<Result<IEnumerable<PlotWithCurrentImageryResource>, Error>> Handle(GetPlotsWithCurrentImageryQuery query, CancellationToken cancellationToken = default)
+    {
+        var plots = await plotRepository.ListAsync(cancellationToken);
+        var userPlots = plots.Where(p => p.OwnerUserId == query.UserId && !p.IsDeleted)
+                             .Select(p => MapToPlotWithImageryResource(p, clock))
+                             .ToList();
+
+        return new Result<IEnumerable<PlotWithCurrentImageryResource>, Error>.Success(userPlots);
     }
 
     public async Task<Result<MyPlotsOverviewResource, Error>> Handle(GetMyPlotsOverviewQuery query, CancellationToken cancellationToken = default)
@@ -87,26 +97,13 @@ public class PlotQueryService(
             new MyPlotsOverviewResource(userPlots.Count, totalArea, userPlots.Count, activeDevices, overviewPlots));
     }
 
-    private static PlotResource MapToPlotResource(Plot plot, ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock, bool includeCurrentImagery = false)
+    private static PlotResource MapToPlotResource(Plot plot, ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock)
     {
         var polygon = plot.PolygonCoordinates.Points
             .Select(p => (IEnumerable<double>)new double[] { (double)p.Longitude, (double)p.Latitude })
             .ToList();
 
         var now = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero);
-
-        CurrentImageryResource? imagery = null;
-        if (includeCurrentImagery)
-        {
-            imagery = new CurrentImageryResource(
-                "img-" + plot.Id,
-                plot.Id,
-                "https://satellite.viora.local/tiles/" + plot.Id,
-                now.AddDays(-1),
-                0.65,
-                0.05
-            );
-        }
 
         return new PlotResource(
             plot.Id,
@@ -120,9 +117,40 @@ public class PlotQueryService(
             plot.Location,
             plot.Campaign,
             plot.Notes,
+            plot.IsActive ? "active" : "inactive"
+        );
+    }
+
+    private static PlotWithCurrentImageryResource MapToPlotWithImageryResource(Plot plot, ArcadiaDevs.Viora.Platform.Shared.Domain.IClock clock)
+    {
+        var polygon = plot.PolygonCoordinates.Points
+            .Select(p => (IEnumerable<double>)new double[] { (double)p.Longitude, (double)p.Latitude })
+            .ToList();
+
+        var now = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero);
+
+        var imagery = new CurrentImageryResource(
+            "img-" + plot.Id,
+            plot.Id,
+            "https://satellite.viora.local/tiles/" + plot.Id,
+            now.AddDays(-1),
+            0.65,
+            0.05
+        );
+
+        return new PlotWithCurrentImageryResource(
+            plot.Id,
+            plot.OwnerUserId,
+            plot.PlotName,
+            polygon,
+            plot.AreaSize,
+            plot.CreatedAt ?? now,
+            plot.CropType,
+            plot.Variety,
+            plot.Location,
+            plot.Campaign,
+            plot.Notes,
             plot.IsActive ? "active" : "inactive",
-            "Healthy",
-            "Low",
             imagery
         );
     }

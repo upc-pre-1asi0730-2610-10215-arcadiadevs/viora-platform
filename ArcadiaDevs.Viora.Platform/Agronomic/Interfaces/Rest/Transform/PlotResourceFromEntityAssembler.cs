@@ -26,10 +26,7 @@ public static class PlotResourceFromEntityAssembler
             plot.Location,
             plot.Campaign,
             plot.Notes,
-            plot.IsActive ? "active" : "inactive",
-            "Healthy",
-            "Low",
-            null
+            plot.IsActive ? "active" : "inactive"
         );
     }
 
