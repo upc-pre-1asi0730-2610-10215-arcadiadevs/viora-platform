@@ -23,6 +23,10 @@ using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.OutboundServices.Acl;
 using ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.OutboundServices.Acl;
 using ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using ArcadiaDevs.Viora.Platform.Surveillance.Application.Acl;
+using ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Acl;
+using ArcadiaDevs.Viora.Platform.Intervention.Application.OutboundServices.Acl;
+using ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.OutboundServices.Acl;
 using Cortex.Mediator;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
@@ -292,6 +296,9 @@ builder.Services.AddScoped<ICommunityRiskQueryService, CommunityRiskQueryService
 builder.Services.AddScoped<IPestSightingReportQueryService, PestSightingReportQueryService>();
 
 builder.Services.AddScoped<IExternalAgronomicService, ExternalAgronomicService>();
+// WU2 of Intervention parity (surveillance-acl-facade, obs #268): outward-facing
+// facade so other bounded contexts (Intervention) can read Alert data via the ACL.
+builder.Services.AddScoped<ISurveillanceContextFacade, SurveillanceContextFacade>();
 builder.Services.AddScoped<ThreatInferenceService>();
 builder.Services.AddScoped<IDynamicNutritionPlanRepository, DynamicNutritionPlanRepository>();
 
@@ -312,12 +319,15 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IIamContextFacade, IamContextFacade>();
 
 // Intervention Bounded Context Injection Configuration
-// WU1 of 8 (specialist-and-matching, obs #268): only the Specialist slice is
-// registered here; WU2-WU8 extend this block as their aggregates land.
+// WU1 of 8 (specialist-and-matching, obs #268): Specialist slice.
 builder.Services.AddScoped<ISpecialistRepository, SpecialistRepository>();
 builder.Services.AddScoped<ISpecialistCommandService, SpecialistCommandService>();
 builder.Services.AddScoped<ISpecialistQueryService, SpecialistQueryService>();
 builder.Services.AddScoped<SpecialistMatchingPolicy>();
+// WU2 of 8 (surveillance-acl-facade, obs #268): Intervention-owned adapter
+// consuming Surveillance's outward-facing ISurveillanceContextFacade.
+builder.Services.AddScoped<IExternalSurveillanceService, ExternalSurveillanceService>();
+// WU3-WU8 extend this block as their aggregates land.
 
 // Profile Bounded Context Injection Configuration
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
