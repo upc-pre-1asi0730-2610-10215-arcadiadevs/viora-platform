@@ -4,9 +4,11 @@ using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Profile.Domain.Model.ValueObjects;
-using ArcadiaDevs.Viora.Platform.Profile.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Profile.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
-using ProfileAggregate = ArcadiaDevs.Viora.Platform.Profile.Domain.Model.Aggregates.Profile;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace ArcadiaDevs.Viora.Platform.Intervention.Application.Internal.CommandServices;
 
@@ -17,18 +19,25 @@ namespace ArcadiaDevs.Viora.Platform.Intervention.Application.Internal.CommandSe
 ///     <c>SymptomCommandService</c> seeding shape.
 /// </summary>
 /// <remarks>
-///     Design decision 1 (obs #267): the Profile rows are inserted directly
-///     via <see cref="IProfileRepository" />, bypassing
-///     <c>IProfileContextFacade.EnsureProfile</c> (which is hardcoded to
-///     <c>Role=Producer</c>). This is a seed-only, bootstrap-time exception
-///     to the ACL boundary — Intervention and Profile share the same
-///     solution/DB, and no live specialist-signup flow exists yet to create
-///     these rows through a normal request path.
+///     Fixed after the initial WU1 review pass: the Profile rows are now
+///     provisioned via <see cref="IProfileContextFacade.EnsureProfile" />
+///     (extended with a <c>role</c> parameter, defaulting to
+///     <c>Role=Producer</c>, so it can also provision <c>Role=Specialist</c>
+///     profiles) instead of reaching directly into Profile's own
+///     <c>IProfileRepository</c> — the original design's stated rationale
+///     ("no facade method supports Role=Specialist") is resolved by that
+///     signature extension rather than by bypassing the ACL boundary. The
+///     seed is also now gated to non-Production environments only, since it
+///     writes fabricated demo PII (<c>FullName</c>/<c>Email</c>/<c>Phone</c>)
+///     with hardcoded <c>ProfileUserId</c> values that have no FK constraint
+///     against real IAM users.
 /// </remarks>
 public class SpecialistCommandService(
     ISpecialistRepository specialistRepository,
-    IProfileRepository profileRepository,
-    IUnitOfWork unitOfWork)
+    IProfileContextFacade profileContextFacade,
+    IUnitOfWork unitOfWork,
+    IHostEnvironment environment,
+    ILogger<SpecialistCommandService> logger)
     : ISpecialistCommandService
 {
     private sealed record DemoSpecialist(
@@ -57,43 +66,60 @@ public class SpecialistCommandService(
 
     public async Task Handle(SeedSpecialistsCommand command, CancellationToken cancellationToken = default)
     {
-        var anyAdded = false;
-
-        foreach (var demo in DemoCatalog)
+        if (environment.IsProduction())
         {
-            var existingProfile = await profileRepository.FindByUserIdAsync(demo.ProfileUserId, cancellationToken);
-            if (existingProfile is null)
-            {
-                var profile = new ProfileAggregate(
-                    demo.ProfileUserId,
-                    ProfileRole.Specialist,
-                    demo.FullName,
-                    demo.Email,
-                    demo.Phone);
-
-                await profileRepository.AddAsync(profile, cancellationToken);
-                anyAdded = true;
-            }
-
-            if (!await specialistRepository.ExistsByProfileUserIdAsync(demo.ProfileUserId, cancellationToken))
-            {
-                var specialist = new Specialist(
-                    demo.ProfileUserId,
-                    demo.SuccessRate,
-                    demo.CaseCount,
-                    demo.DistanceKm,
-                    new SpecialistTags(demo.Tags),
-                    demo.Availability,
-                    demo.Whatsapp);
-
-                await specialistRepository.AddAsync(specialist, cancellationToken);
-                anyAdded = true;
-            }
+            logger.LogInformation("Skipping demo Specialist seed in Production environment.");
+            return;
         }
 
-        if (anyAdded)
+        try
         {
-            await unitOfWork.CompleteAsync(cancellationToken);
+            var anyAdded = false;
+
+            foreach (var demo in DemoCatalog)
+            {
+                await profileContextFacade.EnsureProfile(
+                    demo.ProfileUserId,
+                    demo.FullName,
+                    demo.Email,
+                    demo.Phone,
+                    role: ProfileRole.Specialist,
+                    ct: cancellationToken);
+
+                if (!await specialistRepository.ExistsByProfileUserIdAsync(demo.ProfileUserId, cancellationToken))
+                {
+                    var specialist = new Specialist(
+                        demo.ProfileUserId,
+                        demo.SuccessRate,
+                        demo.CaseCount,
+                        demo.DistanceKm,
+                        new SpecialistTags(demo.Tags),
+                        demo.Availability,
+                        demo.Whatsapp);
+
+                    await specialistRepository.AddAsync(specialist, cancellationToken);
+                    anyAdded = true;
+                }
+            }
+
+            if (anyAdded)
+            {
+                await unitOfWork.CompleteAsync(cancellationToken);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (DbUpdateException ex)
+        {
+            logger.LogWarning(ex, "Database error while seeding demo specialists.");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Unexpected error while seeding demo specialists.");
+            throw;
         }
     }
 }

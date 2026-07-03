@@ -1,3 +1,5 @@
+using ArcadiaDevs.Viora.Platform.Profile.Domain.Model.ValueObjects;
+
 namespace ArcadiaDevs.Viora.Platform.Profile.Interfaces.Acl;
 
 /// <summary>
@@ -13,19 +15,22 @@ public interface IProfileContextFacade
 {
     /// <summary>
     ///     Ensures a profile exists for the given user. If none exists, one is
-    ///     created with <c>Role=Producer</c> and the provided field values.
-    ///     Idempotent: no-op if a profile already exists.
+    ///     created with the given <paramref name="role" /> (defaults to
+    ///     <c>Role=Producer</c>) and the provided field values. Idempotent:
+    ///     no-op if a profile already exists.
     /// </summary>
     /// <param name="userId">The user id.</param>
     /// <param name="fullName">The user's full name.</param>
     /// <param name="email">The user's email.</param>
     /// <param name="phone">Optional phone number (null at signup, filled later via PUT).</param>
+    /// <param name="role">The role to provision the profile with if it does not already exist.</param>
     /// <param name="ct">The cancellation token.</param>
     Task EnsureProfile(
         int userId,
         string fullName,
         string email,
         string? phone = null,
+        ProfileRole role = ProfileRole.Producer,
         CancellationToken ct = default);
 
     /// <summary>

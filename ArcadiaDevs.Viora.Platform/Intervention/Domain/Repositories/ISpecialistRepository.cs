@@ -11,6 +11,11 @@ public interface ISpecialistRepository : IBaseRepository<Specialist>
     /// <summary>
     ///     Finds a specialist by its backing Profile's UserId.
     /// </summary>
+    /// <remarks>
+    ///     Not called anywhere in WU1 — kept as a forward-looking lookup
+    ///     (e.g. for a future "is this authenticated user a specialist"
+    ///     check) rather than a currently-exercised code path.
+    /// </remarks>
     Task<Specialist?> FindByProfileUserIdAsync(int profileUserId, CancellationToken cancellationToken = default);
 
     /// <summary>

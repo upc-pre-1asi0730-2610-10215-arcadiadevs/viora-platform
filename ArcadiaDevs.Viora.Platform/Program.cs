@@ -32,6 +32,7 @@ using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFramewo
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Cortex.Mediator.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ArcadiaDevs.Viora.Platform.Iam.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Iam.Application.Internal.CommandServices;
 using ArcadiaDevs.Viora.Platform.Iam.Application.Internal.OutboundServices;
@@ -348,8 +349,22 @@ using (var scope = app.Services.CreateScope())
 
     // Seeding Intervention demo specialists (WU1 bootstrap — design decision 1,
     // obs #267; each backed by a real Profile row with Role=Specialist).
-    var specialistCommandService = services.GetRequiredService<ISpecialistCommandService>();
-    await specialistCommandService.Handle(new SeedSpecialistsCommand());
+    // Wrapped in try/catch: under a rolling deploy with multiple replicas,
+    // concurrent cold starts can race on the specialists.profile_user_id
+    // unique index. A seed failure must not prevent the instance from
+    // accepting traffic — log and continue startup instead of crashing.
+    // NOTE: the pre-existing SeedSymptomsCommand/IamDataSeeder calls above
+    // are not guarded the same way; that gap is out of scope for this fix
+    // pass (not touching unrelated seeders to avoid scope creep).
+    try
+    {
+        var specialistCommandService = services.GetRequiredService<ISpecialistCommandService>();
+        await specialistCommandService.Handle(new SeedSpecialistsCommand());
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "Failed to seed demo specialists during startup; continuing startup anyway.");
+    }
 }
 
 // Configure the HTTP request pipeline.
