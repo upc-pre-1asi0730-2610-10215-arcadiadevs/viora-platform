@@ -12,9 +12,9 @@ namespace ArcadiaDevs.Viora.Platform.Profile.Application.Acl;
 /// </summary>
 /// <remarks>
 ///     Idempotent: <see cref="EnsureProfile" /> is a no-op if a profile already
-///     exists for the given userId. The profile is created with
-///     <c>Role=Producer</c> by default, matching OS's
-///     <c>ProfileCommandServiceImpl.ensureProfile</c> semantics.
+///     exists for the given userId. The profile is created with the given
+///     <c>role</c> parameter, defaulting to <c>Role=Producer</c> to match
+///     OS's <c>ProfileCommandServiceImpl.ensureProfile</c> semantics.
 /// </remarks>
 public class ProfileContextFacade(
     IProfileRepository profileRepository,
@@ -26,6 +26,7 @@ public class ProfileContextFacade(
         string fullName,
         string email,
         string? phone = null,
+        ProfileRole role = ProfileRole.Producer,
         CancellationToken ct = default)
     {
         var existing = await profileRepository.FindByUserIdAsync(userId, ct);
@@ -34,12 +35,21 @@ public class ProfileContextFacade(
 
         var profile = new ProfileAggregate(
             userId,
-            ProfileRole.Producer,
+            role,
             fullName,
             email,
             phone);
 
         await profileRepository.AddAsync(profile, ct);
         await unitOfWork.CompleteAsync(ct);
+    }
+
+    /// <inheritdoc />
+    public async Task<ProfileSummary?> GetProfileSummaryAsync(int userId, CancellationToken ct = default)
+    {
+        var profile = await profileRepository.FindByUserIdAsync(userId, ct);
+        return profile is null
+            ? null
+            : new ProfileSummary(profile.FullName, profile.Email, profile.Phone, profile.Role);
     }
 }

@@ -32,6 +32,7 @@ using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFramewo
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Cortex.Mediator.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ArcadiaDevs.Viora.Platform.Iam.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Iam.Application.Internal.CommandServices;
 using ArcadiaDevs.Viora.Platform.Iam.Application.Internal.OutboundServices;
@@ -46,6 +47,14 @@ using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Tokens.Jwt.Configuration;
 using ArcadiaDevs.Viora.Platform.Iam.Application.Acl;
 using ArcadiaDevs.Viora.Platform.Iam.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Tokens.Jwt.Services;
+using ArcadiaDevs.Viora.Platform.Intervention.Application.CommandServices;
+using ArcadiaDevs.Viora.Platform.Intervention.Application.Internal.CommandServices;
+using ArcadiaDevs.Viora.Platform.Intervention.Application.Internal.QueryServices;
+using ArcadiaDevs.Viora.Platform.Intervention.Application.QueryServices;
+using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Commands;
+using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Services;
+using ArcadiaDevs.Viora.Platform.Intervention.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using ArcadiaDevs.Viora.Platform.Profile.Application.Acl;
 using ArcadiaDevs.Viora.Platform.Profile.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Profile.Application.Internal.CommandServices;
@@ -302,6 +311,14 @@ builder.Services.AddScoped<IHashingService, HashingService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IIamContextFacade, IamContextFacade>();
 
+// Intervention Bounded Context Injection Configuration
+// WU1 of 8 (specialist-and-matching, obs #268): only the Specialist slice is
+// registered here; WU2-WU8 extend this block as their aggregates land.
+builder.Services.AddScoped<ISpecialistRepository, SpecialistRepository>();
+builder.Services.AddScoped<ISpecialistCommandService, SpecialistCommandService>();
+builder.Services.AddScoped<ISpecialistQueryService, SpecialistQueryService>();
+builder.Services.AddScoped<SpecialistMatchingPolicy>();
+
 // Profile Bounded Context Injection Configuration
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
 builder.Services.AddScoped<IProfileQueryService, ProfileQueryService>();
@@ -329,6 +346,25 @@ using (var scope = app.Services.CreateScope())
 
     // Seeding Iam roles (idempotent — safe to run on every startup)
     await IamDataSeeder.SeedAsync(context);
+
+    // Seeding Intervention demo specialists (WU1 bootstrap — design decision 1,
+    // obs #267; each backed by a real Profile row with Role=Specialist).
+    // Wrapped in try/catch: under a rolling deploy with multiple replicas,
+    // concurrent cold starts can race on the specialists.profile_user_id
+    // unique index. A seed failure must not prevent the instance from
+    // accepting traffic — log and continue startup instead of crashing.
+    // NOTE: the pre-existing SeedSymptomsCommand/IamDataSeeder calls above
+    // are not guarded the same way; that gap is out of scope for this fix
+    // pass (not touching unrelated seeders to avoid scope creep).
+    try
+    {
+        var specialistCommandService = services.GetRequiredService<ISpecialistCommandService>();
+        await specialistCommandService.Handle(new SeedSpecialistsCommand());
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "Failed to seed demo specialists during startup; continuing startup anyway.");
+    }
 }
 
 // Configure the HTTP request pipeline.
