@@ -196,6 +196,8 @@ builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.Quer
 builder.Services.AddScoped<IIoTDeviceRepository, IoTDeviceRepository>();
 builder.Services.AddScoped<IMonitoringSummaryQueryService, MonitoringSummaryQueryService>();
 builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.ClimateRiskEvaluator>();
+builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.PhenologicalRiskEvaluator>();
+builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.ChillSeasonEvaluator>();
 builder.Services.AddSingleton<IActivationCodeCatalog, InMemoryActivationCodeCatalog>();
 // A1 (PR-C): yield forecast estimator (pure-function port of OS YieldForecastEstimator).
 builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.IYieldForecastEstimator, ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.YieldForecastEstimator>();
