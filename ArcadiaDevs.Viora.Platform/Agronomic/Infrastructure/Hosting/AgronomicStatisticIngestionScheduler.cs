@@ -39,12 +39,7 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Hosting;
 /// </remarks>
 public class AgronomicStatisticIngestionScheduler : BackgroundService
 {
-    private readonly IAgronomicStatisticIngestionService _ingestionService;
-    private readonly IPlotRepository _plotRepository;
-    private readonly IAgronomicStatisticRepository _statisticRepository;
     private readonly IChillDeficitEvaluator _chillDeficitEvaluator;
-    private readonly ChillRequirementResolver _chillRequirementResolver;
-    private readonly IMediator _mediator;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IOptions<AgronomicStatisticsOptions> _options;
     private readonly ILogger<AgronomicStatisticIngestionScheduler> _logger;
@@ -52,23 +47,19 @@ public class AgronomicStatisticIngestionScheduler : BackgroundService
     /// <summary>
     /// Initializes a new instance of the <see cref="AgronomicStatisticIngestionScheduler"/> class.
     /// </summary>
+    /// <remarks>
+    /// Hosted services are singletons, so scoped dependencies (ingestion service,
+    /// repositories, <see cref="ChillRequirementResolver"/>, <see cref="IMediator"/>)
+    /// cannot be constructor-injected; they are resolved per ingestion cycle
+    /// through <see cref="IServiceScopeFactory"/> in <see cref="IngestOnceAsync"/>.
+    /// </remarks>
     public AgronomicStatisticIngestionScheduler(
-        IAgronomicStatisticIngestionService ingestionService,
-        IPlotRepository plotRepository,
-        IAgronomicStatisticRepository statisticRepository,
         IChillDeficitEvaluator chillDeficitEvaluator,
-        ChillRequirementResolver chillRequirementResolver,
-        IMediator mediator,
         IServiceScopeFactory serviceScopeFactory,
         IOptions<AgronomicStatisticsOptions> options,
         ILogger<AgronomicStatisticIngestionScheduler> logger)
     {
-        _ingestionService = ingestionService;
-        _plotRepository = plotRepository;
-        _statisticRepository = statisticRepository;
         _chillDeficitEvaluator = chillDeficitEvaluator;
-        _chillRequirementResolver = chillRequirementResolver;
-        _mediator = mediator;
         _serviceScopeFactory = serviceScopeFactory;
         _options = options;
         _logger = logger;
@@ -106,28 +97,35 @@ public class AgronomicStatisticIngestionScheduler : BackgroundService
 
     private async Task IngestOnceAsync(CancellationToken ct)
     {
+        using var scope = _serviceScopeFactory.CreateScope();
+        var ingestionService = scope.ServiceProvider.GetRequiredService<IAgronomicStatisticIngestionService>();
+        var plotRepository = scope.ServiceProvider.GetRequiredService<IPlotRepository>();
+        var statisticRepository = scope.ServiceProvider.GetRequiredService<IAgronomicStatisticRepository>();
+        var chillRequirementResolver = scope.ServiceProvider.GetRequiredService<ChillRequirementResolver>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+
         // 1. Run ingestion
-        var report = await _ingestionService.IngestAllActivePlotsAsync(ct);
+        var report = await ingestionService.IngestAllActivePlotsAsync(ct);
         _logger.LogInformation(
             "Agronomic statistic ingestion completed. Ingested={Ingested}, Skipped={Skipped}.",
             report.Ingested,
             report.Skipped);
 
         // 2. Run chill deficit producer (D14)
-        var plots = (await _plotRepository.ListAsync(ct))
+        var plots = (await plotRepository.ListAsync(ct))
             .Where(p => p.IsActive)
             .ToList();
 
         foreach (var plot in plots)
         {
-            var latest = await _statisticRepository.FindLatestByPlotIdAsync(plot.Id, ct);
+            var latest = await statisticRepository.FindLatestByPlotIdAsync(plot.Id, ct);
             if (latest is null) continue;
 
-            var requirement = _chillRequirementResolver.ResolveFor(plot);
+            var requirement = chillRequirementResolver.ResolveFor(plot);
 
             if (_chillDeficitEvaluator.HasDeficit(requirement, (decimal)latest.ChillPortions))
             {
-                await _mediator.PublishAsync(
+                await mediator.PublishAsync(
                     new AgronomicChillDeficitIntegrationEvent(
                         plot.Id,
                         (decimal)latest.ChillPortions,
@@ -143,10 +141,7 @@ public class AgronomicStatisticIngestionScheduler : BackgroundService
         }
 
         // 3. Run hydric stress producer (1.16.2 — D17: scoped via IServiceScopeFactory)
-        using (var scope = _serviceScopeFactory.CreateScope())
-        {
-            var producer = scope.ServiceProvider.GetRequiredService<IHydricStressDetectedIntegrationEventProducer>();
-            await producer.ProduceHydricStressEventsAsync(ct);
-        }
+        var producer = scope.ServiceProvider.GetRequiredService<IHydricStressDetectedIntegrationEventProducer>();
+        await producer.ProduceHydricStressEventsAsync(ct);
     }
 }
