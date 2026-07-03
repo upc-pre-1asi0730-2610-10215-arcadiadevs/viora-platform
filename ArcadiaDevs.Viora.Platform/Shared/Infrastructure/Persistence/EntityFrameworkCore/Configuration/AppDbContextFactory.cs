@@ -6,9 +6,12 @@ namespace ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFra
 
 /// <summary>
 ///     Design-time factory for <see cref="AppDbContext" />.
-///     Used by <c>dotnet ef migrations add</c> at design time.
-///     Hardcodes a local PostgreSQL connection string since design-time has no
-///     DATABASE_URL environment variable available.
+///     Used by <c>dotnet ef migrations add</c>/<c>dotnet ef database update</c>
+///     at design time. Reads the same DATABASE_URL/PORT/SCHEMA/USER/PASSWORD
+///     values as the runtime composition root (Program.cs) — from user
+///     secrets or environment variables — and expands them into the
+///     connection string template from appsettings.json. Falls back to a
+///     hardcoded local default if none of those are set.
 /// </summary>
 public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
 {
@@ -18,10 +21,20 @@ public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: true)
             .AddJsonFile("appsettings.Development.json", optional: true)
+            .AddUserSecrets<AppDbContextFactory>(optional: true)
+            .AddEnvironmentVariables()
             .Build();
 
-        var connectionString = config.GetConnectionString("DefaultConnection")
-                               ?? "Host=localhost;Port=5432;Database=viora_platform;Username=postgres;Password=postgres;Search Path=public";
+        var connectionStringTemplate = config.GetConnectionString("DefaultConnection")
+                               ?? "Host=%DATABASE_URL%;Port=%DATABASE_PORT%;Database=%DATABASE_NAME%;Username=%DATABASE_USER%;Password=%DATABASE_PASSWORD%;Search Path=%DATABASE_SCHEMA%";
+
+        var connectionString = connectionStringTemplate
+            .Replace("%DATABASE_URL%", config["DATABASE_URL"] ?? "localhost")
+            .Replace("%DATABASE_PORT%", config["DATABASE_PORT"] ?? "5432")
+            .Replace("%DATABASE_NAME%", config["DATABASE_NAME"] ?? "viora_platform")
+            .Replace("%DATABASE_SCHEMA%", config["DATABASE_SCHEMA"] ?? "public")
+            .Replace("%DATABASE_USER%", config["DATABASE_USER"] ?? "postgres")
+            .Replace("%DATABASE_PASSWORD%", config["DATABASE_PASSWORD"] ?? "postgres");
 
         var builder = new DbContextOptionsBuilder<AppDbContext>();
         builder.UseNpgsql(connectionString);

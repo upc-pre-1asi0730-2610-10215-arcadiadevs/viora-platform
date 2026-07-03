@@ -85,8 +85,12 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // Add Database Connection
-var useEnvironmentVariables =
-    !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("DATABASE_URL"));
+// Read via IConfiguration (not Environment.GetEnvironmentVariable) so the
+// value can come from OS environment variables, appsettings, OR user secrets
+// (dotnet user-secrets set DATABASE_URL ...) — CreateBuilder wires user
+// secrets into IConfiguration automatically in Development.
+var databaseUrl = builder.Configuration["DATABASE_URL"];
+var useEnvironmentVariables = !string.IsNullOrWhiteSpace(databaseUrl);
 
 // Configure Database Context and route EF logs through the app logger pipeline.
 // SHARED-011: the EF Core SaveChangesInterceptors are now registered here
@@ -120,7 +124,13 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
     if (string.IsNullOrWhiteSpace(connectionStringTemplate))
         throw new InvalidOperationException("Database connection string is not set in the configuration.");
 
-    var connectionString = Environment.ExpandEnvironmentVariables(connectionStringTemplate);
+    var connectionString = connectionStringTemplate
+        .Replace("%DATABASE_URL%", databaseUrl)
+        .Replace("%DATABASE_PORT%", builder.Configuration["DATABASE_PORT"])
+        .Replace("%DATABASE_NAME%", builder.Configuration["DATABASE_NAME"])
+        .Replace("%DATABASE_SCHEMA%", builder.Configuration["DATABASE_SCHEMA"])
+        .Replace("%DATABASE_USER%", builder.Configuration["DATABASE_USER"])
+        .Replace("%DATABASE_PASSWORD%", builder.Configuration["DATABASE_PASSWORD"]);
     if (string.IsNullOrWhiteSpace(connectionString))
         throw new InvalidOperationException("Database connection string is not set in the configuration.");
 

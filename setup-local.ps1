@@ -158,6 +158,7 @@ if ($dbExists -eq "1") {
 # ---------------------------------------------------------------------------
 $env:DATABASE_URL = "localhost"
 $env:DATABASE_PORT = "5432"
+$env:DATABASE_NAME = $DatabaseName
 $env:DATABASE_SCHEMA = "public"
 $env:DATABASE_USER = "postgres"
 $env:DATABASE_PASSWORD = $PostgresPassword
@@ -185,7 +186,7 @@ Write-Host ""
 Write-Host "To run the API, execute from the repo root:"
 Write-Host ""
 Write-Host "  cd ArcadiaDevs.Viora.Platform"
-Write-Host "  `$env:DATABASE_URL='localhost'; `$env:DATABASE_PORT='5432'; `$env:DATABASE_SCHEMA='public'; `$env:DATABASE_USER='postgres'; `$env:DATABASE_PASSWORD='$PostgresPassword'; `$env:AGROMONITORING_API_KEY='dummy'; dotnet run"
+Write-Host "  `$env:DATABASE_URL='localhost'; `$env:DATABASE_PORT='5432'; `$env:DATABASE_NAME='$DatabaseName'; `$env:DATABASE_SCHEMA='public'; `$env:DATABASE_USER='postgres'; `$env:DATABASE_PASSWORD='$PostgresPassword'; `$env:AGROMONITORING_API_KEY='dummy'; dotnet run"
 Write-Host ""
 Write-Host "Then open Swagger at: http://localhost:8080/swagger"
 Write-Host ""
