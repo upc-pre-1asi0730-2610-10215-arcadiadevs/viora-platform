@@ -5,6 +5,18 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.30.0] - 2026-07-03
+
+### fixed
+- Local Postgres configuration was silently unusable: `DATABASE_URL` was read via `Environment.GetEnvironmentVariable`, which never sees `dotnet user-secrets` values, so the app always fell back to the EF InMemory provider regardless of configuration
+- `AppDbContextFactory` (design-time factory for `dotnet ef`) never expanded the `%VAR%` placeholders in the connection string template — used the literal unexpanded string
+- Connection string template had no `DATABASE_NAME` variable (`Database=%DATABASE_SCHEMA%`), so any successful connection attempt would target a database literally named `public` instead of the intended one
+
+### notes
+- Local dev DB credentials are configured via `dotnet user-secrets` (`DATABASE_URL/PORT/NAME/SCHEMA/USER/PASSWORD`), documented in README — chosen over an in-repo `.env` file (no automatic `.env` loading in this stack) and over docker-compose (Docker is managed by the developer outside the repo)
+- Verified end-to-end against a real local Postgres instance: applied all 11 migrations, ran the app, confirmed `IamDataSeeder` and `SeedSymptomsCommand` persisted real rows
+- Build green (0 errors)
+
 ## [1.29.0] - 2026-07-03
 
 ### breaking
