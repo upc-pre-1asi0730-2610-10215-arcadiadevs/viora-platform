@@ -101,4 +101,39 @@ public static class InMemoryRepositories
     ///     substitute.
     /// </summary>
     public static IAlertRepository NewAlertRepository() => Substitute.For<IAlertRepository>();
+
+    /// <summary>
+    ///     Returns a substitute for <see cref="IAgronomicStatisticRepository"/>.
+    /// </summary>
+    public static IAgronomicStatisticRepository NewAgronomicStatisticRepository() => Substitute.For<IAgronomicStatisticRepository>();
+
+    /// <summary>
+    ///     Returns a substitute for <see cref="IIoTDeviceRepository"/>.
+    /// </summary>
+    public static IIoTDeviceRepository NewIoTDeviceRepository() => Substitute.For<IIoTDeviceRepository>();
+
+    /// <summary>
+    ///     Returns a substitute for <see cref="IExpenseRepository"/>.
+    /// </summary>
+    public static IExpenseRepository NewExpenseRepository() => Substitute.For<IExpenseRepository>();
+
+    /// <summary>
+    ///     Returns a substitute for <see cref="IDynamicNutritionPlanRepository"/>.
+    /// </summary>
+    public static IDynamicNutritionPlanRepository NewDynamicNutritionPlanRepository() => Substitute.For<IDynamicNutritionPlanRepository>();
+
+    /// <summary>
+    ///     Returns a substitute for <see cref="IPestSightingReportRepository"/>.
+    /// </summary>
+    public static IPestSightingReportRepository NewPestSightingReportRepository() => Substitute.For<IPestSightingReportRepository>();
+
+    /// <summary>
+    ///     Returns a substitute for <see cref="ISymptomDictionaryItemRepository"/>.
+    /// </summary>
+    public static ISymptomDictionaryItemRepository NewSymptomDictionaryItemRepository() => Substitute.For<ISymptomDictionaryItemRepository>();
+
+    /// <summary>
+    ///     Returns a substitute for <see cref="IAgroMonitoringPlotIntegrationRepository"/>.
+    /// </summary>
+    public static IAgroMonitoringPlotIntegrationRepository NewAgroMonitoringPlotIntegrationRepository() => Substitute.For<IAgroMonitoringPlotIntegrationRepository>();
 }

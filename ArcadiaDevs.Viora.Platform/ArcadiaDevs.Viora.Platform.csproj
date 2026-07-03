@@ -6,6 +6,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <InvariantGlobalization>false</InvariantGlobalization> <!-- Changed to false -->
         <LangVersion>14</LangVersion>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <NoWarn>$(NoWarn);1591</NoWarn>
+        <UserSecretsId>a3f8c2e1-6b4d-4f9a-9c7e-1d5f8b2a6e3c</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>

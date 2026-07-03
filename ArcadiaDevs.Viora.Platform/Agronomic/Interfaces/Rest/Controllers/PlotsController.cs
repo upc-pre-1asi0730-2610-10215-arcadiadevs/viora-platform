@@ -4,6 +4,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Transform;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Pipeline.Middleware.Attributes;
+using ArcadiaDevs.Viora.Platform.Shared.Domain;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Resources.Errors;
 using Microsoft.AspNetCore.Mvc;
@@ -28,7 +29,8 @@ public class PlotsController(
     IGetPlotWeatherForecastQueryService getPlotWeatherForecastQueryService,
     IGetPlotNdviTileQueryService getPlotNdviTileQueryService,
     IStringLocalizer<ErrorMessages> errorLocalizer,
-    ProblemDetailsFactory problemDetailsFactory) : ControllerBase
+    ProblemDetailsFactory problemDetailsFactory,
+    IClock clock) : ControllerBase
 {
     /// <summary>
     ///     Creates a new plot with geospatial polygon coordinates.
@@ -120,7 +122,7 @@ public class PlotsController(
             result,
             errorLocalizer,
             problemDetailsFactory,
-            plot => Ok(plot.ToResource()));
+            plot => Ok(plot.ToResource(clock)));
     }
 
     /// <summary>

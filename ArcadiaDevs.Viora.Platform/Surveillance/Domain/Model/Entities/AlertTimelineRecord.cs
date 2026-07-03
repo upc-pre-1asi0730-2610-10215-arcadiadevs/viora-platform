@@ -1,13 +1,15 @@
+using ArcadiaDevs.Viora.Platform.Shared.Domain;
+
 namespace ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Entities;
 
 public class AlertTimelineRecord
 {
-    public AlertTimelineRecord(string tag, string title, string description)
+    public AlertTimelineRecord(string tag, string title, string description, IClock clock)
     {
         Tag = tag;
         Title = title;
         Description = description;
-        CreatedAt = DateTimeOffset.UtcNow;
+        CreatedAt = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero);
     }
 
     private AlertTimelineRecord() { } // EF Core

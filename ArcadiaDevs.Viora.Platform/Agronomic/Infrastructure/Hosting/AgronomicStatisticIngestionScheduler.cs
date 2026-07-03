@@ -7,6 +7,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Events;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Shared.Domain;
 using Cortex.Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -43,6 +44,7 @@ public class AgronomicStatisticIngestionScheduler : BackgroundService
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IOptions<AgronomicStatisticsOptions> _options;
     private readonly ILogger<AgronomicStatisticIngestionScheduler> _logger;
+    private readonly IClock _clock;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AgronomicStatisticIngestionScheduler"/> class.
@@ -57,12 +59,14 @@ public class AgronomicStatisticIngestionScheduler : BackgroundService
         IChillDeficitEvaluator chillDeficitEvaluator,
         IServiceScopeFactory serviceScopeFactory,
         IOptions<AgronomicStatisticsOptions> options,
-        ILogger<AgronomicStatisticIngestionScheduler> logger)
+        ILogger<AgronomicStatisticIngestionScheduler> logger,
+        IClock clock)
     {
         _chillDeficitEvaluator = chillDeficitEvaluator;
         _serviceScopeFactory = serviceScopeFactory;
         _options = options;
         _logger = logger;
+        _clock = clock;
     }
 
     /// <inheritdoc />
@@ -131,7 +135,7 @@ public class AgronomicStatisticIngestionScheduler : BackgroundService
                         (decimal)latest.ChillPortions,
                         (decimal)requirement.Portions.Value,
                         0m, // temperatureAnomaly placeholder
-                        DateTimeOffset.UtcNow),
+                        new DateTimeOffset(_clock.UtcNow, TimeSpan.Zero)),
                     ct);
 
                 _logger.LogInformation(

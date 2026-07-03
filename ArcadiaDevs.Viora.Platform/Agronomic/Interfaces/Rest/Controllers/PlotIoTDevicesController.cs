@@ -5,6 +5,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Transform;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Pipeline.Middleware.Attributes;
+using ArcadiaDevs.Viora.Platform.Shared.Domain;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Resources.Errors;
 using Microsoft.AspNetCore.Mvc;
@@ -28,7 +29,8 @@ public class PlotIoTDevicesController(
     IIoTDeviceQueryService ioTDeviceQueryService,
     IIoTDeviceCommandService ioTDeviceCommandService,
     IStringLocalizer<ErrorMessages> errorLocalizer,
-    ProblemDetailsFactory problemDetailsFactory) : ControllerBase
+    ProblemDetailsFactory problemDetailsFactory,
+    IClock clock) : ControllerBase
 {
     /// <summary>
     ///     Registers a new IoT device under the specified plot.
@@ -59,7 +61,7 @@ public class PlotIoTDevicesController(
             device => CreatedAtAction(
                 nameof(GetIoTDevicesByPlotId),
                 new { plotId = device.PlotId, userId = command.PlotId },
-                IoTDeviceResourceFromEntityAssembler.ToResourceFromEntity(device)));
+                IoTDeviceResourceFromEntityAssembler.ToResourceFromEntity(device, clock)));
     }
 
     /// <summary>
@@ -91,7 +93,7 @@ public class PlotIoTDevicesController(
             result,
             errorLocalizer,
             problemDetailsFactory,
-            device => Ok(IoTDeviceResourceFromEntityAssembler.ToResourceFromEntity(device)));
+            device => Ok(IoTDeviceResourceFromEntityAssembler.ToResourceFromEntity(device, clock)));
     }
 
     /// <summary>

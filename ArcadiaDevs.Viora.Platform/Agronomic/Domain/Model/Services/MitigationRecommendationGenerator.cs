@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.AdvisorValueObjects;
+using ArcadiaDevs.Viora.Platform.Shared.Domain;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services;
 
@@ -15,11 +16,11 @@ public interface IMitigationRecommendationGenerator
 /// <summary>
 ///     Generates mitigation recommendations based on climate risk level (OS parity).
 /// </summary>
-public class MitigationRecommendationGenerator : IMitigationRecommendationGenerator
+public class MitigationRecommendationGenerator(IClock clock) : IMitigationRecommendationGenerator
 {
     public List<MitigationRecommendation> GenerateRecommendations(AgronomicClimateRiskLevel climateRiskLevel)
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateOnly.FromDateTime(clock.UtcNow);
 
         return climateRiskLevel switch
         {

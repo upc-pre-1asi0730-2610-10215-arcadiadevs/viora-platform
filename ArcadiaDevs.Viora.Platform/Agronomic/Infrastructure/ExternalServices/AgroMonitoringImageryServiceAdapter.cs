@@ -5,6 +5,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Entities;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
+using ArcadiaDevs.Viora.Platform.Shared.Domain;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
 
@@ -13,7 +14,8 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices;
 public class AgroMonitoringImageryServiceAdapter(
     AgroMonitoringApiClient apiClient,
     IAgroMonitoringPlotIntegrationRepository integrationRepository,
-    IUnitOfWork unitOfWork) : IAgroMonitoringImageryService
+    IUnitOfWork unitOfWork,
+    IClock clock) : IAgroMonitoringImageryService
 {
     private const int CacheTtlDays = 1;
 
@@ -58,13 +60,13 @@ public class AgroMonitoringImageryServiceAdapter(
         }
 
         // Buscar imagen satelital (últimos 30 días)
-        var end = DateTimeOffset.UtcNow;
+        var end = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero);
         var start = end.AddDays(-30);
         var imagesResult = await apiClient.GetImagesAsync(integration.ExternalPolygonId, start, end, cancellationToken);
 
         if (!imagesResult.IsSuccess || !((Result<IReadOnlyList<AgroMonitoringImageResponse>, Error>.Success)imagesResult).Value.Any())
         {
-            integration.LastCheckedAt = DateTimeOffset.UtcNow;
+            integration.LastCheckedAt = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero);
             integrationRepository.Update(integration);
             await unitOfWork.CompleteAsync(cancellationToken);
             return;
@@ -83,7 +85,7 @@ public class AgroMonitoringImageryServiceAdapter(
             integration.CloudPercentage = latestImage.Cl;
         }
 
-        integration.LastCheckedAt = DateTimeOffset.UtcNow;
+        integration.LastCheckedAt = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero);
         integrationRepository.Update(integration);
         await unitOfWork.CompleteAsync(cancellationToken);
     }
@@ -119,10 +121,10 @@ public class AgroMonitoringImageryServiceAdapter(
         return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 
-    private static bool WasCheckedRecently(AgroMonitoringPlotIntegration integration)
+    private bool WasCheckedRecently(AgroMonitoringPlotIntegration integration)
     {
         if (!integration.LastCheckedAt.HasValue) return false;
-        var diff = DateTimeOffset.UtcNow - integration.LastCheckedAt.Value;
+        var diff = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero) - integration.LastCheckedAt.Value;
         return diff.TotalDays < CacheTtlDays;
     }
 

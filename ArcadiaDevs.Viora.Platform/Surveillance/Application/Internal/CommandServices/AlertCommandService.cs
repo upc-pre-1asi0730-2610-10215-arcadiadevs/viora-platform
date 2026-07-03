@@ -8,6 +8,7 @@ using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Events;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.ValueObjects;
+using ArcadiaDevs.Viora.Platform.Shared.Domain;
 using Cortex.Mediator;
 using Microsoft.EntityFrameworkCore;
 using Unit = ArcadiaDevs.Viora.Platform.Shared.Domain.Model.Unit;
@@ -17,14 +18,25 @@ namespace ArcadiaDevs.Viora.Platform.Surveillance.Application.Internal.CommandSe
 public class AlertCommandService(
     IAlertRepository alertRepository,
     IUnitOfWork unitOfWork,
-    IMediator mediator)
+    IMediator mediator,
+    IClock clock)
     : IAlertCommandService
 {
+    /// <summary>
+    ///     Backward-compatible constructor that defaults to <see cref="SystemClock"/>.
+    /// </summary>
+    public AlertCommandService(
+        IAlertRepository alertRepository,
+        IUnitOfWork unitOfWork,
+        IMediator mediator)
+        : this(alertRepository, unitOfWork, mediator, new Shared.Infrastructure.SystemClock())
+    {
+    }
     public async Task<Result<Alert, Error>> Handle(CreateAlertCommand command, CancellationToken cancellationToken = default)
     {
         try
         {
-            var alert = new Alert(command);
+            var alert = new Alert(command, clock);
 
             await alertRepository.AddAsync(alert, cancellationToken);
             await unitOfWork.CompleteAsync(cancellationToken);
@@ -53,7 +65,7 @@ public class AlertCommandService(
                     alert.PlotId.Value,
                     alert.Id,
                     alert.Type.ToString(),
-                    DateTime.UtcNow
+                    clock.UtcNow
                 );
 
                 await mediator.PublishAsync(integrationEvent, cancellationToken);

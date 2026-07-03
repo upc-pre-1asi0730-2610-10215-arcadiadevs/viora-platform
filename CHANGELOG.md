@@ -5,6 +5,25 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.28.0] - 2026-07-03
+
+### security
+- Restricted the Swagger/health-check auth bypass in `RequestAuthorizationMiddleware` to `Development` only (previously applied in Staging too, exposing the API schema unauthenticated); `/healthz` now uses endpoint-level `AllowAnonymous()` instead of a manual bypass
+- `TokenService.ValidateToken` now validates JWT expiry against the injected `IClock` instead of the real wall clock, closing a clock-source mismatch between token issuance and validation
+- Removed a real API key that had been typed into the tracked `appsettings.Development.json` (never committed) in favor of `dotnet user-secrets`
+
+### fixed
+- `GET /api/v1/agronomic-statistics` and its `/series` route now return `400` for an invalid `timeRange` value instead of an unhandled `500`
+- `PestSightingReport`'s parameterless constructor no longer throws on EF Core materialization (previously threw building an empty `Symptoms` value object)
+
+### added
+- Backfilled unit test coverage for WU2-WU9 (Roles, ChangePassword, Alert resolve/dismiss, pest sighting reports, cross-plot IoT devices, route realignment, plots `?view=` dispatch + IDOR closure) — 316 → 329 tests
+- `IClock` injected across the remaining production call sites that hardcoded `DateTime.UtcNow`
+
+### notes
+- SDD change `audit/test-coverage-backfill-2026-07-02` — reviewed via a 4-lens parallel review (risk/resilience/readability/reliability) before archiving; caught 2 real security issues and 3 real test-coverage gaps, all fixed before this release
+- Build green (0 errors); tests 329/329 pass (`dotnet test --filter "Database!=Postgres"`); full unfiltered suite has 1 pre-existing unrelated Postgres/Testcontainers failure (`RoleMigrationTests`)
+
 ## [1.27.0] - 2026-07-02
 
 ### breaking

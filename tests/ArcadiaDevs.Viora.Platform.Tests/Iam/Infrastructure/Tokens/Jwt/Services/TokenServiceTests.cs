@@ -5,6 +5,7 @@ using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Tokens.Jwt.Configuration;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Tokens.Jwt.Services;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
+using ArcadiaDevs.Viora.Platform.Tests.TestHarness;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
@@ -147,5 +148,55 @@ public class TokenServiceTests
         // Strengthened from v1.1: same rationale as test method 5 above.
         Assert.False(result.IsValid);
         Assert.Equal("Iam.TokenInvalid", result.FailureCode);
+    }
+
+    // The two tests below use the real (IOptions<TokenSettings>, IClock) constructor —
+    // NOT the backward-compatible one-arg constructor used by `_sut` above, which
+    // defaults to SystemClock and would defeat the point of these tests: proving
+    // ValidateToken's expiry check is actually driven by the injected IClock rather
+    // than falling back to real wall-clock time inside JsonWebTokenHandler.
+    //
+    // The clock is seeded 1 hour ahead of the real wall clock. JsonWebTokenHandler.
+    // CreateToken auto-stamps `nbf`/`iat` from the REAL DateTime.UtcNow whenever the
+    // SecurityTokenDescriptor doesn't set NotBefore/IssuedAt explicitly (see the
+    // ValidateToken_ReturnsExpired_WhenTokenHasPastExpiry comment above and engram obs
+    // #132) — GenerateToken never sets them. Seeding 1 hour ahead keeps the fake
+    // "now" safely past that real `nbf` so the lifetime validator's not-yet-valid
+    // check never fires because of timing skew between capturing the seed and the
+    // token actually being minted a few milliseconds later.
+
+    [Fact]
+    public async Task ValidateToken_WithInjectedClock_ReturnsValid_BeforeExpiry()
+    {
+        var clock = new FakeClock(DateTime.UtcNow.AddHours(1));
+        var sut = new TokenService(Options(), clock);
+        var user = new User("alice", "x");
+
+        var token = sut.GenerateToken(user);
+
+        // No time advance: still well within the 7-day expiry window.
+        var result = await sut.ValidateToken(token);
+
+        Assert.True(result.IsValid);
+        Assert.Equal(user.Id, result.UserId);
+    }
+
+    [Fact]
+    public async Task ValidateToken_WithInjectedClock_ReturnsExpired_WhenClockAdvancesPast7DayWindow()
+    {
+        var clock = new FakeClock(DateTime.UtcNow.AddHours(1));
+        var sut = new TokenService(Options(), clock);
+        var user = new User("alice", "x");
+
+        var token = sut.GenerateToken(user);
+
+        // Advance the SAME clock instance (the one TokenService holds a reference to)
+        // past the 7-day expiry baked into the token at generation time.
+        clock.Advance(TimeSpan.FromDays(7).Add(TimeSpan.FromMinutes(1)));
+
+        var result = await sut.ValidateToken(token);
+
+        Assert.False(result.IsValid);
+        Assert.Equal("Iam.TokenExpired", result.FailureCode);
     }
 }

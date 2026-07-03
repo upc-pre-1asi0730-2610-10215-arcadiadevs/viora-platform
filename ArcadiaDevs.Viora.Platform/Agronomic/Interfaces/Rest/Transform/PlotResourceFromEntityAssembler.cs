@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
+using ArcadiaDevs.Viora.Platform.Shared.Domain;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Transform;
 
 public static class PlotResourceFromEntityAssembler
 {
-    public static PlotResource ToResource(this Plot plot)
+    public static PlotResource ToResource(this Plot plot, IClock clock)
     {
         var polygon = plot.PolygonCoordinates.Points
             .Select(p => (IEnumerable<double>)new double[] { (double)p.Longitude, (double)p.Latitude })
@@ -20,7 +21,7 @@ public static class PlotResourceFromEntityAssembler
             plot.PlotName,
             polygon,
             plot.AreaSize,
-            plot.CreatedAt ?? DateTimeOffset.UtcNow,
+            plot.CreatedAt ?? new DateTimeOffset(clock.UtcNow, TimeSpan.Zero),
             plot.CropType,
             plot.Variety,
             plot.Location,

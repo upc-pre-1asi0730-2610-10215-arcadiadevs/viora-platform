@@ -1,4 +1,5 @@
 using System;
+using ArcadiaDevs.Viora.Platform.Shared.Domain;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 
@@ -25,11 +26,21 @@ public record WeatherSnapshot
         WeatherStatus weatherStatus, 
         DateTimeOffset lastValidatedReadingAt, 
         ClimateRiskLevel climateRiskLevel)
+        : this(currentTemperature, weatherStatus, lastValidatedReadingAt, climateRiskLevel, new Shared.Infrastructure.SystemClock())
+    {
+    }
+
+    public WeatherSnapshot(
+        decimal currentTemperature, 
+        WeatherStatus weatherStatus, 
+        DateTimeOffset lastValidatedReadingAt, 
+        ClimateRiskLevel climateRiskLevel,
+        IClock clock)
     {
         if (currentTemperature < -50 || currentTemperature > 60)
             throw new ArgumentException("Current temperature is out of valid range (-50 to 60).", nameof(currentTemperature));
 
-        if (lastValidatedReadingAt > DateTimeOffset.UtcNow)
+        if (lastValidatedReadingAt > new DateTimeOffset(clock.UtcNow, TimeSpan.Zero))
             throw new ArgumentException("Last validated reading cannot be in the future.", nameof(lastValidatedReadingAt));
 
         if (!Enum.IsDefined(typeof(WeatherStatus), weatherStatus))
