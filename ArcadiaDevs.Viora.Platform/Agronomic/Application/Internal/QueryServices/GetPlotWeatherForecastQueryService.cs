@@ -41,6 +41,9 @@ public class GetPlotWeatherForecastQueryService(
         if (plot is null || plot.IsDeleted)
             return new Result<PlotWeatherForecastResource, Error>.Failure(AgronomicErrors.PlotNotFound);
 
+        if (plot.OwnerUserId != query.UserId)
+            return new Result<PlotWeatherForecastResource, Error>.Failure(AgronomicErrors.PlotOwnership);
+
         var now = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero);
 
         // Delegate to the real provider. A null result means the upstream

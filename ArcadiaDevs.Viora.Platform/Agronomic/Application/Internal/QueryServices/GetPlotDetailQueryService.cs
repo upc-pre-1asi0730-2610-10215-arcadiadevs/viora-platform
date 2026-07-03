@@ -25,6 +25,9 @@ public class GetPlotDetailQueryService(
         if (plot is null || plot.IsDeleted)
             return new Result<PlotDetailResource, Error>.Failure(AgronomicErrors.PlotNotFound);
 
+        if (plot.OwnerUserId != query.UserId)
+            return new Result<PlotDetailResource, Error>.Failure(AgronomicErrors.PlotOwnership);
+
         var devices = await ioTDeviceRepository.FindAllByPlotIdsAsync(new[] { (long)plot.Id }, cancellationToken);
         var onlineDevices = devices.Count(d => d.Status == ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects.IoTDeviceStatus.Active);
         
