@@ -8,7 +8,13 @@ using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 
-public interface IGetPlotByIdQueryService
+public interface IPlotQueryService
 {
     Task<Result<PlotResource, Error>> Handle(GetPlotByIdQuery query, CancellationToken cancellationToken = default);
+
+    Task<Result<IEnumerable<PlotResource>, Error>> Handle(GetPlotsByUserIdQuery query, CancellationToken cancellationToken = default);
+
+    Task<Result<IEnumerable<PlotWithCurrentImageryResource>, Error>> Handle(GetPlotsWithCurrentImageryQuery query, CancellationToken cancellationToken = default);
+
+    Task<Result<MyPlotsOverviewResource, Error>> Handle(GetMyPlotsOverviewQuery query, CancellationToken cancellationToken = default);
 }
