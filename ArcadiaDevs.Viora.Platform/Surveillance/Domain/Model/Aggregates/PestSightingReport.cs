@@ -8,7 +8,6 @@ public partial class PestSightingReport
     public PestSightingReport()
     {
         RiskZone = ERiskZone.FULL_PLOT;
-        Symptoms = new Symptoms(new List<Symptom>());
         ObservedSeverity = EAlertSeverity.LOW;
         Notes = string.Empty;
         CalculatedRisk = EAlertSeverity.LOW;

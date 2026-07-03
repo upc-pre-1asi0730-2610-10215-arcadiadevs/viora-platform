@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
+using ArcadiaDevs.Viora.Platform.Shared.Domain;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model.Events;
+using ArcadiaDevs.Viora.Platform.Shared.Infrastructure;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Exceptions;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Entities;
@@ -21,8 +23,15 @@ namespace ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Aggregates;
 /// </summary>
 public partial class Alert : IHasDomainEvents
 {
-    public Alert()
+    private readonly IClock _clock;
+
+    public Alert() : this(new SystemClock())
     {
+    }
+
+    public Alert(IClock clock)
+    {
+        _clock = clock;
         Type = EThreatType.UNKNOWN;
         Severity = EAlertSeverity.LOW;
         Title = string.Empty;
@@ -36,7 +45,11 @@ public partial class Alert : IHasDomainEvents
         PlotId = null!;
     }
 
-    public Alert(CreateAlertCommand command) : this()
+    public Alert(CreateAlertCommand command) : this(command, new SystemClock())
+    {
+    }
+
+    public Alert(CreateAlertCommand command, IClock clock) : this(clock)
     {
         PlotId = new PlotId(command.PlotId);
         Type = Enum.Parse<EThreatType>(command.AlertType, true);
@@ -94,7 +107,7 @@ public partial class Alert : IHasDomainEvents
 
     public void AddTimelineRecord(string tag, string title, string description)
     {
-        _timeline.Add(new AlertTimelineRecord(tag, title, description));
+        _timeline.Add(new AlertTimelineRecord(tag, title, description, _clock));
     }
 
     public Alert MarkAsReviewed()
