@@ -13,9 +13,10 @@ namespace ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.Persistence.Ent
 ///     WU1 registered <c>SpecialistConfiguration</c>; WU3 added
 ///     <c>InterventionRequestConfiguration</c>; WU4 added
 ///     <c>ServiceProposalConfiguration</c>; WU5 added
-///     <c>TreatmentPrescriptionConfiguration</c>; WU6 adds
-///     <c>InterventionExecutionConfiguration</c>; WU7-WU8 extend this method
-///     as their aggregates land (per-slice migrations, obs #269).
+///     <c>TreatmentPrescriptionConfiguration</c>; WU6 added
+///     <c>InterventionExecutionConfiguration</c>; WU7 adds
+///     <c>InterventionOutcomeConfiguration</c>; WU8 extends this method as
+///     its read models land (per-slice migrations, obs #269).
 /// </remarks>
 public static class ModelBuilderExtensions
 {
@@ -30,5 +31,6 @@ public static class ModelBuilderExtensions
         builder.ApplyConfiguration(new ServiceProposalConfiguration());
         builder.ApplyConfiguration(new TreatmentPrescriptionConfiguration());
         builder.ApplyConfiguration(new InterventionExecutionConfiguration());
+        builder.ApplyConfiguration(new InterventionOutcomeConfiguration());
     }
 }
