@@ -26,7 +26,7 @@ public record AgrochemicalPrescription
         string preHarvestInterval,
         string agronomistRecommendations,
         string requiredPPE,
-        IEnumerable<string> products)
+        IReadOnlyList<string> products)
     {
         if (string.IsNullOrWhiteSpace(applicationMethod))
         {
