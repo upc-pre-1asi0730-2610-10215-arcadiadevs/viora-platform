@@ -349,7 +349,11 @@ builder.Services.AddScoped<IInterventionRequestQueryService, InterventionRequest
 builder.Services.AddScoped<IServiceProposalRepository, ServiceProposalRepository>();
 builder.Services.AddScoped<IServiceProposalCommandService, ServiceProposalCommandService>();
 builder.Services.AddScoped<IServiceProposalQueryService, ServiceProposalQueryService>();
-// WU5-WU8 extend this block as their aggregates land.
+// WU5 of 8 (treatment-prescription, obs #268): TreatmentPrescription slice.
+builder.Services.AddScoped<ITreatmentPrescriptionRepository, TreatmentPrescriptionRepository>();
+builder.Services.AddScoped<ITreatmentPrescriptionCommandService, TreatmentPrescriptionCommandService>();
+builder.Services.AddScoped<ITreatmentPrescriptionQueryService, TreatmentPrescriptionQueryService>();
+// WU6-WU8 extend this block as their aggregates land.
 
 // Profile Bounded Context Injection Configuration
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
