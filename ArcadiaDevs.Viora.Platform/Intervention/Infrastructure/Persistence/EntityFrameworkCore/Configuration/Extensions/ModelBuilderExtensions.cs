@@ -12,8 +12,9 @@ namespace ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.Persistence.Ent
 ///     Core mapping, mirroring Surveillance's <c>ModelBuilderExtensions</c>.
 ///     WU1 registered <c>SpecialistConfiguration</c>; WU3 added
 ///     <c>InterventionRequestConfiguration</c>; WU4 added
-///     <c>ServiceProposalConfiguration</c>; WU5 adds
-///     <c>TreatmentPrescriptionConfiguration</c>; WU6-WU8 extend this method
+///     <c>ServiceProposalConfiguration</c>; WU5 added
+///     <c>TreatmentPrescriptionConfiguration</c>; WU6 adds
+///     <c>InterventionExecutionConfiguration</c>; WU7-WU8 extend this method
 ///     as their aggregates land (per-slice migrations, obs #269).
 /// </remarks>
 public static class ModelBuilderExtensions
@@ -28,5 +29,6 @@ public static class ModelBuilderExtensions
         builder.ApplyConfiguration(new InterventionRequestConfiguration());
         builder.ApplyConfiguration(new ServiceProposalConfiguration());
         builder.ApplyConfiguration(new TreatmentPrescriptionConfiguration());
+        builder.ApplyConfiguration(new InterventionExecutionConfiguration());
     }
 }
