@@ -23,6 +23,10 @@ using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Surveillance.Application.OutboundServices.Acl;
 using ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.OutboundServices.Acl;
 using ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using ArcadiaDevs.Viora.Platform.Surveillance.Application.Acl;
+using ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Acl;
+using ArcadiaDevs.Viora.Platform.Intervention.Application.OutboundServices.Acl;
+using ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.OutboundServices.Acl;
 using Cortex.Mediator;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
@@ -32,6 +36,7 @@ using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFramewo
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Cortex.Mediator.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ArcadiaDevs.Viora.Platform.Iam.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Iam.Application.Internal.CommandServices;
 using ArcadiaDevs.Viora.Platform.Iam.Application.Internal.OutboundServices;
@@ -46,6 +51,14 @@ using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Tokens.Jwt.Configuration;
 using ArcadiaDevs.Viora.Platform.Iam.Application.Acl;
 using ArcadiaDevs.Viora.Platform.Iam.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Tokens.Jwt.Services;
+using ArcadiaDevs.Viora.Platform.Intervention.Application.CommandServices;
+using ArcadiaDevs.Viora.Platform.Intervention.Application.Internal.CommandServices;
+using ArcadiaDevs.Viora.Platform.Intervention.Application.Internal.QueryServices;
+using ArcadiaDevs.Viora.Platform.Intervention.Application.QueryServices;
+using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Commands;
+using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Services;
+using ArcadiaDevs.Viora.Platform.Intervention.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using ArcadiaDevs.Viora.Platform.Profile.Application.Acl;
 using ArcadiaDevs.Viora.Platform.Profile.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Profile.Application.Internal.CommandServices;
@@ -282,7 +295,16 @@ builder.Services.AddScoped<IAlertQueryService, AlertQueryService>();
 builder.Services.AddScoped<ICommunityRiskQueryService, CommunityRiskQueryService>();
 builder.Services.AddScoped<IPestSightingReportQueryService, PestSightingReportQueryService>();
 
-builder.Services.AddScoped<IExternalAgronomicService, ExternalAgronomicService>();
+// Fully-qualified: WU3 of Intervention parity (obs #268) registers its own
+// same-named IExternalAgronomicService/ExternalAgronomicService pair below
+// in a different namespace, which makes the short names ambiguous once
+// both `using` directives are in scope.
+builder.Services.AddScoped<
+    ArcadiaDevs.Viora.Platform.Surveillance.Application.OutboundServices.Acl.IExternalAgronomicService,
+    ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.OutboundServices.Acl.ExternalAgronomicService>();
+// WU2 of Intervention parity (surveillance-acl-facade, obs #268): outward-facing
+// facade so other bounded contexts (Intervention) can read Alert data via the ACL.
+builder.Services.AddScoped<ISurveillanceContextFacade, SurveillanceContextFacade>();
 builder.Services.AddScoped<ThreatInferenceService>();
 builder.Services.AddScoped<IDynamicNutritionPlanRepository, DynamicNutritionPlanRepository>();
 
@@ -301,6 +323,50 @@ builder.Services.AddScoped<IUserCommandService, UserCommandService>();
 builder.Services.AddScoped<IHashingService, HashingService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IIamContextFacade, IamContextFacade>();
+
+// Intervention Bounded Context Injection Configuration
+// WU1 of 8 (specialist-and-matching, obs #268): Specialist slice.
+builder.Services.AddScoped<ISpecialistRepository, SpecialistRepository>();
+builder.Services.AddScoped<ISpecialistCommandService, SpecialistCommandService>();
+builder.Services.AddScoped<ISpecialistQueryService, SpecialistQueryService>();
+builder.Services.AddScoped<SpecialistMatchingPolicy>();
+// WU2 of 8 (surveillance-acl-facade, obs #268): Intervention-owned adapter
+// consuming Surveillance's outward-facing ISurveillanceContextFacade.
+builder.Services.AddScoped<IExternalSurveillanceService, ExternalSurveillanceService>();
+// WU3 of 8 (intervention-request, obs #268): InterventionRequest slice +
+// Intervention-owned adapter consuming Agronomic's IAgronomicContextFacade.
+// Fully-qualified here: Surveillance already registers its own same-named
+// IExternalAgronomicService/ExternalAgronomicService pair (line above,
+// design's Cross-BC ACL Wiring table) in a different namespace — the
+// `using` for that namespace makes the short names ambiguous.
+builder.Services.AddScoped<IInterventionRequestRepository, InterventionRequestRepository>();
+builder.Services.AddScoped<
+    ArcadiaDevs.Viora.Platform.Intervention.Application.OutboundServices.Acl.IExternalAgronomicService,
+    ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.OutboundServices.Acl.ExternalAgronomicService>();
+builder.Services.AddScoped<IInterventionRequestCommandService, InterventionRequestCommandService>();
+builder.Services.AddScoped<IInterventionRequestQueryService, InterventionRequestQueryService>();
+// WU4 of 8 (service-proposal, obs #268): ServiceProposal slice.
+builder.Services.AddScoped<IServiceProposalRepository, ServiceProposalRepository>();
+builder.Services.AddScoped<IServiceProposalCommandService, ServiceProposalCommandService>();
+builder.Services.AddScoped<IServiceProposalQueryService, ServiceProposalQueryService>();
+// WU5 of 8 (treatment-prescription, obs #268): TreatmentPrescription slice.
+builder.Services.AddScoped<ITreatmentPrescriptionRepository, TreatmentPrescriptionRepository>();
+builder.Services.AddScoped<ITreatmentPrescriptionCommandService, TreatmentPrescriptionCommandService>();
+builder.Services.AddScoped<ITreatmentPrescriptionQueryService, TreatmentPrescriptionQueryService>();
+// WU6 of 8 (intervention-execution, obs #268): InterventionExecution slice.
+builder.Services.AddScoped<IInterventionExecutionRepository, InterventionExecutionRepository>();
+builder.Services.AddScoped<IInterventionExecutionCommandService, InterventionExecutionCommandService>();
+builder.Services.AddScoped<IInterventionExecutionQueryService, InterventionExecutionQueryService>();
+// WU7 of 8 (intervention-outcome, obs #268): InterventionOutcome slice.
+builder.Services.AddScoped<IInterventionOutcomeRepository, InterventionOutcomeRepository>();
+builder.Services.AddScoped<IInterventionOutcomeCommandService, InterventionOutcomeCommandService>();
+builder.Services.AddScoped<IInterventionOutcomeQueryService, InterventionOutcomeQueryService>();
+// WU8 of 8 (overview-and-metrics, obs #268): pure read-model slice, no new
+// aggregate/migration. InterventionOverviewComposer is a plain domain
+// service (no interface), mirroring SpecialistMatchingPolicy's registration.
+builder.Services.AddScoped<InterventionOverviewComposer>();
+builder.Services.AddScoped<IInterventionOverviewQueryService, InterventionOverviewQueryService>();
+builder.Services.AddScoped<IInterventionRequestMetricsQueryService, InterventionRequestMetricsQueryService>();
 
 // Profile Bounded Context Injection Configuration
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
@@ -329,6 +395,25 @@ using (var scope = app.Services.CreateScope())
 
     // Seeding Iam roles (idempotent — safe to run on every startup)
     await IamDataSeeder.SeedAsync(context);
+
+    // Seeding Intervention demo specialists (WU1 bootstrap — design decision 1,
+    // obs #267; each backed by a real Profile row with Role=Specialist).
+    // Wrapped in try/catch: under a rolling deploy with multiple replicas,
+    // concurrent cold starts can race on the specialists.profile_user_id
+    // unique index. A seed failure must not prevent the instance from
+    // accepting traffic — log and continue startup instead of crashing.
+    // NOTE: the pre-existing SeedSymptomsCommand/IamDataSeeder calls above
+    // are not guarded the same way; that gap is out of scope for this fix
+    // pass (not touching unrelated seeders to avoid scope creep).
+    try
+    {
+        var specialistCommandService = services.GetRequiredService<ISpecialistCommandService>();
+        await specialistCommandService.Handle(new SeedSpecialistsCommand());
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "Failed to seed demo specialists during startup; continuing startup anyway.");
+    }
 }
 
 // Configure the HTTP request pipeline.

@@ -480,6 +480,269 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Aggregates.InterventionExecution", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateOnly>("ApplicationDate")
+                        .HasColumnType("date")
+                        .HasColumnName("application_date");
+
+                    b.Property<decimal>("AppliedArea")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("applied_area");
+
+                    b.Property<string>("ExecutionStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("execution_status");
+
+                    b.Property<string>("FieldNote")
+                        .HasColumnType("text")
+                        .HasColumnName("field_note");
+
+                    b.Property<int>("TreatmentPrescriptionId")
+                        .HasColumnType("integer")
+                        .HasColumnName("treatment_prescription_id");
+
+                    b.HasKey("Id")
+                        .HasName("p_k_intervention_executions");
+
+                    b.HasIndex("TreatmentPrescriptionId")
+                        .IsUnique()
+                        .HasDatabaseName("i_x_intervention_executions_treatment_prescription_id");
+
+                    b.ToTable("intervention_executions", (string)null);
+                });
+
+            modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Aggregates.InterventionOutcome", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("InterventionExecutionId")
+                        .HasColumnType("integer")
+                        .HasColumnName("intervention_execution_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("p_k_intervention_outcomes");
+
+                    b.HasIndex("InterventionExecutionId")
+                        .IsUnique()
+                        .HasDatabaseName("i_x_intervention_outcomes_intervention_execution_id");
+
+                    b.ToTable("intervention_outcomes", (string)null);
+                });
+
+            modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Aggregates.InterventionRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<long?>("AlertId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("alert_id");
+
+                    b.Property<string>("DeclineReason")
+                        .HasColumnType("text")
+                        .HasColumnName("decline_reason");
+
+                    b.Property<int>("GrowerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("grower_id");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("message");
+
+                    b.Property<long>("PlotId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("plot_id");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("reason");
+
+                    b.Property<int>("SpecialistId")
+                        .HasColumnType("integer")
+                        .HasColumnName("specialist_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("p_k_intervention_requests");
+
+                    b.HasIndex("GrowerId")
+                        .HasDatabaseName("i_x_intervention_requests_grower_id");
+
+                    b.HasIndex("SpecialistId")
+                        .HasDatabaseName("i_x_intervention_requests_specialist_id");
+
+                    b.ToTable("intervention_requests", (string)null);
+                });
+
+            modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Aggregates.ServiceProposal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DurationLabel")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("duration_label");
+
+                    b.Property<int>("InterventionRequestId")
+                        .HasColumnType("integer")
+                        .HasColumnName("intervention_request_id");
+
+                    b.Property<string>("ProposalDetails")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("proposal_details");
+
+                    b.Property<DateOnly>("ProposedDate")
+                        .HasColumnType("date")
+                        .HasColumnName("proposed_date");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("scope");
+
+                    b.Property<string>("ServiceTitle")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("service_title");
+
+                    b.Property<int>("SpecialistId")
+                        .HasColumnType("integer")
+                        .HasColumnName("specialist_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("p_k_service_proposals");
+
+                    b.HasIndex("InterventionRequestId")
+                        .HasDatabaseName("i_x_service_proposals_intervention_request_id");
+
+                    b.ToTable("service_proposals", (string)null);
+                });
+
+            modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Aggregates.Specialist", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Availability")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("availability");
+
+                    b.Property<int>("CaseCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("case_count");
+
+                    b.Property<double>("DistanceKm")
+                        .HasColumnType("double precision")
+                        .HasColumnName("distance_km");
+
+                    b.Property<int>("ProfileUserId")
+                        .HasColumnType("integer")
+                        .HasColumnName("profile_user_id");
+
+                    b.Property<double>("SuccessRate")
+                        .HasColumnType("double precision")
+                        .HasColumnName("success_rate");
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tags");
+
+                    b.Property<string>("Whatsapp")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("whatsapp");
+
+                    b.HasKey("Id")
+                        .HasName("p_k_specialists");
+
+                    b.HasIndex("ProfileUserId")
+                        .IsUnique()
+                        .HasDatabaseName("i_x_specialists_profile_user_id");
+
+                    b.ToTable("specialists", (string)null);
+                });
+
+            modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Aggregates.TreatmentPrescription", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ServiceProposalId")
+                        .HasColumnType("integer")
+                        .HasColumnName("service_proposal_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("p_k_treatment_prescriptions");
+
+                    b.HasIndex("ServiceProposalId")
+                        .IsUnique()
+                        .HasDatabaseName("i_x_treatment_prescriptions_service_proposal_id");
+
+                    b.ToTable("treatment_prescriptions", (string)null);
+                });
+
             modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Profile.Domain.Model.Aggregates.Profile", b =>
                 {
                     b.Property<int>("Id")
@@ -1042,6 +1305,200 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
 
                     b.Navigation("PolygonCoordinates")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Aggregates.InterventionOutcome", b =>
+                {
+                    b.OwnsOne("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects.ImpactReport", "ImpactReport", b1 =>
+                        {
+                            b1.Property<int>("InterventionOutcomeId")
+                                .HasColumnType("integer")
+                                .HasColumnName("id");
+
+                            b1.Property<string>("GracePeriod")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("grace_period");
+
+                            b1.Property<string>("ImpactLevel")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("impact_level");
+
+                            b1.Property<string>("ObservedResult")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("observed_result");
+
+                            b1.Property<string>("ProducerAssessment")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("producer_assessment");
+
+                            b1.HasKey("InterventionOutcomeId")
+                                .HasName("p_k_intervention_outcomes");
+
+                            b1.ToTable("intervention_outcomes");
+
+                            b1.WithOwner()
+                                .HasForeignKey("InterventionOutcomeId")
+                                .HasConstraintName("f_k_intervention_outcomes_intervention_outcomes_id");
+                        });
+
+                    b.OwnsOne("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects.ServiceEvaluation", "ServiceEvaluation", b1 =>
+                        {
+                            b1.Property<int>("InterventionOutcomeId")
+                                .HasColumnType("integer")
+                                .HasColumnName("id");
+
+                            b1.Property<bool>("HireAgain")
+                                .HasColumnType("boolean")
+                                .HasColumnName("hire_again");
+
+                            b1.Property<string>("PrivateFeedback")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("private_feedback");
+
+                            b1.Property<string>("ServiceResult")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("service_result");
+
+                            b1.HasKey("InterventionOutcomeId")
+                                .HasName("p_k_intervention_outcomes");
+
+                            b1.ToTable("intervention_outcomes");
+
+                            b1.WithOwner()
+                                .HasForeignKey("InterventionOutcomeId")
+                                .HasConstraintName("f_k_intervention_outcomes_intervention_outcomes_id");
+                        });
+
+                    b.Navigation("ImpactReport")
+                        .IsRequired();
+
+                    b.Navigation("ServiceEvaluation");
+                });
+
+            modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Aggregates.ServiceProposal", b =>
+                {
+                    b.OwnsOne("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects.CostEstimate", "CostEstimate", b1 =>
+                        {
+                            b1.Property<int>("ServiceProposalId")
+                                .HasColumnType("integer")
+                                .HasColumnName("id");
+
+                            b1.Property<decimal>("Amount")
+                                .HasColumnType("decimal(18,2)")
+                                .HasColumnName("cost_estimate_amount");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasMaxLength(10)
+                                .HasColumnType("character varying(10)")
+                                .HasColumnName("cost_estimate_currency");
+
+                            b1.HasKey("ServiceProposalId")
+                                .HasName("p_k_service_proposals");
+
+                            b1.ToTable("service_proposals");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ServiceProposalId")
+                                .HasConstraintName("f_k_service_proposals_service_proposals_id");
+                        });
+
+                    b.Navigation("CostEstimate")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Aggregates.TreatmentPrescription", b =>
+                {
+                    b.OwnsOne("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects.AgrochemicalPrescription", "AgrochemicalPrescription", b1 =>
+                        {
+                            b1.Property<int>("TreatmentPrescriptionId")
+                                .HasColumnType("integer")
+                                .HasColumnName("id");
+
+                            b1.Property<string>("AgronomistRecommendations")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("agronomist_recommendations");
+
+                            b1.Property<string>("ApplicationMethod")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("application_method");
+
+                            b1.Property<string>("PreHarvestInterval")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("pre_harvest_interval");
+
+                            b1.Property<string>("Products")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("products");
+
+                            b1.Property<string>("RequiredPPE")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("required_ppe");
+
+                            b1.Property<string>("SprayVolume")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("spray_volume");
+
+                            b1.HasKey("TreatmentPrescriptionId")
+                                .HasName("p_k_treatment_prescriptions");
+
+                            b1.ToTable("treatment_prescriptions");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TreatmentPrescriptionId")
+                                .HasConstraintName("f_k_treatment_prescriptions_treatment_prescriptions_id");
+                        });
+
+                    b.OwnsOne("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects.FieldInspectionRecord", "FieldInspectionRecord", b1 =>
+                        {
+                            b1.Property<int>("TreatmentPrescriptionId")
+                                .HasColumnType("integer")
+                                .HasColumnName("id");
+
+                            b1.Property<string>("FindingType")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("finding_type");
+
+                            b1.Property<string>("IncidenceLevel")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("incidence_level");
+
+                            b1.Property<DateOnly>("RecordDate")
+                                .HasColumnType("date")
+                                .HasColumnName("record_date");
+
+                            b1.Property<string>("TechnicalDescription")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("technical_description");
+
+                            b1.HasKey("TreatmentPrescriptionId")
+                                .HasName("p_k_treatment_prescriptions");
+
+                            b1.ToTable("treatment_prescriptions");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TreatmentPrescriptionId")
+                                .HasConstraintName("f_k_treatment_prescriptions_treatment_prescriptions_id");
+                        });
+
+                    b.Navigation("AgrochemicalPrescription");
+
+                    b.Navigation("FieldInspectionRecord");
                 });
 
             modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Aggregates.Alert", b =>
