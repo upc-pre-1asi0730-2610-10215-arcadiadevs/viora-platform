@@ -361,7 +361,12 @@ builder.Services.AddScoped<IInterventionExecutionQueryService, InterventionExecu
 builder.Services.AddScoped<IInterventionOutcomeRepository, InterventionOutcomeRepository>();
 builder.Services.AddScoped<IInterventionOutcomeCommandService, InterventionOutcomeCommandService>();
 builder.Services.AddScoped<IInterventionOutcomeQueryService, InterventionOutcomeQueryService>();
-// WU8 extends this block as its aggregates land.
+// WU8 of 8 (overview-and-metrics, obs #268): pure read-model slice, no new
+// aggregate/migration. InterventionOverviewComposer is a plain domain
+// service (no interface), mirroring SpecialistMatchingPolicy's registration.
+builder.Services.AddScoped<InterventionOverviewComposer>();
+builder.Services.AddScoped<IInterventionOverviewQueryService, InterventionOverviewQueryService>();
+builder.Services.AddScoped<IInterventionRequestMetricsQueryService, InterventionRequestMetricsQueryService>();
 
 // Profile Bounded Context Injection Configuration
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
