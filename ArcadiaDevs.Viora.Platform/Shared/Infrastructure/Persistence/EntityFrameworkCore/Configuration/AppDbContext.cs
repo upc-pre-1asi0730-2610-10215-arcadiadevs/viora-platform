@@ -1,6 +1,7 @@
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Entities;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
+using ArcadiaDevs.Viora.Platform.Billing.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
@@ -76,6 +77,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         // EF Core mapping. The call order is alphabetical by BC and matches the
         // order used to generate the migration snapshot.
         builder.ApplyAgronomicConfiguration();
+        builder.ApplyBillingConfiguration();
         builder.ApplyIamConfiguration();
         builder.ApplyInterventionConfiguration();
         builder.ApplyProfileConfiguration();
