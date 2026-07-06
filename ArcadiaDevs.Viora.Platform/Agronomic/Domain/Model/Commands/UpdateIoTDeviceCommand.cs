@@ -9,11 +9,12 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands;
 public record UpdateIoTDeviceCommand
 {
     public int PlotId { get; init; }
+    public int UserId { get; init; }
     public int DeviceId { get; init; }
     public string DeviceName { get; init; }
     public IoTDeviceStatus Status { get; init; }
-    
-    public UpdateIoTDeviceCommand(int plotId, int deviceId, string deviceName, IoTDeviceStatus? status)
+
+    public UpdateIoTDeviceCommand(int plotId, int userId, int deviceId, string deviceName, IoTDeviceStatus? status)
     {
         if (plotId <= 0)
             throw new ArgumentException("UpdateIoTDeviceCommand requires a valid plotId", nameof(plotId));
@@ -26,8 +27,9 @@ public record UpdateIoTDeviceCommand
 
         if (status == null)
             throw new ArgumentException("UpdateIoTDeviceCommand requires a valid status", nameof(status));
-        
+
         PlotId = plotId;
+        UserId = userId;
         DeviceId = deviceId;
         DeviceName = deviceName;
         Status = status.Value;

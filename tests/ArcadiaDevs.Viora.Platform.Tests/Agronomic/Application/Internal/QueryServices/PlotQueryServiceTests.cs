@@ -90,7 +90,7 @@ public class PlotQueryServiceTests
         var plot = BuildPlot(10, ownerUserId: 1);
         _plotRepository.FindByIdAsync(10, Arg.Any<CancellationToken>()).Returns(plot);
 
-        var query = new GetPlotByIdQuery(PlotId: 10);
+        var query = new GetPlotByIdQuery(PlotId: 10, UserId: 1);
 
         // WHEN the query is handled
         var result = await _sut.Handle(query, CancellationToken.None);
@@ -114,7 +114,7 @@ public class PlotQueryServiceTests
         // GIVEN a non-existent plot
         _plotRepository.FindByIdAsync(999, Arg.Any<CancellationToken>()).Returns((Plot?)null);
 
-        var query = new GetPlotByIdQuery(PlotId: 999);
+        var query = new GetPlotByIdQuery(PlotId: 999, UserId: 1);
 
         // WHEN the query is handled
         var result = await _sut.Handle(query, CancellationToken.None);
@@ -127,27 +127,27 @@ public class PlotQueryServiceTests
     /// <summary>
     ///     GIVEN a plot owned by user A
     ///     WHEN user B requests the plot via GetPlotByIdQuery
-    ///     THEN the plot is still returned (PlotQueryService does NOT enforce ownership —
-    ///     ownership checks live in GetPlotDetailQueryService, GetPlotMonitoringSummaryQueryService,
-    ///     and GetPlotWeatherForecastQueryService which receive userId in the query).
-    ///     This test documents the current behavior: the base GetPlotById query does NOT carry
-    ///     a userId, so IDOR prevention is enforced at the view-specific services.
+    ///     THEN <see cref="AgronomicErrors.PlotOwnership"/> is returned (403) — regression
+    ///     guard for the IDOR closure: GetPlotByIdQuery now carries UserId and
+    ///     PlotQueryService enforces ownership, matching GetPlotDetailQueryService,
+    ///     GetPlotMonitoringSummaryQueryService, and GetPlotWeatherForecastQueryService.
     /// </summary>
     [Fact]
-    public async Task Handle_GetPlotById_NoUserId_DoesNotEnforceOwnership_DocumentedBehavior()
+    public async Task Handle_GetPlotById_UserDoesNotOwnPlot_ReturnsOwnershipFailure()
     {
         // GIVEN a plot owned by user 1
         var plot = BuildPlot(10, ownerUserId: 1);
         _plotRepository.FindByIdAsync(10, Arg.Any<CancellationToken>()).Returns(plot);
 
-        // AND GetPlotByIdQuery has no userId — the IDOR closure lives in view-specific services
-        var query = new GetPlotByIdQuery(PlotId: 10);
+        // AND user 2 (not the owner) requests the plot
+        var query = new GetPlotByIdQuery(PlotId: 10, UserId: 2);
 
-        // WHEN any user requests the plot
+        // WHEN the query is handled
         var result = await _sut.Handle(query, CancellationToken.None);
 
-        // THEN the plot is returned (no ownership check at this layer)
-        Assert.True(result.IsSuccess);
+        // THEN ownership is enforced — the plot is NOT returned
+        Assert.True(result.IsFailure);
+        Assert.Equal(AgronomicErrors.PlotOwnership, ((Result<PlotResource, Error>.Failure)result).Error);
     }
 
     /// <summary>

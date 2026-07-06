@@ -12,12 +12,14 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands
     ///     via <see cref="IoTDevice.Claim"/>.
     /// </summary>
     /// <param name="PlotId">The plot to associate the device with.</param>
+    /// <param name="UserId">The authenticated caller's id, derived from the token.</param>
     /// <param name="DeviceName">The human-readable name of the device.</param>
     /// <param name="Status">The desired status; defaults to Active if null.</param>
     /// <param name="ActivationCode">The pre-issued code printed on the device label.</param>
     public record CreateIoTDeviceCommand
     {
         public int PlotId { get; init; }
+        public int UserId { get; init; }
         public string DeviceName { get; init; }
         public IoTDeviceStatus Status { get; init; }
         public string ActivationCode { get; init; }
@@ -25,6 +27,7 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands
         // Constructor público con validaciones y valor por defecto para Status
         public CreateIoTDeviceCommand(
             int plotId,
+            int userId,
             string deviceName,
             IoTDeviceStatus? status = null,
             string? activationCode = null)
@@ -39,6 +42,7 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands
                 throw new ArgumentException("CreateIoTDeviceCommand requires a non-blank activationCode", nameof(activationCode));
 
             PlotId = plotId;
+            UserId = userId;
             DeviceName = deviceName;
             Status = status ?? IoTDeviceStatus.Active;
             ActivationCode = activationCode;

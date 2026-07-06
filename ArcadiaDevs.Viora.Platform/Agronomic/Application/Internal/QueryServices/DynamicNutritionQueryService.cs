@@ -2,7 +2,9 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
@@ -13,12 +15,19 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Errors;
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices;
 
 public class DynamicNutritionQueryService(
-    IDynamicNutritionPlanRepository dynamicNutritionPlanRepository) : IDynamicNutritionQueryService
+    IDynamicNutritionPlanRepository dynamicNutritionPlanRepository,
+    PlotOwnershipValidator plotOwnershipValidator) : IDynamicNutritionQueryService
 {
     public async Task<Result<DynamicNutritionPlanResource, Error>> Handle(GetDynamicNutritionPlanQuery query, CancellationToken cancellationToken = default)
     {
         try
         {
+            var ownershipResult = await plotOwnershipValidator.ValidateAsync(query.UserId, query.PlotId, cancellationToken);
+            if (ownershipResult is Result<Plot, Error>.Failure ownershipFailure)
+            {
+                return new Result<DynamicNutritionPlanResource, Error>.Failure(AgronomicErrors.PlotOwnership);
+            }
+
             var plan = await dynamicNutritionPlanRepository.FindActiveByPlotIdAsync(query.PlotId, cancellationToken);
             if (plan == null)
             {

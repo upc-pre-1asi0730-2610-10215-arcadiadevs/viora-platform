@@ -137,6 +137,11 @@ public class PlotCommandService(
             return new Result<Plot, Error>.Failure(AgronomicErrors.PlotNotFound);
         }
 
+        if (!plot.BelongsTo(command.UserId))
+        {
+            return new Result<Plot, Error>.Failure(AgronomicErrors.UnauthorizedAccess);
+        }
+
         if (!plot.IsActive)
         {
             return new Result<Plot, Error>.Failure(AgronomicErrors.PlotInactive);
@@ -193,6 +198,11 @@ public class PlotCommandService(
         if (plot is null)
         {
             return new Result<string, Error>.Failure(AgronomicErrors.PlotNotFound);
+        }
+
+        if (!plot.BelongsTo(command.UserId))
+        {
+            return new Result<string, Error>.Failure(AgronomicErrors.UnauthorizedAccess);
         }
 
         if (!_plotDeletionPolicy.CanDelete(plot))

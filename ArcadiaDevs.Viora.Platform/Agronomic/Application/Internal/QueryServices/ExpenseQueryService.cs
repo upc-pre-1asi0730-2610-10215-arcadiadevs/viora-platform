@@ -1,3 +1,4 @@
+using System.Linq;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Queries;
@@ -22,7 +23,13 @@ public class ExpenseQueryService : IExpenseQueryService
         CancellationToken cancellationToken = default)
     {
         if (query.PlotId.HasValue)
-            return await _repository.FindByPlotIdAsync(query.PlotId.Value, cancellationToken);
+        {
+            // A plot-scoped lookup must still be grower-scoped — FindByPlotIdAsync
+            // alone would leak another grower's expenses on a plot whose id the
+            // caller merely guesses/knows, since it doesn't check ownership.
+            var plotExpenses = await _repository.FindByPlotIdAsync(query.PlotId.Value, cancellationToken);
+            return plotExpenses.Where(e => e.GrowerId == query.GrowerId);
+        }
 
         return await _repository.FindByGrowerIdAsync(query.GrowerId, cancellationToken);
     }

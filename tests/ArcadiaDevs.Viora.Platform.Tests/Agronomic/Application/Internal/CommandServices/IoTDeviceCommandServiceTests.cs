@@ -115,6 +115,7 @@ public class IoTDeviceCommandServiceTests
 
         var command = new CreateIoTDeviceCommand(
             plotId: 10,
+            userId: 1,
             deviceName: "Weather Station Alpha",
             activationCode: "VIORA-WS01-ABCD");
 
@@ -155,6 +156,7 @@ public class IoTDeviceCommandServiceTests
 
         var command = new CreateIoTDeviceCommand(
             plotId: 10,
+            userId: 1,
             deviceName: "Weather Station Alpha",
             activationCode: "VIORA-WS01-ABCD");
 
@@ -184,6 +186,7 @@ public class IoTDeviceCommandServiceTests
 
         var command = new CreateIoTDeviceCommand(
             plotId: 999,
+            userId: 1,
             deviceName: "Weather Station Alpha",
             activationCode: "VIORA-WS01-ABCD");
 
@@ -220,6 +223,7 @@ public class IoTDeviceCommandServiceTests
 
         var command = new UpdateIoTDeviceCommand(
             plotId: 10,
+            userId: 1,
             deviceId: 5,
             deviceName: "Updated Name",
             status: IoTDeviceStatus.Active);
