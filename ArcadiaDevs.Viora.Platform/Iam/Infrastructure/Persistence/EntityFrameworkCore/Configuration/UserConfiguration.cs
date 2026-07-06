@@ -35,6 +35,24 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasColumnName("password_hash")
             .IsRequired();
 
+        builder.Property(u => u.Email)
+            .HasColumnName("email")
+            .HasMaxLength(255);
+
+        builder.Property(u => u.FullName)
+            .HasColumnName("full_name")
+            .HasMaxLength(200);
+
+        builder.Property(u => u.Active)
+            .HasColumnName("active")
+            .HasDefaultValue(true)
+            .IsRequired();
+
+        builder.Property(u => u.Verified)
+            .HasColumnName("verified")
+            .HasDefaultValue(true)
+            .IsRequired();
+
         builder.Property(u => u.CreatedAt)
             .HasColumnName("created_at");
 

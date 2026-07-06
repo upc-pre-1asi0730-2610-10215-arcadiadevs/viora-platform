@@ -10,8 +10,8 @@ namespace ArcadiaDevs.Viora.Platform.Iam.Interfaces.Rest.Transform;
  */
 public static class SignInCommandFromResourceAssembler
 {
-    public static SignInCommand ToCommand(this SignInResource resource)
+    public static SignInCommand ToCommand(this SignInResource resource, string? userAgent = null)
     {
-        return new SignInCommand(resource.Username, resource.Password);
+        return new SignInCommand(resource.Username, resource.Password, userAgent);
     }
 }

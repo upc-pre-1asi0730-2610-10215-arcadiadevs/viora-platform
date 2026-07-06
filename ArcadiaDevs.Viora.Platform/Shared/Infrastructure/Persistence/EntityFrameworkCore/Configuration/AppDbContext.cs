@@ -42,6 +42,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// </summary>
     public DbSet<Role> Roles => Set<Role>();
 
+    /// <summary>
+    ///     Gets the verification tokens set.
+    /// </summary>
+    public DbSet<VerificationToken> VerificationTokens => Set<VerificationToken>();
+
+    /// <summary>
+    ///     Gets the user sessions set.
+    /// </summary>
+    public DbSet<UserSession> UserSessions => Set<UserSession>();
+
     /// <inheritdoc />
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {

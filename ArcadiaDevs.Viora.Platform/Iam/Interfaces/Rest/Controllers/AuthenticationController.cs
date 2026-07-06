@@ -36,6 +36,10 @@ public class AuthenticationController(
     ///     production admin-only gate would be an unconditional deadlock (see
     ///     spec REQ-1).
     /// </remarks>
+    /// <param name="resource">The sign-up payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="201">User created.</response>
+    /// <response code="400">Validation failure.</response>
     [HttpPost("sign-up")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(UserResource), StatusCodes.Status201Created)]
@@ -58,12 +62,47 @@ public class AuthenticationController(
     /// <summary>
     ///     Authenticates a user and returns a JWT token.
     /// </summary>
+    /// <param name="resource">The sign-in credentials.</param>
+    /// <param name="userAgent">The requesting client's user agent, recorded on the resulting session.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Authentication succeeded.</response>
+    /// <response code="401">Invalid credentials.</response>
     [HttpPost("sign-in")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(AuthenticatedUserResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> SignIn(
         [FromBody] SignInResource resource,
+        [FromHeader(Name = "User-Agent")] string? userAgent,
+        CancellationToken cancellationToken)
+    {
+        var command = resource.ToCommand(userAgent);
+        var result = await userCommandService.Handle(command, cancellationToken);
+
+        return IamActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            authenticatedUser => Ok(authenticatedUser.ToResource()));
+    }
+
+    /// <summary>
+    ///     Consumes a verification token and marks the account as verified.
+    ///     Auto signs-in on success (REQ-EV-2).
+    /// </summary>
+    /// <param name="resource">The verification token payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Account verified; authenticated session returned.</response>
+    /// <response code="404">Token not found.</response>
+    /// <response code="400">Token expired or already used.</response>
+    [HttpPost("verifications")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(AuthenticatedUserResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Verify(
+        [FromBody] VerifyResource resource,
         CancellationToken cancellationToken)
     {
         var command = resource.ToCommand();
@@ -75,5 +114,33 @@ public class AuthenticationController(
             errorLocalizer,
             problemDetailsFactory,
             authenticatedUser => Ok(authenticatedUser.ToResource()));
+    }
+
+    /// <summary>
+    ///     Issues a new verification token for an unverified account (REQ-EV-3).
+    /// </summary>
+    /// <param name="resource">The account identifier to resend a verification token for.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Verification token reissued.</response>
+    /// <response code="404">Account not found.</response>
+    /// <response code="422">Account is already verified.</response>
+    [HttpPost("verification-requests")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(UserResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> ResendVerification(
+        [FromBody] ResendVerificationResource resource,
+        CancellationToken cancellationToken)
+    {
+        var command = resource.ToCommand();
+        var result = await userCommandService.Handle(command, cancellationToken);
+
+        return IamActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            user => Ok(user!.ToResource()));
     }
 }
