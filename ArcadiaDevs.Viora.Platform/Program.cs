@@ -59,6 +59,13 @@ using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Services;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using ArcadiaDevs.Viora.Platform.Billing.Application.CommandServices;
+using ArcadiaDevs.Viora.Platform.Billing.Application.Internal.CommandServices;
+using ArcadiaDevs.Viora.Platform.Billing.Application.Internal.QueryServices;
+using ArcadiaDevs.Viora.Platform.Billing.Application.QueryServices;
+using ArcadiaDevs.Viora.Platform.Billing.Domain.Model.Commands;
+using ArcadiaDevs.Viora.Platform.Billing.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Billing.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using ArcadiaDevs.Viora.Platform.Profile.Application.Acl;
 using ArcadiaDevs.Viora.Platform.Profile.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Profile.Application.Internal.CommandServices;
@@ -68,6 +75,7 @@ using ArcadiaDevs.Viora.Platform.Profile.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Profile.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using ArcadiaDevs.Viora.Platform.Profile.Interfaces.Acl;
 using Microsoft.Extensions.Options;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -103,6 +111,14 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.EnableAnnotations();
     options.OperationFilter<PlotViewResponseOperationFilter>();
+
+    // Wires the XML doc comments generated via <GenerateDocumentationFile> into
+    // Swagger UI/OpenAPI JSON — without this, controller <summary>/<remarks>/
+    // <param>/<response> tags are compiled but never reach the API docs.
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+        options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
 });
 
 // Add Database Connection
@@ -345,6 +361,7 @@ builder.Services.AddScoped<
     ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.OutboundServices.Acl.ExternalAgronomicService>();
 builder.Services.AddScoped<IInterventionRequestCommandService, InterventionRequestCommandService>();
 builder.Services.AddScoped<IInterventionRequestQueryService, InterventionRequestQueryService>();
+// specialist-dashboard-parity: specialist verify/decline + GET /specialist-dashboard.
 // WU4 of 8 (service-proposal, obs #268): ServiceProposal slice.
 builder.Services.AddScoped<IServiceProposalRepository, ServiceProposalRepository>();
 builder.Services.AddScoped<IServiceProposalCommandService, ServiceProposalCommandService>();
@@ -367,6 +384,12 @@ builder.Services.AddScoped<IInterventionOutcomeQueryService, InterventionOutcome
 builder.Services.AddScoped<InterventionOverviewComposer>();
 builder.Services.AddScoped<IInterventionOverviewQueryService, InterventionOverviewQueryService>();
 builder.Services.AddScoped<IInterventionRequestMetricsQueryService, InterventionRequestMetricsQueryService>();
+
+// Billing Bounded Context Injection Configuration
+// WU1 of 9 (plan, obs #319): Plan catalog slice. WU2-WU9 extend this block.
+builder.Services.AddScoped<IPlanRepository, PlanRepository>();
+builder.Services.AddScoped<IPlanCommandService, PlanCommandService>();
+builder.Services.AddScoped<IPlanQueryService, PlanQueryService>();
 
 // Profile Bounded Context Injection Configuration
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
@@ -413,6 +436,21 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         app.Logger.LogWarning(ex, "Failed to seed demo specialists during startup; continuing startup anyway.");
+    }
+
+    // Seeding the Billing Plan catalog (WU1 bootstrap — REQ-PLAN-1,
+    // idempotent by Code). Wrapped in the same try/catch shape as the
+    // Specialist seed above: under a rolling deploy with multiple replicas,
+    // concurrent cold starts can race on the plans.code unique index, and a
+    // seed failure must not prevent the instance from accepting traffic.
+    try
+    {
+        var planCommandService = services.GetRequiredService<IPlanCommandService>();
+        await planCommandService.Handle(new SeedPlanCatalogCommand());
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "Failed to seed the Plan catalog during startup; continuing startup anyway.");
     }
 }
 

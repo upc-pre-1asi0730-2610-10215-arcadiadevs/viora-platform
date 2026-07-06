@@ -25,10 +25,5 @@ public static class ModelBuilderExtensions
     public static void ApplyBillingConfiguration(this ModelBuilder builder)
     {
         builder.ApplyConfiguration(new PlanConfiguration());
-        builder.ApplyConfiguration(new SubscriptionConfiguration());
-        builder.ApplyConfiguration(new PaymentMethodConfiguration());
-        builder.ApplyConfiguration(new InvoiceConfiguration());
-        builder.ApplyConfiguration(new CouponConfiguration());
-        builder.ApplyConfiguration(new ReferralCodeConfiguration());
     }
 }
