@@ -5,6 +5,7 @@ using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Services;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Profile.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Profile.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
@@ -14,9 +15,14 @@ using Microsoft.Extensions.Logging;
 namespace ArcadiaDevs.Viora.Platform.Intervention.Application.Internal.QueryServices;
 
 /// <summary>
-///     Handles Specialist read queries (REQ-SPEC-1..3), composing the
-///     <c>Specialist</c> aggregate's business fields with identity fields
-///     resolved live from <see cref="IProfileContextFacade" />.
+///     Handles Specialist read queries (REQ-SPEC-1..3). Rebuilt for real
+///     specialist matching: the public profile and candidates lists now
+///     compose entirely from <c>Profile</c> (Role=Specialist) via
+///     <see cref="IProfileContextFacade" />, keyed by <c>ProfileUserId</c> —
+///     not from a stored <c>Specialist</c> business-fields catalog. The
+///     <c>Specialist</c> aggregate/repository is only still consulted for
+///     the Intervention-local <c>Whatsapp</c> contact channel, which has no
+///     home on <c>Profile</c>.
 /// </summary>
 public class SpecialistQueryService(
     ISpecialistRepository specialistRepository,
@@ -33,22 +39,15 @@ public class SpecialistQueryService(
     {
         try
         {
-            var specialist = await specialistRepository.FindByIdAsync(query.Id, cancellationToken);
-            if (specialist is null)
+            var profile = await profileContextFacade.GetSpecialistProfileAsync(query.Id, cancellationToken);
+            if (profile is null)
             {
                 return new Result<SpecialistPublicProfile, Error>.Failure(InterventionErrors.NotFound);
             }
 
-            var profileSummary = await profileContextFacade.GetProfileSummaryAsync(specialist.ProfileUserId, cancellationToken);
-            if (profileSummary is null)
-            {
-                logger.LogWarning(
-                    "Specialist {SpecialistId} references ProfileUserId {ProfileUserId}, but no matching Profile was found.",
-                    specialist.Id, specialist.ProfileUserId);
-                return new Result<SpecialistPublicProfile, Error>.Failure(InterventionErrors.NotFound);
-            }
+            var caseCount = await CountAcceptedCasesAsync(query.Id, cancellationToken);
 
-            return new Result<SpecialistPublicProfile, Error>.Success(ToPublicProfile(specialist, profileSummary));
+            return new Result<SpecialistPublicProfile, Error>.Success(ToPublicProfile(profile, caseCount, distanceKm: null));
         }
         catch (OperationCanceledException)
         {
@@ -68,15 +67,16 @@ public class SpecialistQueryService(
     /// <remarks>
     ///     REQ-SPEC-2 requires <c>InterventionRequest(requestId).status ==
     ///     ACCEPTED &amp;&amp; InterventionRequest(requestId).specialistId ==
-    ///     id</c>. WU3 (obs #268/#272) adds the real
-    ///     <see cref="IInterventionRequestRepository" /> lookup, replacing
-    ///     WU1's interim always-deny stub. Per WU1 fix pass item #10, the
-    ///     gating ALSO verifies that <c>query.CallerUserId</c> owns the
-    ///     referenced request (<c>request.GrowerId == CallerUserId</c>) —
-    ///     status+specialist-id matching alone is not sufficient to
-    ///     authorize the caller, since any authenticated user could
-    ///     otherwise guess a valid <c>requestId</c>/<c>specialistId</c>
-    ///     pair belonging to someone else.
+    ///     id</c>, where <c>id</c>/<c>specialistId</c> are now both the
+    ///     specialist's Profile UserId (see the specialist-live-matching
+    ///     change — <c>InterventionRequest.SpecialistId</c> and this query's
+    ///     <c>SpecialistId</c> used to live in two different id spaces: the
+    ///     former was always the Profile UserId, the latter used to be the
+    ///     Specialist aggregate's own row id; unified onto Profile UserId
+    ///     everywhere). The gating ALSO verifies that
+    ///     <c>query.CallerUserId</c> owns the referenced request
+    ///     (<c>request.GrowerId == CallerUserId</c>) — status+specialist-id
+    ///     matching alone is not sufficient to authorize the caller.
     /// </remarks>
     public async Task<Result<SpecialistContact, Error>> Handle(
         GetSpecialistContactQuery query,
@@ -84,12 +84,6 @@ public class SpecialistQueryService(
     {
         try
         {
-            var specialist = await specialistRepository.FindByIdAsync(query.SpecialistId, cancellationToken);
-            if (specialist is null)
-            {
-                return new Result<SpecialistContact, Error>.Failure(InterventionErrors.NotFound);
-            }
-
             var request = await interventionRequestRepository.FindByIdAsync(query.RequestId, cancellationToken);
             if (request is null ||
                 request.Status != InterventionStatus.ACCEPTED ||
@@ -99,17 +93,19 @@ public class SpecialistQueryService(
                 return new Result<SpecialistContact, Error>.Failure(InterventionErrors.ContactNotUnlocked);
             }
 
-            var profileSummary = await profileContextFacade.GetProfileSummaryAsync(specialist.ProfileUserId, cancellationToken);
+            var profileSummary = await profileContextFacade.GetProfileSummaryAsync(query.SpecialistId, cancellationToken);
             if (profileSummary is null)
             {
                 logger.LogWarning(
-                    "Specialist {SpecialistId} references ProfileUserId {ProfileUserId}, but no matching Profile was found.",
-                    specialist.Id, specialist.ProfileUserId);
+                    "Specialist contact requested for ProfileUserId {ProfileUserId}, but no matching Profile was found.",
+                    query.SpecialistId);
                 return new Result<SpecialistContact, Error>.Failure(InterventionErrors.NotFound);
             }
 
+            var specialist = await specialistRepository.FindByProfileUserIdAsync(query.SpecialistId, cancellationToken);
+
             return new Result<SpecialistContact, Error>.Success(
-                new SpecialistContact(specialist.Id, profileSummary.Email, profileSummary.Phone, specialist.Whatsapp));
+                new SpecialistContact(query.SpecialistId, profileSummary.Email, profileSummary.Phone, specialist?.Whatsapp));
         }
         catch (OperationCanceledException)
         {
@@ -127,16 +123,13 @@ public class SpecialistQueryService(
 
     /// <inheritdoc />
     /// <remarks>
-    ///     Ranks the FULL specialist repository first (uncapped via
-    ///     <see cref="SpecialistMatchingPolicy" />), THEN filters out any
-    ///     candidate whose Profile can't be resolved, THEN trims to
-    ///     <see cref="GetSpecialistCandidatesQuery.Limit" />. Order matters:
-    ///     capping before filtering would silently under-fill the result
-    ///     whenever a ranked specialist's Profile is missing. This handler
-    ///     intentionally does not participate in the Result/ProblemDetails
-    ///     error contract (its interface returns a bare list, mirroring
-    ///     OS parity) — unhandled infra failures here still bubble to the
-    ///     global exception middleware, same as before this fix pass.
+    ///     Ranks every real specialist Profile via
+    ///     <see cref="SpecialistMatchingPolicy" /> (geo/tag/availability-aware
+    ///     when <c>alertId</c> is given), then trims to
+    ///     <see cref="GetSpecialistCandidatesQuery.Limit" />. Unlike the
+    ///     previous fixed-catalog design, every ranked entry is already
+    ///     Profile-backed by construction — there is no "candidate whose
+    ///     Profile can't be resolved" case to filter out anymore.
     /// </remarks>
     public async Task<IReadOnlyList<SpecialistPublicProfile>> Handle(
         GetSpecialistCandidatesQuery query,
@@ -145,40 +138,39 @@ public class SpecialistQueryService(
         var ranked = await matchingPolicy.MatchSpecialistsForAlertAsync(query.AlertId, cancellationToken);
 
         var results = new List<SpecialistPublicProfile>(Math.Min(ranked.Count, query.Limit));
-        foreach (var specialist in ranked)
+        foreach (var candidate in ranked.Take(query.Limit))
         {
-            if (results.Count >= query.Limit)
-            {
-                break;
-            }
-
-            var profileSummary = await profileContextFacade.GetProfileSummaryAsync(specialist.ProfileUserId, cancellationToken);
-            if (profileSummary is null)
-            {
-                logger.LogWarning(
-                    "Specialist {SpecialistId} references ProfileUserId {ProfileUserId}, but no matching Profile was found; excluded from candidates.",
-                    specialist.Id, specialist.ProfileUserId);
-                continue;
-            }
-
-            results.Add(ToPublicProfile(specialist, profileSummary));
+            var caseCount = await CountAcceptedCasesAsync(candidate.Profile.UserId, cancellationToken);
+            results.Add(ToPublicProfile(candidate.Profile, caseCount, candidate.DistanceKm));
         }
 
         return results.AsReadOnly();
     }
 
-    private static SpecialistPublicProfile ToPublicProfile(
-        Domain.Model.Aggregates.Specialist specialist,
-        ProfileSummary profileSummary)
+    private async Task<int> CountAcceptedCasesAsync(int profileUserId, CancellationToken cancellationToken)
     {
+        var accepted = await interventionRequestRepository.FindBySpecialistIdAndStatusAsync(
+            profileUserId, InterventionStatus.ACCEPTED, cancellationToken);
+        return accepted.Count;
+    }
+
+    private static SpecialistPublicProfile ToPublicProfile(
+        SpecialistProfileSummary profile,
+        int caseCount,
+        double? distanceKm)
+    {
+        var tags = string.IsNullOrWhiteSpace(profile.ServiceTags)
+            ? Array.Empty<string>()
+            : profile.ServiceTags.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
         return new SpecialistPublicProfile(
-            specialist.Id,
-            profileSummary.FullName,
-            profileSummary.Role.ToString(),
-            specialist.SuccessRate,
-            specialist.CaseCount,
-            specialist.DistanceKm,
-            specialist.Tags.Items,
-            specialist.Availability.ToString());
+            profile.UserId,
+            profile.DisplayName,
+            nameof(ProfileRole.Specialist),
+            null, // SuccessRate: no closed-case derivation yet — deliberately null, not fabricated.
+            caseCount,
+            distanceKm,
+            tags,
+            (profile.Availability ?? ESpecialistAvailability.AvailableThisWeek).ToString());
     }
 }
