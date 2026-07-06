@@ -25,5 +25,6 @@ public static class ModelBuilderExtensions
     public static void ApplyBillingConfiguration(this ModelBuilder builder)
     {
         builder.ApplyConfiguration(new PlanConfiguration());
+        builder.ApplyConfiguration(new SubscriptionConfiguration());
     }
 }
