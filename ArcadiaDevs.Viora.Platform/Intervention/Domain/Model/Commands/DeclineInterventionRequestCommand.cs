@@ -5,4 +5,7 @@ namespace ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Commands;
 ///     (REQ-IREQ-3). No self-guard against the current status — see
 ///     <see cref="Aggregates.InterventionRequest.Decline" />.
 /// </summary>
-public record DeclineInterventionRequestCommand(int Id, string DeclineReason);
+/// <param name="Id">The intervention request id.</param>
+/// <param name="DeclineReason">The reason for declining.</param>
+/// <param name="GrowerId">The authenticated caller's id, derived from the token — enforced as owner.</param>
+public record DeclineInterventionRequestCommand(int Id, string DeclineReason, int GrowerId);

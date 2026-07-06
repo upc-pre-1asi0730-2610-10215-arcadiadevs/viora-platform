@@ -22,13 +22,13 @@ public class InterventionsController(IInterventionOverviewQueryService intervent
     ///     Gets the composed overview of every intervention request for a
     ///     grower, including the downstream chain and a derived status.
     /// </summary>
-    /// <param name="growerId">The grower id.</param>
+    /// <param name="growerId">The authenticated caller's id, derived from the token.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <response code="200">Overview rows returned (possibly empty).</response>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<InterventionOverviewResource>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetInterventionsOverview(
-        [FromQuery] int growerId,
+        [FromToken] int growerId,
         CancellationToken cancellationToken = default)
     {
         var items = await interventionOverviewQueryService.Handle(

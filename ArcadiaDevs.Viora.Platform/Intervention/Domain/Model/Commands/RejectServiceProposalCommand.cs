@@ -8,4 +8,6 @@ namespace ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Commands;
 ///     <c>DECLINED</c> — no re-routing, no re-opening (locked business
 ///     logic, not a gap).
 /// </summary>
-public record RejectServiceProposalCommand(int Id);
+/// <param name="Id">The service proposal id.</param>
+/// <param name="GrowerId">The authenticated caller's id, derived from the token — enforced as the parent request's owner.</param>
+public record RejectServiceProposalCommand(int Id, int GrowerId);
