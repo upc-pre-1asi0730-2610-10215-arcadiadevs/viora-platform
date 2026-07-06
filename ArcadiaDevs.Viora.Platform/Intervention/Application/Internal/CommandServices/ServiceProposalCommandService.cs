@@ -95,17 +95,17 @@ public class ServiceProposalCommandService(
                 return new Result<ServiceProposal, Error>.Failure(InterventionErrors.NotFound);
             }
 
+            var request = await interventionRequestRepository.FindByIdAsync(
+                proposal.InterventionRequestId, cancellationToken);
+            if (request is null || request.GrowerId != command.GrowerId)
+            {
+                return new Result<ServiceProposal, Error>.Failure(InterventionErrors.NotFound);
+            }
+
             var acceptResult = proposal.Accept();
             if (acceptResult is Result<Unit, Error>.Failure acceptFailure)
             {
                 return new Result<ServiceProposal, Error>.Failure(acceptFailure.Error);
-            }
-
-            var request = await interventionRequestRepository.FindByIdAsync(
-                proposal.InterventionRequestId, cancellationToken);
-            if (request is null)
-            {
-                return new Result<ServiceProposal, Error>.Failure(InterventionErrors.NotFound);
             }
 
             request.MarkAccepted();
@@ -147,17 +147,17 @@ public class ServiceProposalCommandService(
                 return new Result<ServiceProposal, Error>.Failure(InterventionErrors.NotFound);
             }
 
+            var request = await interventionRequestRepository.FindByIdAsync(
+                proposal.InterventionRequestId, cancellationToken);
+            if (request is null || request.GrowerId != command.GrowerId)
+            {
+                return new Result<ServiceProposal, Error>.Failure(InterventionErrors.NotFound);
+            }
+
             var rejectResult = proposal.Reject();
             if (rejectResult is Result<Unit, Error>.Failure rejectFailure)
             {
                 return new Result<ServiceProposal, Error>.Failure(rejectFailure.Error);
-            }
-
-            var request = await interventionRequestRepository.FindByIdAsync(
-                proposal.InterventionRequestId, cancellationToken);
-            if (request is null)
-            {
-                return new Result<ServiceProposal, Error>.Failure(InterventionErrors.NotFound);
             }
 
             // REQ-SP-3: terminal decline, no re-routing — reuses InterventionRequest's
