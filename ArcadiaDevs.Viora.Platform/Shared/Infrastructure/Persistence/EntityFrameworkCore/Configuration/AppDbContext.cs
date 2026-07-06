@@ -1,6 +1,7 @@
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Entities;
 using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
+using ArcadiaDevs.Viora.Platform.Billing.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
@@ -41,6 +42,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// </summary>
     public DbSet<Role> Roles => Set<Role>();
 
+    /// <summary>
+    ///     Gets the verification tokens set.
+    /// </summary>
+    public DbSet<VerificationToken> VerificationTokens => Set<VerificationToken>();
+
+    /// <summary>
+    ///     Gets the user sessions set.
+    /// </summary>
+    public DbSet<UserSession> UserSessions => Set<UserSession>();
+
     /// <inheritdoc />
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
@@ -76,6 +87,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         // EF Core mapping. The call order is alphabetical by BC and matches the
         // order used to generate the migration snapshot.
         builder.ApplyAgronomicConfiguration();
+        builder.ApplyBillingConfiguration();
         builder.ApplyIamConfiguration();
         builder.ApplyInterventionConfiguration();
         builder.ApplyProfileConfiguration();
