@@ -52,4 +52,15 @@ public class ProfileContextFacade(
             ? null
             : new ProfileSummary(profile.FullName, profile.Email, profile.Phone, profile.Role);
     }
+
+    /// <inheritdoc />
+    public async Task DeleteByUserIdAsync(int userId, CancellationToken ct = default)
+    {
+        var profile = await profileRepository.FindByUserIdAsync(userId, ct);
+        if (profile is null)
+            return;
+
+        profileRepository.Remove(profile);
+        await unitOfWork.CompleteAsync(ct);
+    }
 }
