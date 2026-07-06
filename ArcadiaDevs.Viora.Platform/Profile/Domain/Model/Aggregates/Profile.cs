@@ -41,6 +41,18 @@ public class Profile
     /// </summary>
     public string? PhotoUrl { get; private set; }
 
+    public double? Latitude { get; private set; }
+
+    public double? Longitude { get; private set; }
+
+    public double? ServiceRadiusKm { get; private set; }
+
+    public string? ServiceTags { get; private set; }
+
+    public ESpecialistAvailability? Availability { get; private set; }
+
+    public bool ShowProBadge { get; private set; }
+
     private Profile()
     {
         FullName = string.Empty;
@@ -57,7 +69,13 @@ public class Profile
         string? language = null,
         string? location = null,
         string? specialtyArea = null,
-        string? photoUrl = null)
+        string? photoUrl = null,
+        double? latitude = null,
+        double? longitude = null,
+        double? serviceRadiusKm = null,
+        string? serviceTags = null,
+        ESpecialistAvailability? availability = null,
+        bool showProBadge = false)
     {
         UserId = userId;
         Role = role;
@@ -69,6 +87,12 @@ public class Profile
         Location = location;
         SpecialtyArea = specialtyArea;
         PhotoUrl = photoUrl;
+        Latitude = latitude;
+        Longitude = longitude;
+        ServiceRadiusKm = serviceRadiusKm;
+        ServiceTags = serviceTags;
+        Availability = availability;
+        ShowProBadge = showProBadge;
     }
 
     /// <summary>
@@ -86,7 +110,13 @@ public class Profile
         string? language = null,
         string? location = null,
         string? specialtyArea = null,
-        string? photoUrl = null)
+        string? photoUrl = null,
+        double? latitude = null,
+        double? longitude = null,
+        double? serviceRadiusKm = null,
+        string? serviceTags = null,
+        ESpecialistAvailability? availability = null,
+        bool? showProBadge = null)
     {
         if (fullName is not null) FullName = fullName;
         if (email is not null) Email = email;
@@ -96,6 +126,12 @@ public class Profile
         if (location is not null) Location = location;
         if (specialtyArea is not null) SpecialtyArea = specialtyArea;
         if (photoUrl is not null) PhotoUrl = photoUrl;
+        if (latitude is not null) Latitude = latitude;
+        if (longitude is not null) Longitude = longitude;
+        if (serviceRadiusKm is not null) ServiceRadiusKm = serviceRadiusKm;
+        if (serviceTags is not null) ServiceTags = serviceTags;
+        if (availability is not null) Availability = availability;
+        if (showProBadge is not null) ShowProBadge = showProBadge.Value;
         return this;
     }
 }

@@ -25,6 +25,12 @@ public static class ProfileResourceFromEntityAssembler
             profile.Language,
             profile.Location,
             profile.SpecialtyArea,
-            profile.PhotoUrl);
+            profile.PhotoUrl,
+            profile.Latitude,
+            profile.Longitude,
+            profile.ServiceRadiusKm,
+            profile.ServiceTags,
+            profile.Availability?.ToString(),
+            profile.ShowProBadge);
     }
 }

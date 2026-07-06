@@ -1,3 +1,4 @@
+using ArcadiaDevs.Viora.Platform.Profile.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
 using ProfileAggregate = ArcadiaDevs.Viora.Platform.Profile.Domain.Model.Aggregates.Profile;
 
@@ -15,4 +16,6 @@ public interface IProfileRepository : IBaseRepository<ProfileAggregate>
     /// <param name="ct">The cancellation token.</param>
     /// <returns>The profile if found, otherwise null.</returns>
     Task<ProfileAggregate?> FindByUserIdAsync(int userId, CancellationToken ct = default);
+
+    Task<IReadOnlyList<ProfileAggregate>> FindByRoleAsync(ProfileRole role, CancellationToken ct = default);
 }
