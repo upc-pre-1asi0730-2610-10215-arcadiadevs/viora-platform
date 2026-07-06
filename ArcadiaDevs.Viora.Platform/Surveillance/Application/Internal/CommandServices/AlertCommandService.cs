@@ -92,7 +92,7 @@ public class AlertCommandService(
     {
         try
         {
-            var alert = await alertRepository.FindByIdAsync((int)command.AlertId, cancellationToken);
+            var alert = await alertRepository.FindByIdAsync(command.AlertId, cancellationToken);
             if (alert is null)
             {
                 return new Result<long, Error>.Failure(SurveillanceErrors.NotFound);
@@ -139,7 +139,7 @@ public class AlertCommandService(
     {
         try
         {
-            var alert = await alertRepository.FindByIdAsync((int)command.AlertId, cancellationToken);
+            var alert = await alertRepository.FindByIdAsync(command.AlertId, cancellationToken);
             if (alert is null)
             {
                 return new Result<Unit, Error>.Failure(SurveillanceErrors.NotFound);
@@ -175,7 +175,7 @@ public class AlertCommandService(
     {
         try
         {
-            var alert = await alertRepository.FindByIdAsync((int)alertId, cancellationToken);
+            var alert = await alertRepository.FindByIdAsync(alertId, cancellationToken);
             if (alert is null)
             {
                 return new Result<Unit, Error>.Failure(SurveillanceErrors.NotFound);

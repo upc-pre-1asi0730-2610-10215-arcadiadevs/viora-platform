@@ -13,6 +13,11 @@ namespace ArcadiaDevs.Viora.Platform.Surveillance.Infrastructure.Persistence.Ent
 public class AlertRepository(AppDbContext context)
     : BaseRepository<Alert>(context), IAlertRepository
 {
+    public async Task<Alert?> FindByIdAsync(long id, CancellationToken cancellationToken = default)
+    {
+        return await Context.Set<Alert>().FindAsync(new object[] { id }, cancellationToken);
+    }
+
     public async Task<IEnumerable<Alert>> FindByPlotIdInOrderByCreatedAtDescAsync(IEnumerable<long> plotIds, int limit, CancellationToken cancellationToken = default)
     {
         var plotIdsList = plotIds.ToList();

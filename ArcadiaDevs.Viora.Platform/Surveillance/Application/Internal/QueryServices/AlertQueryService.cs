@@ -16,7 +16,7 @@ public class AlertQueryService(
 {
     public async Task<Alert?> Handle(GetAlertByIdQuery query, CancellationToken cancellationToken = default)
     {
-        var alert = await alertRepository.FindByIdAsync((int)query.AlertId, cancellationToken);
+        var alert = await alertRepository.FindByIdAsync(query.AlertId, cancellationToken);
         if (alert is null || !query.RequestingUserId.HasValue)
         {
             return alert;
