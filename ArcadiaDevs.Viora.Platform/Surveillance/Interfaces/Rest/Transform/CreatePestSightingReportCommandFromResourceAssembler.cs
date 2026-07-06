@@ -12,12 +12,19 @@ public static class CreatePestSightingReportCommandFromResourceAssembler
     /// Transforms the resource into a command.
     /// </summary>
     /// <param name="resource">The incoming REST resource.</param>
+    /// <param name="reporterUserId">
+    ///     The authenticated caller's id, derived from the token — takes precedence
+    ///     over <see cref="CreatePestSightingReportResource.ReporterUserId"/>, which
+    ///     is client-supplied and therefore not trusted for identity.
+    /// </param>
     /// <returns>The generated command.</returns>
-    public static CreatePestSightingReportCommand ToCommandFromResource(CreatePestSightingReportResource resource)
+    public static CreatePestSightingReportCommand ToCommandFromResource(
+        CreatePestSightingReportResource resource,
+        long reporterUserId)
     {
         return new CreatePestSightingReportCommand(
             resource.PlotId,
-            resource.ReporterUserId,
+            reporterUserId,
             resource.RiskZone,
             resource.Symptoms,
             resource.ObservedSeverity,

@@ -16,7 +16,18 @@ public class AlertQueryService(
 {
     public async Task<Alert?> Handle(GetAlertByIdQuery query, CancellationToken cancellationToken = default)
     {
-        return await alertRepository.FindByIdAsync((int)query.AlertId, cancellationToken);
+        var alert = await alertRepository.FindByIdAsync((int)query.AlertId, cancellationToken);
+        if (alert is null || !query.RequestingUserId.HasValue)
+        {
+            return alert;
+        }
+
+        // Ownership is enforced through the owning plot (Alert has no direct
+        // userId of its own) — mirrors OS's "enforce alert ownership through
+        // the owning plot" hardening. A non-owner sees the same null/404 as a
+        // genuinely missing alert, so existence isn't leaked to other callers.
+        var ownedPlots = await agronomicService.GetPlotsForUserAsMapAsync(query.RequestingUserId.Value, cancellationToken);
+        return ownedPlots.ContainsKey(alert.PlotId.Value) ? alert : null;
     }
 
     public async Task<IEnumerable<AlertSummaryResource>> Handle(GetRecentAlertsByUserIdQuery query, CancellationToken cancellationToken = default)
