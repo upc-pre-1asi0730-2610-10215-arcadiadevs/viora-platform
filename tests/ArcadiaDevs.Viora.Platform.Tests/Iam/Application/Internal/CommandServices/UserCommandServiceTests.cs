@@ -1,3 +1,4 @@
+using ArcadiaDevs.Viora.Platform.Billing.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Iam.Application.Internal.CommandServices;
 using ArcadiaDevs.Viora.Platform.Iam.Application.Internal.OutboundServices;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model;
@@ -7,6 +8,7 @@ using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Profile.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
+using ArcadiaDevs.Viora.Platform.Shared.Domain;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Resources.Errors;
@@ -22,6 +24,12 @@ public class UserCommandServiceTests
     private readonly IHashingService    _hashingService    = Substitute.For<IHashingService>();
     private readonly IRoleRepository    _roleRepository    = Substitute.For<IRoleRepository>();
     private readonly IProfileContextFacade _profileContextFacade = Substitute.For<IProfileContextFacade>();
+    private readonly IBillingContextFacade _billingContextFacade = Substitute.For<IBillingContextFacade>();
+    private readonly IVerificationTokenRepository _verificationTokenRepository =
+        Substitute.For<IVerificationTokenRepository>();
+    private readonly IUserSessionRepository _userSessionRepository = Substitute.For<IUserSessionRepository>();
+    private readonly IEmailService      _emailService      = Substitute.For<IEmailService>();
+    private readonly IClock             _clock             = Substitute.For<IClock>();
     private readonly IStringLocalizer<ErrorMessages> _errorLocalizer =
         Substitute.For<IStringLocalizer<ErrorMessages>>();
     private readonly UserCommandService _sut;
@@ -29,7 +37,9 @@ public class UserCommandServiceTests
     public UserCommandServiceTests()
     {
         _sut = new UserCommandService(
-            _userRepository, _unitOfWork, _tokenService, _hashingService, _roleRepository, _profileContextFacade, _errorLocalizer);
+            _userRepository, _unitOfWork, _tokenService, _hashingService, _roleRepository, _profileContextFacade,
+            _billingContextFacade, _verificationTokenRepository, _userSessionRepository, _emailService, _clock,
+            _errorLocalizer);
     }
 
     [Fact]
