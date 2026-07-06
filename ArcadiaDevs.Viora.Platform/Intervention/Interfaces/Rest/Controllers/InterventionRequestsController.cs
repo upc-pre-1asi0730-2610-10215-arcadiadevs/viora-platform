@@ -37,6 +37,7 @@ public class InterventionRequestsController(
     ///     missing FK maps to 404 (REQ-CC-2, REQ-IREQ-1).
     /// </remarks>
     /// <param name="resource">The request payload.</param>
+    /// <param name="growerId">The authenticated caller's id, derived from the token.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <response code="201">Request created (status <c>PENDING</c>).</response>
     /// <response code="400">Validation failure.</response>
@@ -47,10 +48,11 @@ public class InterventionRequestsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CreateInterventionRequest(
         [FromBody] CreateInterventionRequestResource resource,
+        [FromToken] int growerId,
         CancellationToken cancellationToken = default)
     {
         var command = new CreateInterventionRequestCommand(
-            resource.GrowerId,
+            growerId,
             resource.PlotId,
             resource.SpecialistId,
             resource.AlertId,
@@ -73,6 +75,7 @@ public class InterventionRequestsController(
     ///     Gets an intervention request by id.
     /// </summary>
     /// <param name="id">The intervention request id.</param>
+    /// <param name="growerId">The authenticated caller's id, derived from the token.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <response code="200">Request found.</response>
     /// <response code="404">Request not found.</response>
@@ -81,9 +84,10 @@ public class InterventionRequestsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetInterventionRequestById(
         [FromRoute] int id,
+        [FromToken] int growerId,
         CancellationToken cancellationToken = default)
     {
-        var result = await interventionRequestQueryService.Handle(new GetInterventionRequestByIdQuery(id), cancellationToken);
+        var result = await interventionRequestQueryService.Handle(new GetInterventionRequestByIdQuery(id, growerId), cancellationToken);
 
         return InterventionActionResultAssembler.ToActionResult(
             this,
@@ -97,14 +101,14 @@ public class InterventionRequestsController(
     ///     Lists a grower's intervention requests, optionally narrowed to a
     ///     single plot (REQ-IREQ-2).
     /// </summary>
-    /// <param name="growerId">The grower id.</param>
+    /// <param name="growerId">The authenticated caller's id, derived from the token.</param>
     /// <param name="plotId">Optional plot id filter.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <response code="200">Requests returned (possibly empty).</response>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<InterventionRequestResource>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetInterventionRequests(
-        [FromQuery] int growerId,
+        [FromToken] int growerId,
         [FromQuery] long? plotId,
         CancellationToken cancellationToken = default)
     {
@@ -124,6 +128,7 @@ public class InterventionRequestsController(
     ///     request's current state.
     /// </remarks>
     /// <param name="id">The intervention request id.</param>
+    /// <param name="growerId">The authenticated caller's id, derived from the token.</param>
     /// <param name="resource">The update payload.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <response code="200">Request declined.</response>
@@ -135,6 +140,7 @@ public class InterventionRequestsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateInterventionRequest(
         [FromRoute] int id,
+        [FromToken] int growerId,
         [FromBody] DeclineInterventionRequestResource resource,
         CancellationToken cancellationToken = default)
     {
@@ -150,7 +156,72 @@ public class InterventionRequestsController(
         }
 
         var result = await interventionRequestCommandService.Handle(
-            new DeclineInterventionRequestCommand(id, resource.DeclineReason), cancellationToken);
+            new DeclineInterventionRequestCommand(id, resource.DeclineReason, growerId), cancellationToken);
+
+        return InterventionActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            entity => Ok(InterventionRequestResourceFromEntityAssembler.ToResourceFromEntity(entity)));
+    }
+
+    /// <summary>
+    ///     The assigned specialist verifies (takes on) the request, moving
+    ///     it out of their pending inbox while a proposal is prepared
+    ///     (specialist-dashboard-parity).
+    /// </summary>
+    /// <param name="id">The intervention request id.</param>
+    /// <param name="specialistId">The authenticated caller's id, derived from the token.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Request verified (status <c>AWAITING_RESPONSE</c>).</response>
+    /// <response code="404">Request not found, or not assigned to the caller.</response>
+    [HttpPost("{id:int}/verifications")]
+    [ProducesResponseType(typeof(InterventionRequestResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> VerifyInterventionRequest(
+        [FromRoute] int id,
+        [FromToken] int specialistId,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await interventionRequestCommandService.Handle(
+            new VerifyInterventionRequestCommand(id, specialistId), cancellationToken);
+
+        return InterventionActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            entity => Ok(InterventionRequestResourceFromEntityAssembler.ToResourceFromEntity(entity)));
+    }
+
+    /// <summary>
+    ///     The assigned specialist declines the request. Distinct from the
+    ///     grower-side decline (<c>PATCH /{id}</c>): here the actor is the
+    ///     specialist, and a default reason is used when none is provided
+    ///     (specialist-dashboard-parity).
+    /// </summary>
+    /// <param name="id">The intervention request id.</param>
+    /// <param name="specialistId">The authenticated caller's id, derived from the token.</param>
+    /// <param name="resource">Optional decline payload (<c>reason</c>).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Request declined.</response>
+    /// <response code="404">Request not found, or not assigned to the caller.</response>
+    [HttpPost("{id:int}/declines")]
+    [ProducesResponseType(typeof(InterventionRequestResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeclineInterventionRequestAsSpecialist(
+        [FromRoute] int id,
+        [FromToken] int specialistId,
+        [FromBody] SpecialistDeclineResource? resource,
+        CancellationToken cancellationToken = default)
+    {
+        var reason = string.IsNullOrWhiteSpace(resource?.Reason)
+            ? "Declined by specialist"
+            : resource.Reason;
+
+        var result = await interventionRequestCommandService.Handle(
+            new DeclineInterventionRequestAsSpecialistCommand(id, reason, specialistId), cancellationToken);
 
         return InterventionActionResultAssembler.ToActionResult(
             this,

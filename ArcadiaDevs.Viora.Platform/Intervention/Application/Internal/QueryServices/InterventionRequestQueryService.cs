@@ -22,8 +22,10 @@ public class InterventionRequestQueryService(IInterventionRequestRepository inte
         try
         {
             var request = await interventionRequestRepository.FindByIdAsync(query.Id, cancellationToken);
-            if (request is null)
+            if (request is null || request.GrowerId != query.GrowerId)
             {
+                // A non-owner sees the same NotFound as a genuinely missing request —
+                // existence isn't leaked to callers who don't own it.
                 return new Result<InterventionRequest, Error>.Failure(InterventionErrors.NotFound);
             }
 

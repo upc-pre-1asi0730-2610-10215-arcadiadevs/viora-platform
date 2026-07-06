@@ -93,7 +93,77 @@ public class InterventionRequestCommandService(
         try
         {
             var request = await interventionRequestRepository.FindByIdAsync(command.Id, cancellationToken);
-            if (request is null)
+            if (request is null || request.GrowerId != command.GrowerId)
+            {
+                return new Result<InterventionRequest, Error>.Failure(InterventionErrors.NotFound);
+            }
+
+            request.Decline(command.DeclineReason);
+
+            interventionRequestRepository.Update(request);
+            await unitOfWork.CompleteAsync(cancellationToken);
+
+            return new Result<InterventionRequest, Error>.Success(request);
+        }
+        catch (ArgumentException)
+        {
+            return new Result<InterventionRequest, Error>.Failure(InterventionErrors.ValidationError);
+        }
+        catch (OperationCanceledException)
+        {
+            return new Result<InterventionRequest, Error>.Failure(InterventionErrors.OperationCancelled);
+        }
+        catch (DbUpdateException)
+        {
+            return new Result<InterventionRequest, Error>.Failure(InterventionErrors.DatabaseError);
+        }
+        catch (Exception)
+        {
+            return new Result<InterventionRequest, Error>.Failure(InterventionErrors.InternalServerError);
+        }
+    }
+
+    public async Task<Result<InterventionRequest, Error>> Handle(
+        VerifyInterventionRequestCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var request = await interventionRequestRepository.FindByIdAsync(command.Id, cancellationToken);
+            if (request is null || request.SpecialistId != command.SpecialistId)
+            {
+                return new Result<InterventionRequest, Error>.Failure(InterventionErrors.NotFound);
+            }
+
+            request.Verify();
+
+            interventionRequestRepository.Update(request);
+            await unitOfWork.CompleteAsync(cancellationToken);
+
+            return new Result<InterventionRequest, Error>.Success(request);
+        }
+        catch (OperationCanceledException)
+        {
+            return new Result<InterventionRequest, Error>.Failure(InterventionErrors.OperationCancelled);
+        }
+        catch (DbUpdateException)
+        {
+            return new Result<InterventionRequest, Error>.Failure(InterventionErrors.DatabaseError);
+        }
+        catch (Exception)
+        {
+            return new Result<InterventionRequest, Error>.Failure(InterventionErrors.InternalServerError);
+        }
+    }
+
+    public async Task<Result<InterventionRequest, Error>> Handle(
+        DeclineInterventionRequestAsSpecialistCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var request = await interventionRequestRepository.FindByIdAsync(command.Id, cancellationToken);
+            if (request is null || request.SpecialistId != command.SpecialistId)
             {
                 return new Result<InterventionRequest, Error>.Failure(InterventionErrors.NotFound);
             }

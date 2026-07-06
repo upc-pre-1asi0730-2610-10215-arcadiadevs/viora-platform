@@ -6,4 +6,6 @@ namespace ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Commands;
 ///     (409 otherwise). Side-effects the parent
 ///     <see cref="Aggregates.InterventionRequest" /> to <c>ACCEPTED</c>.
 /// </summary>
-public record AcceptServiceProposalCommand(int Id);
+/// <param name="Id">The service proposal id.</param>
+/// <param name="GrowerId">The authenticated caller's id, derived from the token — enforced as the parent request's owner.</param>
+public record AcceptServiceProposalCommand(int Id, int GrowerId);

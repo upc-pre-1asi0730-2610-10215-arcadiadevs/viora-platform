@@ -77,16 +77,18 @@ public class ServiceProposalsController(
     ///     Lists service proposals for an intervention request (REQ-SP-4).
     /// </summary>
     /// <param name="requestId">The intervention request id.</param>
+    /// <param name="growerId">The authenticated caller's id, derived from the token — enforced as the request's owner.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <response code="200">Proposals returned (possibly empty).</response>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ServiceProposalResource>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetServiceProposals(
         [FromQuery] int requestId,
+        [FromToken] int growerId,
         CancellationToken cancellationToken = default)
     {
         var proposals = await serviceProposalQueryService.Handle(
-            new ListServiceProposalsByRequestQuery(requestId), cancellationToken);
+            new ListServiceProposalsByRequestQuery(requestId, growerId), cancellationToken);
 
         return Ok(proposals.Select(ServiceProposalResourceFromEntityAssembler.ToResourceFromEntity));
     }
@@ -103,6 +105,7 @@ public class ServiceProposalsController(
     ///     request terminal <c>DECLINED</c>, no re-routing).
     /// </remarks>
     /// <param name="id">The service proposal id.</param>
+    /// <param name="growerId">The authenticated caller's id, derived from the token — enforced as the parent request's owner.</param>
     /// <param name="resource">The update payload.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <response code="200">Proposal accepted/rejected.</response>
@@ -116,13 +119,14 @@ public class ServiceProposalsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> UpdateServiceProposal(
         [FromRoute] int id,
+        [FromToken] int growerId,
         [FromBody] UpdateServiceProposalResource resource,
         CancellationToken cancellationToken = default)
     {
         if (string.Equals(resource.Status, "ACCEPTED", StringComparison.OrdinalIgnoreCase))
         {
             var result = await serviceProposalCommandService.Handle(
-                new AcceptServiceProposalCommand(id), cancellationToken);
+                new AcceptServiceProposalCommand(id, growerId), cancellationToken);
 
             return InterventionActionResultAssembler.ToActionResult(
                 this,
@@ -135,7 +139,7 @@ public class ServiceProposalsController(
         if (string.Equals(resource.Status, "REJECTED", StringComparison.OrdinalIgnoreCase))
         {
             var result = await serviceProposalCommandService.Handle(
-                new RejectServiceProposalCommand(id), cancellationToken);
+                new RejectServiceProposalCommand(id, growerId), cancellationToken);
 
             return InterventionActionResultAssembler.ToActionResult(
                 this,
