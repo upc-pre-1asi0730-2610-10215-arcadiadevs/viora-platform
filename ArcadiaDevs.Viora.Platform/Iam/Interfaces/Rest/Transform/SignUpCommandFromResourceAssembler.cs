@@ -18,6 +18,7 @@ public static class SignUpCommandFromResourceAssembler
             resource.Email,
             resource.FullName,
             resource.Role,
-            resource.ReferralCode);
+            resource.ReferralCode,
+            resource.Phone);
     }
 }

@@ -66,6 +66,13 @@ public class UserCommandService(
         if (role == null)
             return new Result<User?, Error>.Failure(IamErrors.InvalidRoleName);
 
+        // A specialist account needs a reachable contact number for producers
+        // to coordinate interventions — required at sign-up, not optional
+        // profile metadata, for this role only.
+        if (string.Equals(roleName, "Specialist", StringComparison.OrdinalIgnoreCase)
+            && string.IsNullOrWhiteSpace(command.Phone))
+            return new Result<User?, Error>.Failure(IamErrors.SpecialistPhoneRequired);
+
         // Hash the password
         var passwordHash = hashingService.HashPassword(command.Password);
 
@@ -90,6 +97,7 @@ public class UserCommandService(
         // still exists; EnsureProfile is idempotent so callers can retry.
         await profileContextFacade.EnsureProfile(
             user.Id, command.FullName, command.Email,
+            phone: command.Phone,
             ct: cancellationToken);
 
         // REQ-REF-6: grant the referral reward to the code's OWNER (not this
