@@ -41,7 +41,13 @@ public class ProfileCommandService(
                 command.Language,
                 command.Location,
                 command.SpecialtyArea,
-                command.PhotoUrl);
+                command.PhotoUrl,
+                command.Latitude,
+                command.Longitude,
+                command.ServiceRadiusKm,
+                command.ServiceTags,
+                command.Availability,
+                command.ShowProBadge ?? false);
 
             await profileRepository.AddAsync(profile, ct);
             created = true;
@@ -57,7 +63,13 @@ public class ProfileCommandService(
                 command.Language,
                 command.Location,
                 command.SpecialtyArea,
-                command.PhotoUrl);
+                command.PhotoUrl,
+                command.Latitude,
+                command.Longitude,
+                command.ServiceRadiusKm,
+                command.ServiceTags,
+                command.Availability,
+                command.ShowProBadge);
 
             profileRepository.Update(existing);
             profile = existing;

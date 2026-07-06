@@ -2,6 +2,17 @@ using ArcadiaDevs.Viora.Platform.Profile.Domain.Model.ValueObjects;
 
 namespace ArcadiaDevs.Viora.Platform.Profile.Interfaces.Acl;
 
+public record SpecialistProfileSummary(
+    int UserId,
+    string DisplayName,
+    string? PhotoUrl,
+    double? Latitude,
+    double? Longitude,
+    double? ServiceRadiusKm,
+    string? ServiceTags,
+    ESpecialistAvailability? Availability,
+    bool ShowProBadge);
+
 /// <summary>
 ///     ACL facade for cross-boundary profile provisioning.
 /// </summary>
@@ -59,4 +70,10 @@ public interface IProfileContextFacade
     Task<string?> GetDisplayNameAsync(int userId, CancellationToken ct = default);
 
     Task<string?> GetPhotoUrlAsync(int userId, CancellationToken ct = default);
+
+    Task<IReadOnlyList<SpecialistProfileSummary>> FindSpecialistProfilesAsync(CancellationToken ct = default);
+
+    Task<SpecialistProfileSummary?> GetSpecialistProfileAsync(int userId, CancellationToken ct = default);
+
+    Task SetProBadgeAsync(int userId, bool enabled, CancellationToken ct = default);
 }

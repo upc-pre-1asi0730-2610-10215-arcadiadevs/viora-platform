@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ArcadiaDevs.Viora.Platform.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260706221500_AddProfileMarketplaceAttributes")]
+    partial class AddProfileMarketplaceAttributes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -975,10 +978,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("alert_id");
 
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
                     b.Property<string>("DeclineReason")
                         .HasColumnType("text")
                         .HasColumnName("decline_reason");
@@ -1010,10 +1009,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)")
                         .HasColumnName("status");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
 
                     b.HasKey("Id")
                         .HasName("p_k_intervention_requests");
@@ -1879,9 +1874,13 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
 
                             b1.Property<string>("ApplicationMethod")
                                 .IsRequired()
-                                .HasMaxLength(30)
-                                .HasColumnType("character varying(30)")
+                                .HasColumnType("text")
                                 .HasColumnName("application_method");
+
+                            b1.Property<string>("PreHarvestInterval")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("pre_harvest_interval");
 
                             b1.Property<string>("Products")
                                 .IsRequired()
@@ -1893,6 +1892,11 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("required_ppe");
 
+                            b1.Property<string>("SprayVolume")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("spray_volume");
+
                             b1.HasKey("TreatmentPrescriptionId")
                                 .HasName("p_k_treatment_prescriptions");
 
@@ -1901,58 +1905,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("TreatmentPrescriptionId")
                                 .HasConstraintName("f_k_treatment_prescriptions_treatment_prescriptions_id");
-
-                            b1.OwnsOne("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects.PreHarvestInterval", "PreHarvestInterval", b2 =>
-                                {
-                                    b2.Property<int>("AgrochemicalPrescriptionTreatmentPrescriptionId")
-                                        .HasColumnType("integer")
-                                        .HasColumnName("id");
-
-                                    b2.Property<int>("Days")
-                                        .HasColumnType("integer")
-                                        .HasColumnName("pre_harvest_interval_days");
-
-                                    b2.HasKey("AgrochemicalPrescriptionTreatmentPrescriptionId")
-                                        .HasName("p_k_treatment_prescriptions");
-
-                                    b2.ToTable("treatment_prescriptions");
-
-                                    b2.WithOwner()
-                                        .HasForeignKey("AgrochemicalPrescriptionTreatmentPrescriptionId")
-                                        .HasConstraintName("f_k_treatment_prescriptions_treatment_prescriptions_id");
-                                });
-
-                            b1.OwnsOne("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects.SprayVolume", "SprayVolume", b2 =>
-                                {
-                                    b2.Property<int>("AgrochemicalPrescriptionTreatmentPrescriptionId")
-                                        .HasColumnType("integer")
-                                        .HasColumnName("id");
-
-                                    b2.Property<int>("Amount")
-                                        .HasColumnType("integer")
-                                        .HasColumnName("spray_volume_amount");
-
-                                    b2.Property<string>("Unit")
-                                        .IsRequired()
-                                        .HasMaxLength(20)
-                                        .HasColumnType("character varying(20)")
-                                        .HasColumnName("spray_volume_unit");
-
-                                    b2.HasKey("AgrochemicalPrescriptionTreatmentPrescriptionId")
-                                        .HasName("p_k_treatment_prescriptions");
-
-                                    b2.ToTable("treatment_prescriptions");
-
-                                    b2.WithOwner()
-                                        .HasForeignKey("AgrochemicalPrescriptionTreatmentPrescriptionId")
-                                        .HasConstraintName("f_k_treatment_prescriptions_treatment_prescriptions_id");
-                                });
-
-                            b1.Navigation("PreHarvestInterval")
-                                .IsRequired();
-
-                            b1.Navigation("SprayVolume")
-                                .IsRequired();
                         });
 
                     b.OwnsOne("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects.FieldInspectionRecord", "FieldInspectionRecord", b1 =>

@@ -1,3 +1,5 @@
+using ArcadiaDevs.Viora.Platform.Profile.Domain.Model.ValueObjects;
+
 namespace ArcadiaDevs.Viora.Platform.Profile.Domain.Model.Commands;
 
 /// <summary>
@@ -12,4 +14,10 @@ public record CreateOrUpdateProfileCommand(
     string? Language,
     string? Location,
     string? SpecialtyArea,
-    string? PhotoUrl);
+    string? PhotoUrl,
+    double? Latitude,
+    double? Longitude,
+    double? ServiceRadiusKm,
+    string? ServiceTags,
+    ESpecialistAvailability? Availability,
+    bool? ShowProBadge);

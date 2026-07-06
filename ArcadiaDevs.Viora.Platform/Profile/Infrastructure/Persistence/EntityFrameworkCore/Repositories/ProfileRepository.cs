@@ -1,3 +1,4 @@
+using ArcadiaDevs.Viora.Platform.Profile.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Profile.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
@@ -17,5 +18,13 @@ public class ProfileRepository(AppDbContext context)
     {
         return await Context.Set<ProfileAggregate>()
             .FirstOrDefaultAsync(p => p.UserId == userId, ct);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<ProfileAggregate>> FindByRoleAsync(ProfileRole role, CancellationToken ct = default)
+    {
+        return await Context.Set<ProfileAggregate>()
+            .Where(p => p.Role == role)
+            .ToListAsync(ct);
     }
 }
