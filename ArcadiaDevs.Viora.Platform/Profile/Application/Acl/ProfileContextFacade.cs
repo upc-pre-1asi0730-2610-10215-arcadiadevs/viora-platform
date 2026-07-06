@@ -63,4 +63,18 @@ public class ProfileContextFacade(
         profileRepository.Remove(profile);
         await unitOfWork.CompleteAsync(ct);
     }
+
+    /// <inheritdoc />
+    public async Task<string?> GetDisplayNameAsync(int userId, CancellationToken ct = default)
+    {
+        var profile = await profileRepository.FindByUserIdAsync(userId, ct);
+        return profile?.FullName;
+    }
+
+    /// <inheritdoc />
+    public async Task<string?> GetPhotoUrlAsync(int userId, CancellationToken ct = default)
+    {
+        var profile = await profileRepository.FindByUserIdAsync(userId, ct);
+        return profile?.PhotoUrl;
+    }
 }
