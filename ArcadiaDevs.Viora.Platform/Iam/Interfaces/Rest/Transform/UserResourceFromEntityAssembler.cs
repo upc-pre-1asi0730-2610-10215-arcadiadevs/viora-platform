@@ -12,6 +12,6 @@ public static class UserResourceFromEntityAssembler
 {
     public static UserResource ToResource(this User user)
     {
-        return new UserResource(user.Id, user.Username, user.Active, user.Verified);
+        return new UserResource(user.Id, user.Username);
     }
 }
