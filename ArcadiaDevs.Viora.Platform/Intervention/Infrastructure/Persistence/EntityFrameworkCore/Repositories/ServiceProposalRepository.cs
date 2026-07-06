@@ -20,4 +20,13 @@ public class ServiceProposalRepository(AppDbContext context)
             .Where(sp => sp.InterventionRequestId == interventionRequestId)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<ServiceProposal>> FindBySpecialistIdAsync(
+        int specialistId,
+        CancellationToken cancellationToken = default)
+    {
+        return await Context.Set<ServiceProposal>()
+            .Where(sp => sp.SpecialistId == specialistId)
+            .ToListAsync(cancellationToken);
+    }
 }

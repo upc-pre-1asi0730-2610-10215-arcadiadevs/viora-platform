@@ -1,4 +1,5 @@
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Aggregates;
+using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
 
 namespace ArcadiaDevs.Viora.Platform.Intervention.Domain.Repositories;
@@ -15,5 +16,15 @@ public interface IInterventionRequestRepository : IBaseRepository<InterventionRe
     Task<IReadOnlyList<InterventionRequest>> ListByGrowerIdAsync(
         int growerId,
         long? plotId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Lists requests assigned to a specialist, filtered by status
+    ///     (specialist-dashboard-parity — mirrors OS's
+    ///     <c>findBySpecialistIdAndStatus</c>).
+    /// </summary>
+    Task<IReadOnlyList<InterventionRequest>> FindBySpecialistIdAndStatusAsync(
+        int specialistId,
+        InterventionStatus status,
         CancellationToken cancellationToken = default);
 }
