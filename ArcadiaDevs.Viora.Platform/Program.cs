@@ -390,6 +390,26 @@ builder.Services.AddScoped<IInterventionRequestMetricsQueryService, Intervention
 builder.Services.AddScoped<IPlanRepository, PlanRepository>();
 builder.Services.AddScoped<IPlanCommandService, PlanCommandService>();
 builder.Services.AddScoped<IPlanQueryService, PlanQueryService>();
+// WU2 of 9 (subscription, obs #319): Subscription slice. FK-validates
+// userId via IIamContextFacade (already registered by the Iam DI block)
+// and planCode via IPlanRepository (registered above).
+builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+builder.Services.AddScoped<ISubscriptionCommandService, SubscriptionCommandService>();
+builder.Services.AddScoped<ISubscriptionQueryService, SubscriptionQueryService>();
+// WU3 of 9 (payment-method, obs #319): PaymentMethod slice. No
+// IIamContextFacade dependency — userId is internally derived (REQ-CC-2
+// exemption clause), no public write endpoint (upsert is invoked from
+// WU6's webhook reconciliation).
+builder.Services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
+builder.Services.AddScoped<IPaymentMethodCommandService, PaymentMethodCommandService>();
+builder.Services.AddScoped<IPaymentMethodQueryService, PaymentMethodQueryService>();
+// WU5 of 9 (payment-gateway-port, obs #319): IPaymentGateway port + the
+// MercadoPagoPaymentGatewayAdapter, composing the raw-HttpClient-registration
+// shape of AgroMonitoringApiClient with the Options+Validator shape of
+// AgroMonitoringWeatherDataService/AgroMonitoringWeatherOptionsValidator
+// (design's PaymentGateway Port Design section). Off by default
+// (MercadoPagoOptions.Enabled=false) — builds/runs with zero real
+// credentials; POST /checkouts returns 503 until configured.
 
 // Profile Bounded Context Injection Configuration
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
