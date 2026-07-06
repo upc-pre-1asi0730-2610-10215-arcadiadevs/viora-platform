@@ -11,4 +11,5 @@ public record CreateOrUpdateProfileCommand(
     string? JobTitle,
     string? Language,
     string? Location,
-    string? SpecialtyArea);
+    string? SpecialtyArea,
+    string? PhotoUrl);

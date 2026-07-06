@@ -71,5 +71,9 @@ public class ProfileConfiguration : IEntityTypeConfiguration<ProfileAggregate>
         builder.Property(p => p.SpecialtyArea)
             .HasColumnName("specialty_area")
             .HasMaxLength(100);
+
+        builder.Property(p => p.PhotoUrl)
+            .HasColumnName("photo_url")
+            .HasMaxLength(500);
     }
 }

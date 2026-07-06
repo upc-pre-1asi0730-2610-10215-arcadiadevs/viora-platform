@@ -31,4 +31,15 @@ public interface IIamContextFacade
      * <returns>The list of role names (empty list if user not found; never <c>null</c>)</returns>
      */
     Task<IReadOnlyList<string>> GetUserRolesAsync(int userId, CancellationToken cancellationToken = default);
+
+    /**
+     * <summary>
+     *     Updates the account's display name so it stays in sync with the profile.
+     * </summary>
+     * <param name="userId">The account to update</param>
+     * <param name="fullName">The new display name</param>
+     * <param name="cancellationToken">The cancellation token</param>
+     * <remarks>No-op if the user does not exist (does not throw).</remarks>
+     */
+    Task UpdateFullNameAsync(int userId, string fullName, CancellationToken cancellationToken = default);
 }
