@@ -31,4 +31,32 @@ public class SurveillanceContextFacade(
 
         return true;
     }
+
+    // inheritedDoc
+    public async Task<AlertCardSummary?> GetAlertCardSummaryAsync(long alertId, CancellationToken cancellationToken = default)
+    {
+        var alert = await alertRepository.FindByIdAsync((int)alertId, cancellationToken);
+
+        if (alert is null)
+        {
+            logger.LogWarning("Alert {AlertId} was not found while resolving a cross-context reference.", alertId);
+            return null;
+        }
+
+        return new AlertCardSummary(alert.Severity.ToString(), alert.Title);
+    }
+
+    // inheritedDoc
+    public async Task<AlertMatchContext?> GetAlertMatchContextAsync(long alertId, CancellationToken cancellationToken = default)
+    {
+        var alert = await alertRepository.FindByIdAsync((int)alertId, cancellationToken);
+
+        if (alert is null)
+        {
+            logger.LogWarning("Alert {AlertId} was not found while resolving a cross-context reference.", alertId);
+            return null;
+        }
+
+        return new AlertMatchContext(alert.PlotId.Value, alert.Type.ToString());
+    }
 }
