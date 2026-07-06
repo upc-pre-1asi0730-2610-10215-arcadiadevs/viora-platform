@@ -15,7 +15,7 @@ public record SubmitServiceProposalCommand(
     int SpecialistId,
     string ServiceTitle,
     string DurationLabel,
-    string Scope,
+    IReadOnlyList<string> Scope,
     DateOnly ProposedDate,
     decimal CostAmount,
     string CostCurrency,
