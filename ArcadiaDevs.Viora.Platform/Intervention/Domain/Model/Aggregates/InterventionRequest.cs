@@ -19,7 +19,7 @@ namespace ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Aggregates;
 ///     self-guarded against the current status, per REQ-IREQ-3's
 ///     established no-guard convention for this aggregate.
 /// </remarks>
-public class InterventionRequest
+public partial class InterventionRequest
 {
     public int Id { get; }
 
@@ -112,6 +112,17 @@ public class InterventionRequest
 
         Status = InterventionStatus.DECLINED;
         DeclineReason = declineReason;
+    }
+
+    /// <summary>
+    ///     The specialist verifies (takes on) the request, moving it out of
+    ///     their pending inbox while a proposal is prepared (matches OS's
+    ///     <c>verify()</c> — no self-guard, same no-guard convention as
+    ///     <see cref="Decline" />).
+    /// </summary>
+    public void Verify()
+    {
+        Status = InterventionStatus.AWAITING_RESPONSE;
     }
 
     /// <summary>
