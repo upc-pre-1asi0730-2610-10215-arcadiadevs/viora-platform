@@ -43,7 +43,7 @@ public class AlertsController(
     ///     Any unknown sort key falls back to <c>recent</c>.
     ///     Returns <c>[]</c> (200) on an empty timeline, not 500.
     /// </remarks>
-    /// <param name="userId">The ID of the user.</param>
+    /// <param name="userId">The authenticated caller's id, derived from the token.</param>
     /// <param name="sort">Sorting criteria (e.g. <c>recent</c>, <c>severity</c>, <c>type</c>).</param>
     /// <param name="limit">The maximum number of alerts to return.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
@@ -51,7 +51,7 @@ public class AlertsController(
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<AlertSummaryResource>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAlerts(
-        [FromQuery] long userId,
+        [FromToken] long userId,
         [FromQuery] string? sort = null,
         [FromQuery] int limit = 3,
         CancellationToken cancellationToken = default)
@@ -78,6 +78,7 @@ public class AlertsController(
     ///     the historical timeline records.
     /// </remarks>
     /// <param name="alertId">The ID of the alert.</param>
+    /// <param name="userId">The authenticated caller's id, derived from the token.</param>
     /// <param name="view">Projection view. Supported values: <c>timeline</c>.</param>
     /// <response code="200">Alert found or timeline retrieved</response>
     /// <response code="404">Alert not found</response>
@@ -86,9 +87,10 @@ public class AlertsController(
     [ProducesResponseType(typeof(EmptyResource), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAlertById(
         [FromRoute] long alertId,
+        [FromToken] long userId,
         [FromQuery] string? view = null)
     {
-        var alert = await alertQueryService.Handle(new GetAlertByIdQuery(alertId));
+        var alert = await alertQueryService.Handle(new GetAlertByIdQuery(alertId, userId));
         if (alert is null)
         {
             return NotFound(new EmptyResource());
