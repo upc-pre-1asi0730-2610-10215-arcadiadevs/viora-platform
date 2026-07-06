@@ -21,7 +21,7 @@ public class SurveillanceContextFacade(
     // inheritedDoc
     public async Task<bool> AlertExistsAsync(long alertId, CancellationToken cancellationToken = default)
     {
-        var alert = await alertRepository.FindByIdAsync((int)alertId, cancellationToken);
+        var alert = await alertRepository.FindByIdAsync(alertId, cancellationToken);
 
         if (alert is null)
         {
@@ -35,7 +35,7 @@ public class SurveillanceContextFacade(
     // inheritedDoc
     public async Task<AlertCardSummary?> GetAlertCardSummaryAsync(long alertId, CancellationToken cancellationToken = default)
     {
-        var alert = await alertRepository.FindByIdAsync((int)alertId, cancellationToken);
+        var alert = await alertRepository.FindByIdAsync(alertId, cancellationToken);
 
         if (alert is null)
         {
@@ -49,7 +49,7 @@ public class SurveillanceContextFacade(
     // inheritedDoc
     public async Task<AlertMatchContext?> GetAlertMatchContextAsync(long alertId, CancellationToken cancellationToken = default)
     {
-        var alert = await alertRepository.FindByIdAsync((int)alertId, cancellationToken);
+        var alert = await alertRepository.FindByIdAsync(alertId, cancellationToken);
 
         if (alert is null)
         {

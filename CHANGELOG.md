@@ -5,6 +5,22 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.34.0] - 2026-07-06
+
+### changed
+- Intervention's `Specialist` is no longer a stored/seeded fake catalog — it is now a transient projection over real `Profile` (Role=Specialist) data. `SpecialistCommandService`'s demo seed is a documented no-op; specialist identity is unified on `ProfileUserId` everywhere (retiring the EF `Specialist.Id` PK as a public concept — `Specialist` now only stores `Id`/`ProfileUserId`/`Whatsapp`, matching-related columns dropped via `RemoveSpecialistStoredMatchingFields`)
+- `SpecialistMatchingPolicy` rewritten: ranks live `Profile` data by service radius (in-radius first, out-of-radius fallback), tag relevance (hardcoded threat-keyword map, case-insensitive substring match against `ServiceTags`), availability, and real plot-centroid distance — composed from the Profile/Surveillance/Agronomic ACLs added in phases 1-2. `SuccessRate`/`DistanceKm` are nullable on `SpecialistPublicProfile`/`SpecialistResource` (deliberate null, not fabricated, until Phase 5's success-rate derivation)
+
+### fixed
+- `Billing`'s `ModelBuilderExtensions.ApplyBillingConfiguration` never registered `ReferralCodeConfiguration` despite the entity/repository/controller being fully implemented — EF's model didn't know about `referral_codes`
+- `AppDbContextModelSnapshot.cs` had been stale since the `StructuredAgrochemicalPrescriptionAndScope` migration (hand-written without regenerating the snapshot), missing the `AgrochemicalPrescription`/`SprayVolume`/`PreHarvestInterval` owned-type mappings and `InterventionRequest.CreatedAt`/`UpdatedAt`
+- `BaseRepository<TEntity>.FindByIdAsync(int)` is incompatible with `long`/bigint-keyed aggregates — every caller resolving an `Alert` (whose `Id` is `long`) by narrowing it to `int` first threw `ArgumentException` at runtime. This had been silently broken since Phase 1 for the new Surveillance ACL methods, and pre-existed for the already-shipped `AlertQueryService.GetAlertByIdQuery` handler and every `AlertCommandService` state-machine transition (confirm/dismiss/escalate/resolve/link-report/mark-reviewed/add-timeline-record). Added a proper `long`-typed `FindByIdAsync` overload to `IAlertRepository`/`AlertRepository`
+
+### notes
+- Phase 4 of the specialist-marketplace/payment-first execution plan (`docs/implementation-plan-specialist-marketplace-and-payment-first-2026-07-06.md`) — the largest/highest-risk phase, an aggregate redesign rather than an additive change
+- Verified end-to-end against a local Postgres: seeded a plot/alert/4 specialist profiles, signed up a real user, hit `GET /api/v1/specialist-candidates` and `GET /api/v1/specialists/{id}` through the live HTTP pipeline — ranking order matched the algorithm exactly
+- Feature-first per standing convention — no tests written; deferred to Phase 8
+
 ## [1.33.0] - 2026-07-06
 
 ### added

@@ -4,6 +4,7 @@ using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Profile.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
@@ -19,7 +20,7 @@ namespace ArcadiaDevs.Viora.Platform.Intervention.Application.Internal.CommandSe
 public class ServiceProposalCommandService(
     IServiceProposalRepository serviceProposalRepository,
     IInterventionRequestRepository interventionRequestRepository,
-    ISpecialistRepository specialistRepository,
+    IProfileContextFacade profileContextFacade,
     IUnitOfWork unitOfWork)
     : IServiceProposalCommandService
 {
@@ -38,8 +39,8 @@ public class ServiceProposalCommandService(
                 return new Result<ServiceProposal, Error>.Failure(InterventionErrors.NotFound);
             }
 
-            var specialist = await specialistRepository.FindByIdAsync(command.SpecialistId, cancellationToken);
-            if (specialist is null)
+            var specialistProfile = await profileContextFacade.GetSpecialistProfileAsync(command.SpecialistId, cancellationToken);
+            if (specialistProfile is null)
             {
                 return new Result<ServiceProposal, Error>.Failure(InterventionErrors.NotFound);
             }

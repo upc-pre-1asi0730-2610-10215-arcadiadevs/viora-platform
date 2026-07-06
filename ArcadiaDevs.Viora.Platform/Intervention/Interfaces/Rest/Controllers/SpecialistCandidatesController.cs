@@ -44,11 +44,15 @@ public class SpecialistCandidatesController(
     ///     Get ranked specialist candidates for an alert.
     /// </summary>
     /// <remarks>
-    ///     Ranks by availability → successRate desc → distanceKm asc,
-    ///     capped to <paramref name="limit" /> (default <see cref="DefaultCandidateLimit" />,
+    ///     Ranks live <c>Profile</c> data via <see cref="SpecialistMatchingPolicy" />:
+    ///     in-radius specialists first (by tag relevance → availability →
+    ///     distance), then out-of-radius specialists as fallback (by
+    ///     distance → relevance → availability), capped to
+    ///     <paramref name="limit" /> (default <see cref="DefaultCandidateLimit" />,
     ///     max <see cref="MaxCandidateLimit" />). <paramref name="alertId" />
-    ///     is accepted as a reserved parameter (unused for ranking today,
-    ///     OS parity) — never rejected.
+    ///     resolves the alert's plot + threat type (via the Surveillance
+    ///     ACL) that drives distance and tag-relevance ranking; when it does
+    ///     not resolve, results fall back to availability-only ranking.
     /// </remarks>
     /// <param name="alertId">Reserved parameter, currently unused for ranking.</param>
     /// <param name="limit">The maximum number of candidates to return (default 3, capped at 50).</param>

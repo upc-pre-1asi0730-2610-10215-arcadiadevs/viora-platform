@@ -29,7 +29,7 @@ public class SpecialistsController(
     /// <summary>
     ///     Get a specialist's public profile.
     /// </summary>
-    /// <param name="id">The specialist id.</param>
+    /// <param name="id">The specialist's <c>ProfileUserId</c> (not the EF <c>Specialist.Id</c> PK — specialists are resolved as a projection over <c>Profile</c>).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <response code="200">Public profile returned (no contact fields).</response>
     /// <response code="404">Specialist not found.</response>
@@ -63,7 +63,7 @@ public class SpecialistsController(
     ///     <c>RequestAuthorizationMiddleware</c>, same pattern as
     ///     <c>UsersController.GetMe</c>.
     /// </remarks>
-    /// <param name="id">The specialist id.</param>
+    /// <param name="id">The specialist's <c>ProfileUserId</c> (not the EF <c>Specialist.Id</c> PK).</param>
     /// <param name="requestId">The intervention request id gating access.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <response code="200">Contact info returned.</response>

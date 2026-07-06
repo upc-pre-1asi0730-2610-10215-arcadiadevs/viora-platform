@@ -7,8 +7,8 @@ public record SpecialistResource(
     int Id,
     string FullName,
     string Role,
-    double SuccessRate,
+    double? SuccessRate,
     int CaseCount,
-    double DistanceKm,
+    double? DistanceKm,
     IReadOnlyList<string> Tags,
     string Availability);
