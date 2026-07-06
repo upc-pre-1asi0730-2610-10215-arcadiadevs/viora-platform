@@ -340,7 +340,6 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUserQueryService, UserQueryService>();
 builder.Services.AddScoped<IRoleQueryService, RoleQueryService>();
-builder.Services.AddScoped<IUserCommandService, UserCommandService>();
 builder.Services.AddScoped<IHashingService, HashingService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IIamContextFacade, IamContextFacade>();

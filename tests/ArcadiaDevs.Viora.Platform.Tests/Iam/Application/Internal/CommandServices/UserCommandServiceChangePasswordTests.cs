@@ -28,22 +28,11 @@ public class UserCommandServiceChangePasswordTests
     private readonly IRoleRepository    _roleRepository    = Substitute.For<IRoleRepository>();
     private readonly IProfileContextFacade _profileContextFacade = Substitute.For<IProfileContextFacade>();
     private readonly IBillingContextFacade _billingContextFacade = Substitute.For<IBillingContextFacade>();
-    private readonly IVerificationTokenRepository _verificationTokenRepository =
-        Substitute.For<IVerificationTokenRepository>();
-    private readonly IUserSessionRepository _userSessionRepository = Substitute.For<IUserSessionRepository>();
-    private readonly IEmailService      _emailService      = Substitute.For<IEmailService>();
     private readonly IClock             _clock             = Substitute.For<IClock>();
     private readonly IStringLocalizer<ErrorMessages> _errorLocalizer =
         Substitute.For<IStringLocalizer<ErrorMessages>>();
     private readonly UserCommandService _sut;
-
-    public UserCommandServiceChangePasswordTests()
-    {
-        _sut = new UserCommandService(
-            _userRepository, _unitOfWork, _tokenService, _hashingService, _roleRepository, _profileContextFacade,
-            _billingContextFacade, _verificationTokenRepository, _userSessionRepository, _emailService, _clock,
-            _errorLocalizer);
-    }
+    
 
     /// <summary>
     ///     Happy path: correct current password + new password meets strength requirement → success.
