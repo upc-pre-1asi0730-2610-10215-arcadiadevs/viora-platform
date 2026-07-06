@@ -24,6 +24,7 @@ public static class ProfileResourceFromEntityAssembler
             profile.JobTitle,
             profile.Language,
             profile.Location,
-            profile.SpecialtyArea);
+            profile.SpecialtyArea,
+            profile.PhotoUrl);
     }
 }

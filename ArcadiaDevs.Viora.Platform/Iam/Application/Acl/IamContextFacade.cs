@@ -1,5 +1,6 @@
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Iam.Interfaces.Acl;
+using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
 
 namespace ArcadiaDevs.Viora.Platform.Iam.Application.Acl;
 
@@ -13,7 +14,7 @@ namespace ArcadiaDevs.Viora.Platform.Iam.Application.Acl;
  *     or entity type leaks across the boundary.
  * </remarks>
  */
-public class IamContextFacade(IUserRepository userRepository) : IIamContextFacade
+public class IamContextFacade(IUserRepository userRepository, IUnitOfWork unitOfWork) : IIamContextFacade
 {
     /// <inheritdoc />
     public async Task<bool> ExistsUserAsync(int userId, CancellationToken ct = default)
@@ -26,5 +27,17 @@ public class IamContextFacade(IUserRepository userRepository) : IIamContextFacad
     public async Task<IReadOnlyList<string>> GetUserRolesAsync(int userId, CancellationToken ct = default)
     {
         return await userRepository.GetRolesByUserIdAsync(userId, ct);
+    }
+
+    /// <inheritdoc />
+    public async Task UpdateFullNameAsync(int userId, string fullName, CancellationToken cancellationToken = default)
+    {
+        var user = await userRepository.FindByIdAsync(userId, cancellationToken);
+        if (user is null)
+            return;
+
+        user.UpdateFullName(fullName);
+        userRepository.Update(user);
+        await unitOfWork.CompleteAsync(cancellationToken);
     }
 }
