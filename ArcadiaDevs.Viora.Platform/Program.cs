@@ -343,6 +343,7 @@ builder.Services.AddScoped<IHashingService, HashingService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IIamContextFacade, IamContextFacade>();
 
+
 // Intervention Bounded Context Injection Configuration
 // WU1 of 8 (specialist-and-matching, obs #268): Specialist slice.
 builder.Services.AddScoped<ISpecialistRepository, SpecialistRepository>();
@@ -438,6 +439,12 @@ builder.Services.AddSingleton<IValidateOptions<MercadoPagoOptions>, MercadoPagoO
 builder.Services.AddOptionsWithValidateOnStart<MercadoPagoOptions>()
     .Bind(builder.Configuration.GetSection(MercadoPagoOptions.SectionName));
 builder.Services.AddScoped<ICheckoutCommandService, CheckoutCommandService>();
+// WU6 of 9 (checkout-and-webhook, obs #319): webhook reconciliation.
+// MercadoPagoWebhookController (POST /webhooks/mercado-pago, [AllowAnonymous])
+// is the sole caller. No new EF migration this slice (no new persisted
+// entity — reconciliation only reads/writes Invoice/Subscription/
+// PaymentMethod, all already registered above).
+builder.Services.AddScoped<IWebhookReconciliationCommandService, WebhookReconciliationCommandService>();
 
 // Profile Bounded Context Injection Configuration
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
