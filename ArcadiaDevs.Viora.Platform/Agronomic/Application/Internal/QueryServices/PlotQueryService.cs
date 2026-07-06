@@ -30,6 +30,9 @@ public class PlotQueryService(
         if (plot is null || plot.IsDeleted)
             return new Result<PlotResource, Error>.Failure(AgronomicErrors.PlotNotFound);
 
+        if (!plot.BelongsTo(query.UserId))
+            return new Result<PlotResource, Error>.Failure(AgronomicErrors.PlotOwnership);
+
         var resource = MapToPlotResource(plot, clock);
 
         return new Result<PlotResource, Error>.Success(resource);

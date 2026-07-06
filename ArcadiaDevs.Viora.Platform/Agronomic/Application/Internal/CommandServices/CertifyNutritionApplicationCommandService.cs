@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using ArcadiaDevs.Viora.Platform.Agronomic.Application.CommandServices;
+using ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Errors;
@@ -18,6 +19,7 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.CommandServi
 
 public class CertifyNutritionApplicationCommandService(
     IDynamicNutritionPlanRepository dynamicNutritionPlanRepository,
+    PlotOwnershipValidator plotOwnershipValidator,
     IUnitOfWork unitOfWork,
     IMediator mediator,
     ILogger<CertifyNutritionApplicationCommandService> logger) : ICertifyNutritionApplicationCommandService
@@ -30,6 +32,12 @@ public class CertifyNutritionApplicationCommandService(
             if (plan == null)
             {
                 return new Result<DynamicNutritionPlan, Error>.Failure(AgronomicErrors.PlanNotFound);
+            }
+
+            var ownershipResult = await plotOwnershipValidator.ValidateAsync((int)command.UserId, plan.PlotId, cancellationToken);
+            if (ownershipResult is Result<Plot, Error>.Failure ownershipFailure)
+            {
+                return new Result<DynamicNutritionPlan, Error>.Failure(AgronomicErrors.PlotOwnership);
             }
 
             var application = new NutritionApplication(
