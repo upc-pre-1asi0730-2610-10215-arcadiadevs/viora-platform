@@ -55,4 +55,8 @@ public interface IProfileContextFacade
     /// <param name="userId">The user id.</param>
     /// <param name="ct">The cancellation token.</param>
     Task DeleteByUserIdAsync(int userId, CancellationToken ct = default);
+
+    Task<string?> GetDisplayNameAsync(int userId, CancellationToken ct = default);
+
+    Task<string?> GetPhotoUrlAsync(int userId, CancellationToken ct = default);
 }
