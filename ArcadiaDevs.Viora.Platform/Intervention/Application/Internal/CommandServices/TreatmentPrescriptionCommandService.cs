@@ -127,13 +127,28 @@ public class TreatmentPrescriptionCommandService(
                 return new Result<TreatmentPrescription, Error>.Failure(InterventionErrors.NotFound);
             }
 
+            // Enum.Parse throws ArgumentException on an unrecognized literal,
+            // which the catch block below maps to InterventionErrors.ValidationError —
+            // same handling as the domain VOs' own constructor validation.
+            var applicationMethod = Enum.Parse<ApplicationMethod>(command.ApplicationMethod ?? string.Empty, ignoreCase: true);
+            var requiredPPE = (command.RequiredPPE ?? Array.Empty<string>())
+                .Select(ppe => Enum.Parse<PersonalProtectiveEquipment>(ppe, ignoreCase: true))
+                .ToList();
+            var products = (command.Products ?? Array.Empty<PrescribedProductCommandItem>())
+                .Select(p => new PrescribedProduct(
+                    p.ProductName,
+                    new Dosage(p.DosageAmount, p.DosageUnit),
+                    new ApplicationSessions(p.SessionsCount),
+                    p.TechnicalRecommendation ?? string.Empty))
+                .ToList();
+
             var agrochemicalPrescription = new AgrochemicalPrescription(
-                command.ApplicationMethod ?? string.Empty,
-                command.SprayVolume ?? string.Empty,
-                command.PreHarvestInterval ?? string.Empty,
+                applicationMethod,
+                new SprayVolume(command.SprayVolumeAmount ?? 0, command.SprayVolumeUnit ?? string.Empty),
+                new PreHarvestInterval(command.PreHarvestIntervalDays ?? 0),
                 command.AgronomistRecommendations ?? string.Empty,
-                command.RequiredPPE ?? string.Empty,
-                command.Products ?? Array.Empty<string>());
+                requiredPPE,
+                products);
 
             var prescribeResult = prescription.PrescribeAgrochemical(agrochemicalPrescription);
             if (prescribeResult is Result<Unit, Error>.Failure prescribeFailure)
