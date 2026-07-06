@@ -93,7 +93,7 @@ public class PlotCommandServiceDeletePlotTests
         var service = BuildService(plotRepository, unitOfWork, Substitute.For<ILogger<PlotCommandService>>());
 
         // Act
-        var result = await service.Handle(new DeletePlotCommand(plot.Id), CancellationToken.None);
+        var result = await service.Handle(new DeletePlotCommand(plot.Id, 1), CancellationToken.None);
 
         // Assert — Result is Success
         Assert.True(result.IsSuccess);
@@ -124,7 +124,7 @@ public class PlotCommandServiceDeletePlotTests
         var service = BuildService(plotRepository, unitOfWork, Substitute.For<ILogger<PlotCommandService>>());
 
         // Act
-        await service.Handle(new DeletePlotCommand(plot.Id), CancellationToken.None);
+        await service.Handle(new DeletePlotCommand(plot.Id, 1), CancellationToken.None);
 
         // Assert
         Assert.True(plot.IsDeleted);
@@ -147,7 +147,7 @@ public class PlotCommandServiceDeletePlotTests
         var service = BuildService(plotRepository, unitOfWork, Substitute.For<ILogger<PlotCommandService>>());
 
         // Act
-        var result = await service.Handle(new DeletePlotCommand(plot.Id), CancellationToken.None);
+        var result = await service.Handle(new DeletePlotCommand(plot.Id, 1), CancellationToken.None);
 
         // Assert — Result is Success
         Assert.True(result.IsSuccess);

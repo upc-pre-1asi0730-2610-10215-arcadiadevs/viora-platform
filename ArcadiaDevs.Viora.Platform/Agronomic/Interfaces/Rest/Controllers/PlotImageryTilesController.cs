@@ -25,6 +25,14 @@ public class PlotImageryTilesController(
     /// <summary>
     ///     Gets the current NDVI tile for a plot.
     /// </summary>
+    /// <param name="plotId">The plot identifier (path variable).</param>
+    /// <param name="zoom">The tile zoom level (query parameter).</param>
+    /// <param name="x">The tile X coordinate (query parameter).</param>
+    /// <param name="y">The tile Y coordinate (query parameter).</param>
+    /// <param name="userId">The user identifier (query parameter).</param>
+    /// <param name="cancellationToken">The request cancellation token.</param>
+    /// <response code="200">The PNG tile image.</response>
+    /// <response code="404">No NDVI tile available for the requested plot/coordinates.</response>
     [HttpGet]
     [Produces("image/png", "application/json")]
     [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK, "image/png")]
@@ -34,7 +42,7 @@ public class PlotImageryTilesController(
         [FromQuery] int zoom,
         [FromQuery] int x,
         [FromQuery] int y,
-        [FromQuery] int userId,
+        [FromToken] int userId,
         CancellationToken cancellationToken = default)
     {
         Response.Headers["Cache-Control"] = "private, max-age=1800";

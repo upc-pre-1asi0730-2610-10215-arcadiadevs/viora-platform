@@ -15,15 +15,18 @@ public static class UpdateIoTDeviceCommandFromResourceAssembler
     /// </summary>
     /// <param name="resource">The PATCH request body.</param>
     /// <param name="plotId">The plot identifier from the path.</param>
+    /// <param name="userId">The authenticated caller's id, derived from the token.</param>
     /// <param name="deviceId">The device identifier from the path.</param>
     /// <returns>The assembled command.</returns>
     public static UpdateIoTDeviceCommand ToCommandFromResource(
         UpdateIoTDeviceResource resource,
         long plotId,
+        int userId,
         long deviceId)
     {
         return new UpdateIoTDeviceCommand(
             (int)plotId,
+            userId,
             (int)deviceId,
             resource.DeviceName,
             (IoTDeviceStatus)Enum.Parse(typeof(IoTDeviceStatus), resource.IotDeviceStatus, true)

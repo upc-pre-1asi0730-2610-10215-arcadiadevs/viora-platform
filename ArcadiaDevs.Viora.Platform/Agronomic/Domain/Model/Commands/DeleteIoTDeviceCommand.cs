@@ -11,12 +11,13 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands;
 public record DeleteIoTDeviceCommand
 {
     public int PlotId { get; init; }
+    public int UserId { get; init; }
     public int DeviceId { get; init; }
 
     /// <summary>
     ///     Constructor with validation logic for DeleteIoTDeviceCommand.
     /// </summary>
-    public DeleteIoTDeviceCommand(int plotId, int deviceId)
+    public DeleteIoTDeviceCommand(int plotId, int userId, int deviceId)
     {
         if (plotId <= 0)
         {
@@ -28,6 +29,7 @@ public record DeleteIoTDeviceCommand
         }
 
         PlotId = plotId;
+        UserId = userId;
         DeviceId = deviceId;
     }
 }
