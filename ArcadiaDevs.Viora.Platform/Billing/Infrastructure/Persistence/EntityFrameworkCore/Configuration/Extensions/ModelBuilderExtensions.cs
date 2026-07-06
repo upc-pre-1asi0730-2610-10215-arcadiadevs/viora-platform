@@ -28,6 +28,7 @@ public static class ModelBuilderExtensions
         builder.ApplyConfiguration(new SubscriptionConfiguration());
         builder.ApplyConfiguration(new PaymentMethodConfiguration());
         builder.ApplyConfiguration(new InvoiceConfiguration());
+        builder.ApplyConfiguration(new CouponConfiguration());
 
     }
 }
