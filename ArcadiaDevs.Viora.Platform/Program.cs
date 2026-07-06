@@ -61,10 +61,13 @@ using ArcadiaDevs.Viora.Platform.Intervention.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using ArcadiaDevs.Viora.Platform.Billing.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Billing.Application.Internal.CommandServices;
+using ArcadiaDevs.Viora.Platform.Billing.Application.Internal.OutboundServices;
 using ArcadiaDevs.Viora.Platform.Billing.Application.Internal.QueryServices;
 using ArcadiaDevs.Viora.Platform.Billing.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Billing.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Billing.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Billing.Infrastructure.ExternalServices;
+using ArcadiaDevs.Viora.Platform.Billing.Infrastructure.ExternalServices.Configuration;
 using ArcadiaDevs.Viora.Platform.Billing.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using ArcadiaDevs.Viora.Platform.Profile.Application.Acl;
 using ArcadiaDevs.Viora.Platform.Profile.Application.CommandServices;
@@ -361,7 +364,7 @@ builder.Services.AddScoped<
     ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.OutboundServices.Acl.ExternalAgronomicService>();
 builder.Services.AddScoped<IInterventionRequestCommandService, InterventionRequestCommandService>();
 builder.Services.AddScoped<IInterventionRequestQueryService, InterventionRequestQueryService>();
-
+// specialist-dashboard-parity: specialist verify/decline + GET /specialist-dashboard.
 // WU4 of 8 (service-proposal, obs #268): ServiceProposal slice.
 builder.Services.AddScoped<IServiceProposalRepository, ServiceProposalRepository>();
 builder.Services.AddScoped<IServiceProposalCommandService, ServiceProposalCommandService>();
@@ -412,6 +415,29 @@ builder.Services.AddScoped<IPaymentMethodQueryService, PaymentMethodQueryService
 builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
 builder.Services.AddScoped<IInvoiceCommandService, InvoiceCommandService>();
 builder.Services.AddScoped<IInvoiceQueryService, InvoiceQueryService>();
+// WU5 of 9 (payment-gateway-port, obs #319): IPaymentGateway port + the
+// MercadoPagoPaymentGatewayAdapter, composing the raw-HttpClient-registration
+// shape of AgroMonitoringApiClient with the Options+Validator shape of
+// AgroMonitoringWeatherDataService/AgroMonitoringWeatherOptionsValidator
+// (design's PaymentGateway Port Design section). Off by default
+// (MercadoPagoOptions.Enabled=false) — builds/runs with zero real
+// credentials; POST /checkouts returns 503 until configured.
+builder.Services.AddHttpClient<MercadoPagoPaymentGatewayAdapter>(client =>
+{
+    // Reads the same config path MercadoPagoOptions.SectionName binds from —
+    // read here directly (not via IOptions<T>) because AddHttpClient's
+    // client-config lambda has no IServiceProvider, exactly mirroring
+    // AgroMonitoringApiClient's own AddHttpClient registration constraint.
+    var baseUrl = builder.Configuration[$"{MercadoPagoOptions.SectionName}:BaseUrl"]
+        ?? "https://api.mercadopago.com";
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.AddScoped<IPaymentGateway>(sp => sp.GetRequiredService<MercadoPagoPaymentGatewayAdapter>());
+builder.Services.AddSingleton<IValidateOptions<MercadoPagoOptions>, MercadoPagoOptionsValidator>();
+builder.Services.AddOptionsWithValidateOnStart<MercadoPagoOptions>()
+    .Bind(builder.Configuration.GetSection(MercadoPagoOptions.SectionName));
+builder.Services.AddScoped<ICheckoutCommandService, CheckoutCommandService>();
 
 // Profile Bounded Context Injection Configuration
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
