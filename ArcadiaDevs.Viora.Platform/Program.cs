@@ -59,6 +59,7 @@ using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Services;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using ArcadiaDevs.Viora.Platform.Billing.Application.Acl;
 using ArcadiaDevs.Viora.Platform.Billing.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Billing.Application.Internal.CommandServices;
 using ArcadiaDevs.Viora.Platform.Billing.Application.Internal.OutboundServices;
@@ -69,6 +70,7 @@ using ArcadiaDevs.Viora.Platform.Billing.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Billing.Infrastructure.ExternalServices;
 using ArcadiaDevs.Viora.Platform.Billing.Infrastructure.ExternalServices.Configuration;
 using ArcadiaDevs.Viora.Platform.Billing.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using ArcadiaDevs.Viora.Platform.Billing.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Profile.Application.Acl;
 using ArcadiaDevs.Viora.Platform.Profile.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Profile.Application.Internal.CommandServices;
@@ -366,7 +368,7 @@ builder.Services.AddScoped<
     ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.OutboundServices.Acl.ExternalAgronomicService>();
 builder.Services.AddScoped<IInterventionRequestCommandService, InterventionRequestCommandService>();
 builder.Services.AddScoped<IInterventionRequestQueryService, InterventionRequestQueryService>();
-
+// specialist-dashboard-parity: specialist verify/decline + GET /specialist-dashboard.
 // WU4 of 8 (service-proposal, obs #268): ServiceProposal slice.
 builder.Services.AddScoped<IServiceProposalRepository, ServiceProposalRepository>();
 builder.Services.AddScoped<IServiceProposalCommandService, ServiceProposalCommandService>();
@@ -464,6 +466,11 @@ builder.Services.AddScoped<ICouponQueryService, CouponQueryService>();
 builder.Services.AddScoped<IReferralCodeRepository, ReferralCodeRepository>();
 builder.Services.AddScoped<IReferralCodeCommandService, ReferralCodeCommandService>();
 builder.Services.AddScoped<IReferralCodeQueryService, ReferralCodeQueryService>();
+// WU9 of 9 (iam-referral-wiring, obs #319, FINAL work unit): owning-BC ACL
+// facade consumed by Iam's signup flow (REQ-REF-5, REQ-REF-6). Wraps
+// IReferralCodeRepository + ICouponRepository (both registered above) —
+// no new aggregate/migration in this slice.
+builder.Services.AddScoped<IBillingContextFacade, BillingContextFacade>();
 
 // Profile Bounded Context Injection Configuration
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
