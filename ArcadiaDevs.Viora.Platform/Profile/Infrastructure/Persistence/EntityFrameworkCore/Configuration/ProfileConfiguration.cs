@@ -75,5 +75,27 @@ public class ProfileConfiguration : IEntityTypeConfiguration<ProfileAggregate>
         builder.Property(p => p.PhotoUrl)
             .HasColumnName("photo_url")
             .HasMaxLength(500);
+
+        builder.Property(p => p.Latitude)
+            .HasColumnName("latitude");
+
+        builder.Property(p => p.Longitude)
+            .HasColumnName("longitude");
+
+        builder.Property(p => p.ServiceRadiusKm)
+            .HasColumnName("service_radius_km");
+
+        builder.Property(p => p.ServiceTags)
+            .HasColumnName("service_tags")
+            .HasMaxLength(500);
+
+        builder.Property(p => p.Availability)
+            .HasColumnName("availability")
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        builder.Property(p => p.ShowProBadge)
+            .HasColumnName("show_pro_badge")
+            .IsRequired();
     }
 }

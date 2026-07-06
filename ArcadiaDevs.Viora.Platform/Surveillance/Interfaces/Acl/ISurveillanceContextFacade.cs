@@ -1,5 +1,9 @@
 namespace ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Acl;
 
+public record AlertCardSummary(string Severity, string ProblemLabel);
+
+public record AlertMatchContext(long PlotId, string ThreatType);
+
 /// <summary>
 ///     Facade for the surveillance context.
 /// </summary>
@@ -12,4 +16,8 @@ public interface ISurveillanceContextFacade
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns><c>true</c> if the alert exists; otherwise, <c>false</c>.</returns>
     Task<bool> AlertExistsAsync(long alertId, CancellationToken cancellationToken = default);
+
+    Task<AlertCardSummary?> GetAlertCardSummaryAsync(long alertId, CancellationToken cancellationToken = default);
+
+    Task<AlertMatchContext?> GetAlertMatchContextAsync(long alertId, CancellationToken cancellationToken = default);
 }

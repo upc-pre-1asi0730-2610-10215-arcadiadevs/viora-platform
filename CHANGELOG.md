@@ -5,6 +5,24 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.33.0] - 2026-07-06
+
+### added
+- New cross-BC ACL facade methods, additive/read-only: `IAgronomicContextFacade.GetPlotCardSummaryAsync`/`CountPlotsByUserAsync`/`DistanceKmFromPlotCentroidAsync`, `ISurveillanceContextFacade.GetAlertCardSummaryAsync`/`GetAlertMatchContextAsync`, `IProfileContextFacade.GetDisplayNameAsync`/`GetPhotoUrlAsync`
+- `Profile` aggregate gained specialist-marketplace attributes: `Latitude`, `Longitude`, `ServiceRadiusKm`, `ServiceTags`, `Availability` (new `ESpecialistAvailability` enum), `ShowProBadge` — exposed on `GET`/`PUT /api/v1/profiles/{userId}`, plus `IProfileContextFacade.FindSpecialistProfilesAsync`/`GetSpecialistProfileAsync`/`SetProBadgeAsync` (`AddProfileMarketplaceAttributes` migration)
+- `IProfileRepository.FindByRoleAsync`
+- `POST /api/v1/authentication/sign-up` now accepts an optional `phone`, required when `role=Specialist` (`Iam.SpecialistPhoneRequired` on a blank/missing value); forwarded into the provisioned `Profile`
+
+### fixed
+- `FromTokenAttribute.cs` (the `[FromToken]` JWT-derived-identity binder) had been committed under the test project instead of the main project — the entire main project failed to compile since 2026-07-06 11:07. Moved to its correct path; removed the resulting redundant duplicate `CurrentUserIdModelBinder.cs` left in the test project
+- `CreatePestSightingReportCommandFromResourceAssembler.cs` had been overwritten with an unrelated `CheckoutsController` duplicate by a mistargeted commit; restored its correct content
+- `UserResourceFromEntityAssembler` never passed the `Active`/`Verified` fields added to `UserResource` — both are now included
+
+### notes
+- These are the first 3 phases of the specialist-marketplace/payment-first execution plan (`docs/implementation-plan-specialist-marketplace-and-payment-first-2026-07-06.md`) — no new endpoints yet, purely additive infrastructure. No consumer wires any of the new ACL/aggregate surface yet; that starts with Phase 4.
+- Feature-first per standing convention — no tests written or run for this change; a dedicated test-writing pass is deferred to Phase 8 of the plan above.
+- Build green (0 errors) — first clean build of the main project since the `FromTokenAttribute` regression landed.
+
 ## [1.31.0] - 2026-07-03
 
 ### added

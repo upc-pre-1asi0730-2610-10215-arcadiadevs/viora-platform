@@ -62,6 +62,34 @@ public class AgronomicContextFacade(
     }
 
     // inheritedDoc
+    public async Task<PlotCardSummary?> GetPlotCardSummaryAsync(long plotId, CancellationToken cancellationToken = default)
+    {
+        var plot = await plotRepository.FindByIdAsync((int)plotId, cancellationToken);
+
+        return plot is null
+            ? null
+            : new PlotCardSummary(plot.PlotName, plot.Location, plot.CropType, plot.AreaSize);
+    }
+
+    // inheritedDoc
+    public async Task<int> CountPlotsByUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var plots = await plotRepository.FindAllByOwnerUserIdAsync(userId, cancellationToken);
+        return plots.Count();
+    }
+
+    // inheritedDoc
+    public async Task<double?> DistanceKmFromPlotCentroidAsync(long plotId, double lat, double lng, CancellationToken cancellationToken = default)
+    {
+        var plot = await plotRepository.FindByIdAsync((int)plotId, cancellationToken);
+        var centroid = plot?.PolygonCoordinates?.Centroid();
+
+        return centroid is null
+            ? null
+            : HaversineKilometers(centroid.Value, (lat, lng));
+    }
+
+    // inheritedDoc
     public async Task<IReadOnlyList<NeighborPlot>> FindNeighborPlotsWithinRadiusAsync(
         long referencePlotId,
         double radiusKm,

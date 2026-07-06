@@ -25,6 +25,12 @@ public static class CreateOrUpdateProfileCommandFromResourceAssembler
             resource.Language,
             resource.Location,
             resource.SpecialtyArea,
-            resource.PhotoUrl);
+            resource.PhotoUrl,
+            resource.Latitude,
+            resource.Longitude,
+            resource.ServiceRadiusKm,
+            resource.ServiceTags,
+            resource.Availability,
+            resource.ShowProBadge);
     }
 }

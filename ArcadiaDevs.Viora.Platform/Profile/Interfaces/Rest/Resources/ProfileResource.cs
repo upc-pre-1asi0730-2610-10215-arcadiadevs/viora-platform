@@ -13,4 +13,10 @@ public record ProfileResource(
     string? Language,
     string? Location,
     string? SpecialtyArea,
-    string? PhotoUrl);
+    string? PhotoUrl,
+    double? Latitude,
+    double? Longitude,
+    double? ServiceRadiusKm,
+    string? ServiceTags,
+    string? Availability,
+    bool ShowProBadge);

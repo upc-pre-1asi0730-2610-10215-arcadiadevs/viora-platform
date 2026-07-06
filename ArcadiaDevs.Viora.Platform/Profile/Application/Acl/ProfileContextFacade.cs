@@ -63,4 +63,60 @@ public class ProfileContextFacade(
         profileRepository.Remove(profile);
         await unitOfWork.CompleteAsync(ct);
     }
+
+    /// <inheritdoc />
+    public async Task<string?> GetDisplayNameAsync(int userId, CancellationToken ct = default)
+    {
+        var profile = await profileRepository.FindByUserIdAsync(userId, ct);
+        return profile?.FullName;
+    }
+
+    /// <inheritdoc />
+    public async Task<string?> GetPhotoUrlAsync(int userId, CancellationToken ct = default)
+    {
+        var profile = await profileRepository.FindByUserIdAsync(userId, ct);
+        return profile?.PhotoUrl;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<SpecialistProfileSummary>> FindSpecialistProfilesAsync(CancellationToken ct = default)
+    {
+        var profiles = await profileRepository.FindByRoleAsync(ProfileRole.Specialist, ct);
+        return profiles.Select(ToSpecialistProfileSummary).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<SpecialistProfileSummary?> GetSpecialistProfileAsync(int userId, CancellationToken ct = default)
+    {
+        var profile = await profileRepository.FindByUserIdAsync(userId, ct);
+        return profile is null || profile.Role != ProfileRole.Specialist
+            ? null
+            : ToSpecialistProfileSummary(profile);
+    }
+
+    /// <inheritdoc />
+    public async Task SetProBadgeAsync(int userId, bool enabled, CancellationToken ct = default)
+    {
+        var profile = await profileRepository.FindByUserIdAsync(userId, ct);
+        if (profile is null)
+            return;
+
+        profile.ApplyUpdate(showProBadge: enabled);
+        profileRepository.Update(profile);
+        await unitOfWork.CompleteAsync(ct);
+    }
+
+    private static SpecialistProfileSummary ToSpecialistProfileSummary(ProfileAggregate profile)
+    {
+        return new SpecialistProfileSummary(
+            profile.UserId,
+            profile.FullName,
+            profile.PhotoUrl,
+            profile.Latitude,
+            profile.Longitude,
+            profile.ServiceRadiusKm,
+            profile.ServiceTags,
+            profile.Availability,
+            profile.ShowProBadge);
+    }
 }
