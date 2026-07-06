@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ArcadiaDevs.Viora.Platform.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260704040315_AddPlan")]
+    partial class AddPlan
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -404,156 +407,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                     b.ToTable("agronomic_agro_monitoring_plot_integrations", (string)null);
                 });
 
-            modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Billing.Domain.Model.Aggregates.Coupon", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("code");
-
-                    b.Property<string>("Conditions")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("conditions");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("description");
-
-                    b.Property<int>("DiscountPercent")
-                        .HasColumnType("integer")
-                        .HasColumnName("discount_percent");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer")
-                        .HasColumnName("user_id");
-
-                    b.Property<DateTime?>("ValidUntil")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("valid_until");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_coupons");
-
-                    b.HasIndex("UserId", "Code")
-                        .IsUnique()
-                        .HasDatabaseName("i_x_coupons_user_id_code");
-
-                    b.ToTable("coupons", (string)null);
-                });
-
-            modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Billing.Domain.Model.Aggregates.Invoice", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric")
-                        .HasColumnName("amount");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("character varying(3)")
-                        .HasColumnName("currency");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("description");
-
-                    b.Property<string>("ExternalPaymentId")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("external_payment_id");
-
-                    b.Property<DateTimeOffset>("IssuedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("issued_at");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("status");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_invoices");
-
-                    b.HasIndex("ExternalPaymentId")
-                        .IsUnique()
-                        .HasDatabaseName("i_x_invoices_external_payment_id");
-
-                    b.ToTable("invoices", (string)null);
-                });
-
-            modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Billing.Domain.Model.Aggregates.PaymentMethod", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Brand")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("brand");
-
-                    b.Property<int>("ExpMonth")
-                        .HasColumnType("integer")
-                        .HasColumnName("exp_month");
-
-                    b.Property<int>("ExpYear")
-                        .HasColumnType("integer")
-                        .HasColumnName("exp_year");
-
-                    b.Property<bool>("IsDefault")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_default");
-
-                    b.Property<string>("Last4")
-                        .IsRequired()
-                        .HasMaxLength(4)
-                        .HasColumnType("character varying(4)")
-                        .HasColumnName("last4");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_payment_methods");
-
-                    b.HasIndex("UserId")
-                        .IsUnique()
-                        .HasDatabaseName("i_x_payment_methods_user_id");
-
-                    b.ToTable("payment_methods", (string)null);
-                });
-
             modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Billing.Domain.Model.Aggregates.Plan", b =>
                 {
                     b.Property<int>("Id")
@@ -620,84 +473,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                     b.ToTable("plans", (string)null);
                 });
 
-            modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Billing.Domain.Model.Aggregates.ReferralCode", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("code");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_referral_codes");
-
-                    b.HasIndex("Code")
-                        .IsUnique()
-                        .HasDatabaseName("i_x_referral_codes_code");
-
-                    b.HasIndex("UserId")
-                        .IsUnique()
-                        .HasDatabaseName("i_x_referral_codes_user_id");
-
-                    b.ToTable("referral_codes", (string)null);
-                });
-
-            modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Billing.Domain.Model.Aggregates.Subscription", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTimeOffset>("CurrentPeriodEnd")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("current_period_end");
-
-                    b.Property<string>("Interval")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("interval");
-
-                    b.Property<string>("PlanCode")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("plan_code");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("status");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_subscriptions");
-
-                    b.HasIndex("UserId")
-                        .IsUnique()
-                        .HasDatabaseName("i_x_subscriptions_user_id");
-
-                    b.ToTable("subscriptions", (string)null);
-                });
-
             modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Aggregates.Role", b =>
                 {
                     b.Property<int>("Id")
@@ -745,25 +520,9 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Active")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("active");
-
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("email");
-
-                    b.Property<string>("FullName")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("full_name");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -780,12 +539,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("username");
 
-                    b.Property<bool>("Verified")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("verified");
-
                     b.HasKey("Id")
                         .HasName("p_k_users");
 
@@ -794,102 +547,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                         .HasDatabaseName("i_x_users_username");
 
                     b.ToTable("users", (string)null);
-                });
-
-            modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Aggregates.UserSession", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<bool>("IsCurrent")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("current_session");
-
-                    b.Property<DateTime>("LastActiveAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_active_at");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.Property<string>("UserAgent")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("user_agent");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_user_sessions");
-
-                    b.ToTable("user_sessions", (string)null);
-                });
-
-            modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Aggregates.VerificationToken", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Consumed")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("consumed");
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("expires_at");
-
-                    b.Property<string>("Purpose")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("purpose");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("token");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_verification_tokens");
-
-                    b.HasIndex("Token")
-                        .IsUnique()
-                        .HasDatabaseName("i_x_verification_tokens_token");
-
-                    b.ToTable("verification_tokens", (string)null);
                 });
 
             modelBuilder.Entity("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Aggregates.InterventionExecution", b =>
@@ -975,10 +632,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("alert_id");
 
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
                     b.Property<string>("DeclineReason")
                         .HasColumnType("text")
                         .HasColumnName("decline_reason");
@@ -1010,10 +663,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)")
                         .HasColumnName("status");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
 
                     b.HasKey("Id")
                         .HasName("p_k_intervention_requests");
@@ -1203,11 +852,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("phone");
-
-                    b.Property<string>("PhotoUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("photo_url");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -1853,9 +1497,13 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
 
                             b1.Property<string>("ApplicationMethod")
                                 .IsRequired()
-                                .HasMaxLength(30)
-                                .HasColumnType("character varying(30)")
+                                .HasColumnType("text")
                                 .HasColumnName("application_method");
+
+                            b1.Property<string>("PreHarvestInterval")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("pre_harvest_interval");
 
                             b1.Property<string>("Products")
                                 .IsRequired()
@@ -1867,6 +1515,11 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("required_ppe");
 
+                            b1.Property<string>("SprayVolume")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("spray_volume");
+
                             b1.HasKey("TreatmentPrescriptionId")
                                 .HasName("p_k_treatment_prescriptions");
 
@@ -1875,58 +1528,6 @@ namespace ArcadiaDevs.Viora.Platform.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("TreatmentPrescriptionId")
                                 .HasConstraintName("f_k_treatment_prescriptions_treatment_prescriptions_id");
-
-                            b1.OwnsOne("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects.PreHarvestInterval", "PreHarvestInterval", b2 =>
-                                {
-                                    b2.Property<int>("AgrochemicalPrescriptionTreatmentPrescriptionId")
-                                        .HasColumnType("integer")
-                                        .HasColumnName("id");
-
-                                    b2.Property<int>("Days")
-                                        .HasColumnType("integer")
-                                        .HasColumnName("pre_harvest_interval_days");
-
-                                    b2.HasKey("AgrochemicalPrescriptionTreatmentPrescriptionId")
-                                        .HasName("p_k_treatment_prescriptions");
-
-                                    b2.ToTable("treatment_prescriptions");
-
-                                    b2.WithOwner()
-                                        .HasForeignKey("AgrochemicalPrescriptionTreatmentPrescriptionId")
-                                        .HasConstraintName("f_k_treatment_prescriptions_treatment_prescriptions_id");
-                                });
-
-                            b1.OwnsOne("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects.SprayVolume", "SprayVolume", b2 =>
-                                {
-                                    b2.Property<int>("AgrochemicalPrescriptionTreatmentPrescriptionId")
-                                        .HasColumnType("integer")
-                                        .HasColumnName("id");
-
-                                    b2.Property<int>("Amount")
-                                        .HasColumnType("integer")
-                                        .HasColumnName("spray_volume_amount");
-
-                                    b2.Property<string>("Unit")
-                                        .IsRequired()
-                                        .HasMaxLength(20)
-                                        .HasColumnType("character varying(20)")
-                                        .HasColumnName("spray_volume_unit");
-
-                                    b2.HasKey("AgrochemicalPrescriptionTreatmentPrescriptionId")
-                                        .HasName("p_k_treatment_prescriptions");
-
-                                    b2.ToTable("treatment_prescriptions");
-
-                                    b2.WithOwner()
-                                        .HasForeignKey("AgrochemicalPrescriptionTreatmentPrescriptionId")
-                                        .HasConstraintName("f_k_treatment_prescriptions_treatment_prescriptions_id");
-                                });
-
-                            b1.Navigation("PreHarvestInterval")
-                                .IsRequired();
-
-                            b1.Navigation("SprayVolume")
-                                .IsRequired();
                         });
 
                     b.OwnsOne("ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects.FieldInspectionRecord", "FieldInspectionRecord", b1 =>
