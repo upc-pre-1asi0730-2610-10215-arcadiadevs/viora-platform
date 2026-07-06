@@ -14,4 +14,5 @@ public record CreateOrUpdateProfileResource(
     string? JobTitle,
     string? Language,
     string? Location,
-    string? SpecialtyArea);
+    string? SpecialtyArea,
+    string? PhotoUrl);

@@ -24,6 +24,7 @@ public static class CreateOrUpdateProfileCommandFromResourceAssembler
             resource.JobTitle,
             resource.Language,
             resource.Location,
-            resource.SpecialtyArea);
+            resource.SpecialtyArea,
+            resource.PhotoUrl);
     }
 }

@@ -35,6 +35,12 @@ public class Profile
 
     public string? SpecialtyArea { get; private set; }
 
+    /// <summary>
+    ///     Avatar hosted on Cloudinary; blank/null means the client shows the
+    ///     generic photo (OS parity — <c>Profile.photoUrl</c>).
+    /// </summary>
+    public string? PhotoUrl { get; private set; }
+
     private Profile()
     {
         FullName = string.Empty;
@@ -50,7 +56,8 @@ public class Profile
         string? jobTitle = null,
         string? language = null,
         string? location = null,
-        string? specialtyArea = null)
+        string? specialtyArea = null,
+        string? photoUrl = null)
     {
         UserId = userId;
         Role = role;
@@ -61,6 +68,7 @@ public class Profile
         Language = language;
         Location = location;
         SpecialtyArea = specialtyArea;
+        PhotoUrl = photoUrl;
     }
 
     /// <summary>
@@ -77,7 +85,8 @@ public class Profile
         string? jobTitle = null,
         string? language = null,
         string? location = null,
-        string? specialtyArea = null)
+        string? specialtyArea = null,
+        string? photoUrl = null)
     {
         if (fullName is not null) FullName = fullName;
         if (email is not null) Email = email;
@@ -86,6 +95,7 @@ public class Profile
         if (language is not null) Language = language;
         if (location is not null) Location = location;
         if (specialtyArea is not null) SpecialtyArea = specialtyArea;
+        if (photoUrl is not null) PhotoUrl = photoUrl;
         return this;
     }
 }

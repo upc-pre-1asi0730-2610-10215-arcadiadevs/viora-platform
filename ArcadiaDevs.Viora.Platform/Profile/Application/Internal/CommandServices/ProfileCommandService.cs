@@ -1,3 +1,4 @@
+using ArcadiaDevs.Viora.Platform.Iam.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Profile.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Profile.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Profile.Domain.Model.ValueObjects;
@@ -14,6 +15,7 @@ namespace ArcadiaDevs.Viora.Platform.Profile.Application.Internal.CommandService
 /// </summary>
 public class ProfileCommandService(
     IProfileRepository profileRepository,
+    IIamContextFacade iamContextFacade,
     IUnitOfWork unitOfWork) : IProfileCommandService
 {
     /// <inheritdoc />
@@ -23,10 +25,13 @@ public class ProfileCommandService(
     {
         var existing = await profileRepository.FindByUserIdAsync(command.UserId, ct);
 
+        ProfileAggregate profile;
+        bool created;
+
         if (existing is null)
         {
             // Create path — default role to Producer per spec REQ.
-            var profile = new ProfileAggregate(
+            profile = new ProfileAggregate(
                 command.UserId,
                 ProfileRole.Producer,
                 command.FullName ?? string.Empty,
@@ -35,27 +40,38 @@ public class ProfileCommandService(
                 command.JobTitle,
                 command.Language,
                 command.Location,
-                command.SpecialtyArea);
+                command.SpecialtyArea,
+                command.PhotoUrl);
 
             await profileRepository.AddAsync(profile, ct);
-            await unitOfWork.CompleteAsync(ct);
+            created = true;
+        }
+        else
+        {
+            // Update path — null-safe partial update, Role untouched.
+            existing.ApplyUpdate(
+                command.FullName,
+                command.Email,
+                command.Phone,
+                command.JobTitle,
+                command.Language,
+                command.Location,
+                command.SpecialtyArea,
+                command.PhotoUrl);
 
-            return new Result<(ProfileAggregate Profile, bool Created), Error>.Success((profile, true));
+            profileRepository.Update(existing);
+            profile = existing;
+            created = false;
         }
 
-        // Update path — null-safe partial update, Role untouched.
-        existing.ApplyUpdate(
-            command.FullName,
-            command.Email,
-            command.Phone,
-            command.JobTitle,
-            command.Language,
-            command.Location,
-            command.SpecialtyArea);
-
-        profileRepository.Update(existing);
         await unitOfWork.CompleteAsync(ct);
 
-        return new Result<(ProfileAggregate Profile, bool Created), Error>.Success((existing, false));
+        // Keep the account's display name in sync with the profile so the
+        // header and the account identity reflect the change immediately
+        // (matches OS's ProfileCommandServiceImpl.handle).
+        if (!string.IsNullOrWhiteSpace(command.FullName))
+            await iamContextFacade.UpdateFullNameAsync(command.UserId, command.FullName.Trim(), ct);
+
+        return new Result<(ProfileAggregate Profile, bool Created), Error>.Success((profile, created));
     }
 }
