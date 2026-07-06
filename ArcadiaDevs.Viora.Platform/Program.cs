@@ -445,6 +445,14 @@ builder.Services.AddScoped<ICheckoutCommandService, CheckoutCommandService>();
 // entity — reconciliation only reads/writes Invoice/Subscription/
 // PaymentMethod, all already registered above).
 builder.Services.AddScoped<IWebhookReconciliationCommandService, WebhookReconciliationCommandService>();
+// WU7 of 9 (coupon, obs #319): Coupon slice. FK-validates userId via
+// IIamContextFacade (REQ-CC-2); code is looked up in the static in-code
+// CouponCatalog (REQ-COUP-1, not DB-backed); redemption idempotency is a
+// per-user command-service-level guard (REQ-COUP-2), not an aggregate
+// self-guard.
+builder.Services.AddScoped<ICouponRepository, CouponRepository>();
+builder.Services.AddScoped<ICouponCommandService, CouponCommandService>();
+builder.Services.AddScoped<ICouponQueryService, CouponQueryService>();
 
 // Profile Bounded Context Injection Configuration
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
