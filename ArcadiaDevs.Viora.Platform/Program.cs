@@ -344,6 +344,7 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IIamContextFacade, IamContextFacade>();
 
 
+
 // Intervention Bounded Context Injection Configuration
 // WU1 of 8 (specialist-and-matching, obs #268): Specialist slice.
 builder.Services.AddScoped<ISpecialistRepository, SpecialistRepository>();
@@ -365,7 +366,7 @@ builder.Services.AddScoped<
     ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.OutboundServices.Acl.ExternalAgronomicService>();
 builder.Services.AddScoped<IInterventionRequestCommandService, InterventionRequestCommandService>();
 builder.Services.AddScoped<IInterventionRequestQueryService, InterventionRequestQueryService>();
-// specialist-dashboard-parity: specialist verify/decline + GET /specialist-dashboard.
+
 // WU4 of 8 (service-proposal, obs #268): ServiceProposal slice.
 builder.Services.AddScoped<IServiceProposalRepository, ServiceProposalRepository>();
 builder.Services.AddScoped<IServiceProposalCommandService, ServiceProposalCommandService>();
@@ -453,6 +454,16 @@ builder.Services.AddScoped<IWebhookReconciliationCommandService, WebhookReconcil
 builder.Services.AddScoped<ICouponRepository, CouponRepository>();
 builder.Services.AddScoped<ICouponCommandService, CouponCommandService>();
 builder.Services.AddScoped<ICouponQueryService, CouponQueryService>();
+// WU8 of 9 (referral-code, obs #319): ReferralCode slice. FK-validates
+// userId via IIamContextFacade (REQ-CC-2); get-or-create idempotency is a
+// repository-lookup concern (FindByUserIdAsync), not an aggregate
+// self-guard; code generation loops until ExistsByCodeAsync returns false
+// (REQ-REF-2, cryptographically secure via RandomNumberGenerator).
+// ReferralCodeQueryService is a thin wrapper delegating to
+// ReferralCodeCommandService (idempotent side-effecting read, REQ-REF-4).
+builder.Services.AddScoped<IReferralCodeRepository, ReferralCodeRepository>();
+builder.Services.AddScoped<IReferralCodeCommandService, ReferralCodeCommandService>();
+builder.Services.AddScoped<IReferralCodeQueryService, ReferralCodeQueryService>();
 
 // Profile Bounded Context Injection Configuration
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
