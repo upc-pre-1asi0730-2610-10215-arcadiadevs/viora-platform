@@ -1,5 +1,7 @@
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Acl;
 
+public record PlotCardSummary(string Name, string? Location, string? CropType, decimal AreaHectares);
+
 /// <summary>
 ///     Facade for the agronomic context.
 /// </summary>
@@ -28,6 +30,12 @@ public interface IAgronomicContextFacade
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The plot name if the plot exists; otherwise, null.</returns>
     Task<string?> GetPlotNameAsync(long plotId, CancellationToken cancellationToken = default);
+
+    Task<PlotCardSummary?> GetPlotCardSummaryAsync(long plotId, CancellationToken cancellationToken = default);
+
+    Task<int> CountPlotsByUserAsync(int userId, CancellationToken cancellationToken = default);
+
+    Task<double?> DistanceKmFromPlotCentroidAsync(long plotId, double lat, double lng, CancellationToken cancellationToken = default);
 
     /// <summary>
     ///     Finds plots whose centroid lies within <paramref name="radiusKm"/> of the reference
