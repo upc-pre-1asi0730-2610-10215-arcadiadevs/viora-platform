@@ -1,5 +1,7 @@
+using System.Linq;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Aggregates;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
@@ -40,8 +42,21 @@ public class ServiceProposalConfiguration : IEntityTypeConfiguration<ServiceProp
             .HasColumnName("duration_label")
             .IsRequired();
 
+        // Scope is a structured list of itemized bullets (2026-07-05 field-level
+        // parity fix — previously an opaque single string), JSON-serialized
+        // mirroring the Products-as-JSON precedent on TreatmentPrescription.
+        var scopeComparer = new ValueComparer<IReadOnlyList<string>>(
+            (c1, c2) => c1 == c2 || (c1 != null && c2 != null && c1.SequenceEqual(c2)),
+            c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+            c => c.ToList());
+
         builder.Property(sp => sp.Scope)
             .HasColumnName("scope")
+            .HasConversion(
+                v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
+                v => System.Text.Json.JsonSerializer.Deserialize<List<string>>(v, (System.Text.Json.JsonSerializerOptions?)null)
+                    ?? new List<string>(),
+                scopeComparer)
             .IsRequired();
 
         builder.Property(sp => sp.ProposedDate)

@@ -14,8 +14,9 @@ public record TreatmentPrescriptionResource(
     string? TechnicalDescription,
     DateOnly? RecordDate,
     string? ApplicationMethod,
-    string? SprayVolume,
-    string? PreHarvestInterval,
+    int? SprayVolumeAmount,
+    string? SprayVolumeUnit,
+    int? PreHarvestIntervalDays,
     string? AgronomistRecommendations,
-    string? RequiredPPE,
-    IReadOnlyList<string>? Products);
+    IReadOnlyList<string>? RequiredPPE,
+    IReadOnlyList<PrescribedProductResource>? Products);

@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net.Mime;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Pipeline.Middleware.Attributes;
 using ArcadiaDevs.Viora.Platform.Intervention.Application.CommandServices;
@@ -173,11 +174,17 @@ public class TreatmentPrescriptionsController(
             var command = new PrescribeAgrochemicalCommand(
                 id,
                 resource.ApplicationMethod,
-                resource.SprayVolume,
-                resource.PreHarvestInterval,
+                resource.SprayVolumeAmount,
+                resource.SprayVolumeUnit,
+                resource.PreHarvestIntervalDays,
                 resource.AgronomistRecommendations,
                 resource.RequiredPPE,
-                resource.Products);
+                resource.Products?.Select(p => new PrescribedProductCommandItem(
+                    p.ProductName,
+                    p.DosageAmount,
+                    p.DosageUnit,
+                    p.SessionsCount,
+                    p.TechnicalRecommendation)).ToList());
 
             var result = await treatmentPrescriptionCommandService.Handle(command, cancellationToken);
 

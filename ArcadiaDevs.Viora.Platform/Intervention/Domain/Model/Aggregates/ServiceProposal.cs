@@ -1,3 +1,4 @@
+using System.Linq;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
@@ -34,7 +35,7 @@ public class ServiceProposal
 
     public string DurationLabel { get; }
 
-    public string Scope { get; }
+    public IReadOnlyList<string> Scope { get; }
 
     public DateOnly ProposedDate { get; }
 
@@ -48,7 +49,7 @@ public class ServiceProposal
     {
         ServiceTitle = string.Empty;
         DurationLabel = string.Empty;
-        Scope = string.Empty;
+        Scope = Array.Empty<string>();
         ProposalDetails = string.Empty;
         CostEstimate = null!;
     }
@@ -58,7 +59,7 @@ public class ServiceProposal
         int specialistId,
         string serviceTitle,
         string durationLabel,
-        string scope,
+        IReadOnlyList<string> scope,
         DateOnly proposedDate,
         CostEstimate costEstimate,
         string proposalDetails)
@@ -83,9 +84,9 @@ public class ServiceProposal
             throw new ArgumentException("Duration label is required.", nameof(durationLabel));
         }
 
-        if (string.IsNullOrWhiteSpace(scope))
+        if (scope is null || scope.Count == 0 || scope.Any(string.IsNullOrWhiteSpace))
         {
-            throw new ArgumentException("Scope is required.", nameof(scope));
+            throw new ArgumentException("Scope is required and must not contain blank items.", nameof(scope));
         }
 
         if (costEstimate is null)

@@ -1,3 +1,4 @@
+using System.Linq;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Intervention.Interfaces.Rest.Resources;
 
@@ -21,11 +22,17 @@ public static class TreatmentPrescriptionResourceFromEntityAssembler
             entity.FieldInspectionRecord?.IncidenceLevel,
             entity.FieldInspectionRecord?.TechnicalDescription,
             entity.FieldInspectionRecord?.RecordDate,
-            entity.AgrochemicalPrescription?.ApplicationMethod,
-            entity.AgrochemicalPrescription?.SprayVolume,
-            entity.AgrochemicalPrescription?.PreHarvestInterval,
+            entity.AgrochemicalPrescription?.ApplicationMethod.ToString(),
+            entity.AgrochemicalPrescription?.SprayVolume.Amount,
+            entity.AgrochemicalPrescription?.SprayVolume.Unit,
+            entity.AgrochemicalPrescription?.PreHarvestInterval.Days,
             entity.AgrochemicalPrescription?.AgronomistRecommendations,
-            entity.AgrochemicalPrescription?.RequiredPPE,
-            entity.AgrochemicalPrescription?.Products);
+            entity.AgrochemicalPrescription?.RequiredPPE.Select(ppe => ppe.ToString()).ToList(),
+            entity.AgrochemicalPrescription?.Products.Select(p => new PrescribedProductResource(
+                p.ProductName,
+                p.Dosage.Amount,
+                p.Dosage.Unit,
+                p.Sessions.Count,
+                p.TechnicalRecommendation)).ToList());
     }
 }

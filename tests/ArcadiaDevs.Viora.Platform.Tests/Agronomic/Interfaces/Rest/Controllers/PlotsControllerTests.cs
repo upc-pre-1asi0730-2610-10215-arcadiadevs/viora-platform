@@ -36,7 +36,6 @@ public class PlotsControllerTests
     private readonly IGetPlotDetailQueryService _getPlotDetailQueryService = Substitute.For<IGetPlotDetailQueryService>();
     private readonly IGetPlotMonitoringSummaryQueryService _getPlotMonitoringSummaryQueryService = Substitute.For<IGetPlotMonitoringSummaryQueryService>();
     private readonly IGetPlotWeatherForecastQueryService _getPlotWeatherForecastQueryService = Substitute.For<IGetPlotWeatherForecastQueryService>();
-    private readonly IGetPlotNdviTileQueryService _getPlotNdviTileQueryService = Substitute.For<IGetPlotNdviTileQueryService>();
     private readonly IStringLocalizer<ErrorMessages> _errorLocalizer = StubLocalizer();
     private readonly ProblemDetailsFactory _problemDetailsFactory = new TestProblemDetailsFactory();
     private readonly IClock _clock = new FakeClock();
@@ -93,7 +92,6 @@ public class PlotsControllerTests
             _getPlotDetailQueryService,
             _getPlotMonitoringSummaryQueryService,
             _getPlotWeatherForecastQueryService,
-            _getPlotNdviTileQueryService,
             _errorLocalizer,
             _problemDetailsFactory,
             _clock);
