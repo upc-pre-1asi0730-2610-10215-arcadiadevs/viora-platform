@@ -45,4 +45,14 @@ public interface IProfileContextFacade
     /// <param name="ct">The cancellation token.</param>
     /// <returns>The profile summary if a profile exists for the user; otherwise null.</returns>
     Task<ProfileSummary?> GetProfileSummaryAsync(int userId, CancellationToken ct = default);
+
+    /// <summary>
+    ///     Permanently deletes the profile for the given user, if one exists.
+    ///     Idempotent: no-op if no profile exists for the user. Called by
+    ///     Iam's account-deletion flow (matches OS's
+    ///     <c>ProfileContextFacade.deleteByUserId</c>).
+    /// </summary>
+    /// <param name="userId">The user id.</param>
+    /// <param name="ct">The cancellation token.</param>
+    Task DeleteByUserIdAsync(int userId, CancellationToken ct = default);
 }
