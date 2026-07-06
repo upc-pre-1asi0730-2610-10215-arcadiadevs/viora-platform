@@ -14,4 +14,13 @@ public interface IServiceProposalRepository : IBaseRepository<ServiceProposal>
     Task<IReadOnlyList<ServiceProposal>> ListByInterventionRequestIdAsync(
         int interventionRequestId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Lists all proposals submitted by a specialist
+    ///     (specialist-dashboard-parity — mirrors OS's
+    ///     <c>findBySpecialistId</c>).
+    /// </summary>
+    Task<IReadOnlyList<ServiceProposal>> FindBySpecialistIdAsync(
+        int specialistId,
+        CancellationToken cancellationToken = default);
 }

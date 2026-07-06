@@ -1,4 +1,5 @@
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.Aggregates;
+using ArcadiaDevs.Viora.Platform.Intervention.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Intervention.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using ArcadiaDevs.Viora.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
@@ -26,5 +27,15 @@ public class InterventionRequestRepository(AppDbContext context)
         }
 
         return await query.ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<InterventionRequest>> FindBySpecialistIdAndStatusAsync(
+        int specialistId,
+        InterventionStatus status,
+        CancellationToken cancellationToken = default)
+    {
+        return await Context.Set<InterventionRequest>()
+            .Where(r => r.SpecialistId == specialistId && r.Status == status)
+            .ToListAsync(cancellationToken);
     }
 }

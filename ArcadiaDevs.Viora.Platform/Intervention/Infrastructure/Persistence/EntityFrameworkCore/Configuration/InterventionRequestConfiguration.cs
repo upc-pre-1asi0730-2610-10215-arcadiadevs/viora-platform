@@ -58,5 +58,13 @@ public class InterventionRequestConfiguration : IEntityTypeConfiguration<Interve
 
         builder.Property(r => r.DeclineReason)
             .HasColumnName("decline_reason");
+
+        // IAuditableEntity — added for the specialist dashboard's incoming-request
+        // createdAt field (2026-07-05, specialist-dashboard-parity).
+        builder.Property(r => r.CreatedAt)
+            .HasColumnName("created_at");
+
+        builder.Property(r => r.UpdatedAt)
+            .HasColumnName("updated_at");
     }
 }

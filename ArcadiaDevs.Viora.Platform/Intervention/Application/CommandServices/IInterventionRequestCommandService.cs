@@ -26,4 +26,22 @@ public interface IInterventionRequestCommandService
     Task<Result<InterventionRequest, Error>> Handle(
         DeclineInterventionRequestCommand command,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     The assigned specialist verifies (takes on) an incoming request,
+    ///     moving it out of their pending inbox (specialist-dashboard-parity,
+    ///     no self-guard against the current status).
+    /// </summary>
+    Task<Result<InterventionRequest, Error>> Handle(
+        VerifyInterventionRequestCommand command,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     The assigned specialist declines an incoming request. Distinct
+    ///     from the grower-side decline — ownership is enforced against
+    ///     <c>SpecialistId</c> instead of <c>GrowerId</c>.
+    /// </summary>
+    Task<Result<InterventionRequest, Error>> Handle(
+        DeclineInterventionRequestAsSpecialistCommand command,
+        CancellationToken cancellationToken = default);
 }
