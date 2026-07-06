@@ -361,7 +361,7 @@ builder.Services.AddScoped<
     ArcadiaDevs.Viora.Platform.Intervention.Infrastructure.OutboundServices.Acl.ExternalAgronomicService>();
 builder.Services.AddScoped<IInterventionRequestCommandService, InterventionRequestCommandService>();
 builder.Services.AddScoped<IInterventionRequestQueryService, InterventionRequestQueryService>();
-// specialist-dashboard-parity: specialist verify/decline + GET /specialist-dashboard.
+
 // WU4 of 8 (service-proposal, obs #268): ServiceProposal slice.
 builder.Services.AddScoped<IServiceProposalRepository, ServiceProposalRepository>();
 builder.Services.AddScoped<IServiceProposalCommandService, ServiceProposalCommandService>();
@@ -403,13 +403,15 @@ builder.Services.AddScoped<ISubscriptionQueryService, SubscriptionQueryService>(
 builder.Services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
 builder.Services.AddScoped<IPaymentMethodCommandService, PaymentMethodCommandService>();
 builder.Services.AddScoped<IPaymentMethodQueryService, PaymentMethodQueryService>();
-// WU5 of 9 (payment-gateway-port, obs #319): IPaymentGateway port + the
-// MercadoPagoPaymentGatewayAdapter, composing the raw-HttpClient-registration
-// shape of AgroMonitoringApiClient with the Options+Validator shape of
-// AgroMonitoringWeatherDataService/AgroMonitoringWeatherOptionsValidator
-// (design's PaymentGateway Port Design section). Off by default
-// (MercadoPagoOptions.Enabled=false) — builds/runs with zero real
-// credentials; POST /checkouts returns 503 until configured.
+// WU4 of 9 (invoice, obs #319): Invoice slice. No IIamContextFacade
+// dependency on the command side — userId is internally derived from an
+// already-validated Subscription/checkout flow (REQ-CC-2 exemption
+// clause); the read side (list-by-userId) DOES validate via
+// IIamContextFacade since userId is direct client input there (REQ-INV-3).
+// Creation is internal-only (invoked from WU6's webhook reconciliation).
+builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+builder.Services.AddScoped<IInvoiceCommandService, InvoiceCommandService>();
+builder.Services.AddScoped<IInvoiceQueryService, InvoiceQueryService>();
 
 // Profile Bounded Context Injection Configuration
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
