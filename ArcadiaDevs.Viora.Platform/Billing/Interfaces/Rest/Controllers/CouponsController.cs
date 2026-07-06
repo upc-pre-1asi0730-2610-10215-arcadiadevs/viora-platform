@@ -26,5 +26,29 @@ public class CouponsController(
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    
+    /// <summary>
+    ///     Lists the coupons redeemed by a user (REQ-COUP-4).
+    /// </summary>
+    /// <param name="userId">The authenticated caller's id, derived from the token.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Coupons for the user (possibly empty).</response>
+    /// <response code="404">Unknown user (REQ-CC-2).</response>
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<CouponResource>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetCouponsByUserId(
+        [FromToken] int userId,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await couponQueryService.Handle(new GetCouponsByUserIdQuery(userId), cancellationToken);
+
+        return BillingActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            coupons => Ok(coupons
+                .Select(coupon => CouponResourceFromEntityAssembler.ToResourceFromEntity(coupon, clock.UtcNow))
+                .ToList()));
+    }
 }
