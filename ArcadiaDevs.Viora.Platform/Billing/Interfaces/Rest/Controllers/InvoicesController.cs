@@ -30,27 +30,5 @@ public class InvoicesController(
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    /// <summary>
-    ///     Lists the invoices belonging to a user (REQ-INV-3).
-    /// </summary>
-    /// <param name="userId">The authenticated caller's id, derived from the token.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Invoices for the user (possibly empty).</response>
-    /// <response code="404">Unknown user (REQ-CC-2).</response>
-    [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<InvoiceResource>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetInvoicesByUserId(
-        [FromToken] int userId,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await invoiceQueryService.Handle(new GetInvoicesByUserIdQuery(userId), cancellationToken);
 
-        return BillingActionResultAssembler.ToActionResult(
-            this,
-            result,
-            errorLocalizer,
-            problemDetailsFactory,
-            invoices => Ok(invoices.Select(InvoiceResourceFromEntityAssembler.ToResourceFromEntity).ToList()));
-    }
 }

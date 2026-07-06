@@ -25,26 +25,5 @@ public class PaymentMethodsController(
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    /// <summary>
-    ///     Lists the payment method(s) belonging to a user (REQ-PM-3).
-    /// </summary>
-    /// <param name="userId">The authenticated caller's id, derived from the token.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Payment methods for the user (possibly empty).</response>
-    [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<PaymentMethodResource>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetPaymentMethodsByUserId(
-        [FromToken] int userId,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await paymentMethodQueryService.Handle(new GetPaymentMethodsByUserIdQuery(userId), cancellationToken);
 
-        return BillingActionResultAssembler.ToActionResult(
-            this,
-            result,
-            errorLocalizer,
-            problemDetailsFactory,
-            paymentMethods => Ok(paymentMethods.Select(PaymentMethodResourceFromEntityAssembler.ToResourceFromEntity).ToList()));
-    }
 }
