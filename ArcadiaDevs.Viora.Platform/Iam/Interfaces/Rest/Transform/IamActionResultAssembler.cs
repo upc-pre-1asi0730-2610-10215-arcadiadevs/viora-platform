@@ -32,6 +32,14 @@ public static class IamActionResultAssembler
             "Iam.InvalidCurrentPassword" => StatusCodes.Status400BadRequest,
             "Iam.InsufficientRole" => StatusCodes.Status403Forbidden,
             "Iam.UserDisabled" => StatusCodes.Status403Forbidden,
+            "Iam.EmailNotVerified" => StatusCodes.Status422UnprocessableEntity,
+            "Iam.VerificationTokenNotFound" => StatusCodes.Status404NotFound,
+            "Iam.VerificationTokenExpiredOrConsumed" => StatusCodes.Status400BadRequest,
+            "Iam.EmailAlreadyVerified" => StatusCodes.Status422UnprocessableEntity,
+            "Iam.SessionNotFound" => StatusCodes.Status404NotFound,
+            "Iam.CannotRevokeCurrentSession" => StatusCodes.Status409Conflict,
+            "Iam.InvalidAccountStateUpdate" => StatusCodes.Status400BadRequest,
+            "Iam.UserAlreadyDeactivated" => StatusCodes.Status409Conflict,
             _ when code.StartsWith("Iam.") => StatusCodes.Status500InternalServerError,
             _ => StatusCodes.Status400BadRequest
         };

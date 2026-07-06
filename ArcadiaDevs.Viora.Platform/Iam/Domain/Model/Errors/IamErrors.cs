@@ -49,4 +49,28 @@ public static class IamErrors
 
     public static readonly Error UserDisabled =
         new("Iam.UserDisabled", "The user account is disabled.");
+
+    public static readonly Error UserAlreadyDeactivated =
+        new("Iam.UserAlreadyDeactivated", "The user account is already deactivated.");
+
+    public static readonly Error EmailNotVerified =
+        new("Iam.EmailNotVerified", "The account's email has not been verified.");
+
+    public static readonly Error EmailAlreadyVerified =
+        new("Iam.EmailAlreadyVerified", "The account's email is already verified.");
+
+    public static readonly Error InvalidAccountStateUpdate =
+        new("Iam.InvalidAccountStateUpdate", "The requested account state update is not valid.");
+
+    public static readonly Error VerificationTokenExpiredOrConsumed =
+        new("Iam.VerificationTokenExpiredOrConsumed", "The verification token is expired or has already been used.");
+
+    public static readonly Error VerificationTokenNotFound =
+        new("Iam.VerificationTokenNotFound", "The specified verification token was not found.");
+
+    public static readonly Error SessionNotFound =
+        new("Iam.SessionNotFound", "The specified session was not found.");
+
+    public static readonly Error CannotRevokeCurrentSession =
+        new("Iam.CannotRevokeCurrentSession", "The current session cannot be revoked.");
 }

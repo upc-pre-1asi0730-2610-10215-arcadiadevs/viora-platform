@@ -25,11 +25,22 @@ public class UserCommandServiceTests
     private readonly IRoleRepository    _roleRepository    = Substitute.For<IRoleRepository>();
     private readonly IProfileContextFacade _profileContextFacade = Substitute.For<IProfileContextFacade>();
     private readonly IBillingContextFacade _billingContextFacade = Substitute.For<IBillingContextFacade>();
+    private readonly IVerificationTokenRepository _verificationTokenRepository =
+        Substitute.For<IVerificationTokenRepository>();
+    private readonly IUserSessionRepository _userSessionRepository = Substitute.For<IUserSessionRepository>();
+    private readonly IEmailService      _emailService      = Substitute.For<IEmailService>();
     private readonly IClock             _clock             = Substitute.For<IClock>();
     private readonly IStringLocalizer<ErrorMessages> _errorLocalizer =
         Substitute.For<IStringLocalizer<ErrorMessages>>();
     private readonly UserCommandService _sut;
-    
+
+    public UserCommandServiceTests()
+    {
+        _sut = new UserCommandService(
+            _userRepository, _unitOfWork, _tokenService, _hashingService, _roleRepository, _profileContextFacade,
+            _billingContextFacade, _verificationTokenRepository, _userSessionRepository, _emailService, _clock,
+            _errorLocalizer);
+    }
 
     [Fact]
     public async Task Handle_SignUp_ReturnsWeakPassword_WhenPasswordShorterThan8Chars()
@@ -41,6 +52,12 @@ public class UserCommandServiceTests
                        .Returns(false);
 
         var command = new SignUpCommand("alice", "short", "alice@example.com", "Alice Smith");   // 5 chars; < 8
+
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(IamErrors.WeakPassword, ((Result<User?, Error>.Failure)result).Error);
+        Assert.Equal("Iam.WeakPassword", ((Result<User?, Error>.Failure)result).Error.Code);
 
         // CRITICAL: hashing must never run on a weak password (timing / branch-leak guard)
         _hashingService.DidNotReceive().HashPassword(Arg.Any<string>());
@@ -59,6 +76,12 @@ public class UserCommandServiceTests
                        .Returns(true);   // note: TRUE — the opposite of the weak-password test
 
         var command = new SignUpCommand("alice", "long-enough-password", "alice@example.com", "Alice Smith");   // 18 chars; >= 8
+
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(IamErrors.UsernameAlreadyTaken, ((Result<User?, Error>.Failure)result).Error);
+        Assert.Equal("Iam.UsernameAlreadyTaken", ((Result<User?, Error>.Failure)result).Error.Code);
 
         // CRITICAL: user creation must never run on a taken username
         // (existence-check early-return guard; if production ever reorders the
@@ -79,6 +102,11 @@ public class UserCommandServiceTests
 
         var command = new SignInCommand("alice", "any-password");
 
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(IamErrors.InvalidCredentials, ((Result<AuthenticatedUser, Error>.Failure)result).Error);
+        Assert.Equal("Iam.InvalidCredentials", ((Result<AuthenticatedUser, Error>.Failure)result).Error.Code);
 
         // CRITICAL: token must never be generated for an unknown user
         _tokenService.DidNotReceive().GenerateToken(Arg.Any<User>());
@@ -102,6 +130,14 @@ public class UserCommandServiceTests
 
         var command = new SignUpCommand("alice", "long-enough-password", "alice@example.com", "Alice Smith", Role: null);
 
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var user = ((Result<User?, Error>.Success)result).Value;
+        Assert.NotNull(user);
+        Assert.Single(user!.Roles);
+        Assert.Equal("Grower", user.Roles.Single().Name);
+
         await _roleRepository.Received(1).FindByNameAsync("Grower", Arg.Any<CancellationToken>());
     }
 
@@ -116,7 +152,14 @@ public class UserCommandServiceTests
         _hashingService.HashPassword(Arg.Any<string>()).Returns("hashed");
 
         var command = new SignUpCommand("bob", "long-enough-password", "bob@example.com", "Bob Jones", Role: "Specialist");
-        
+
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var user = ((Result<User?, Error>.Success)result).Value;
+        Assert.NotNull(user);
+        Assert.Single(user!.Roles);
+        Assert.Equal("Specialist", user.Roles.Single().Name);
     }
 
     [Fact]
@@ -129,7 +172,13 @@ public class UserCommandServiceTests
                        .Returns((Role?)null);
 
         var command = new SignUpCommand("carol", "long-enough-password", "carol@example.com", "Carol Davis", Role: "Administrator");
-        
+
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(IamErrors.InvalidRoleName, ((Result<User?, Error>.Failure)result).Error);
+        Assert.Equal("Iam.InvalidRoleName", ((Result<User?, Error>.Failure)result).Error.Code);
+
         // CRITICAL: hashing/persistence must never run for an unresolvable role
         // (mirrors the weak-password/username-taken early-return guards above).
         _hashingService.DidNotReceive().HashPassword(Arg.Any<string>());

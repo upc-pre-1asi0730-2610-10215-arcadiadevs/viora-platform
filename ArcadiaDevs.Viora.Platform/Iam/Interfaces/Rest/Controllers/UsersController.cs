@@ -1,5 +1,7 @@
 using ArcadiaDevs.Viora.Platform.Iam.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Iam.Application.QueryServices;
+using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Aggregates;
+using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Pipeline.Middleware.Attributes;
@@ -31,6 +33,9 @@ public class UsersController(
     /// <summary>
     ///     Gets all users.
     /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Users returned (possibly empty).</response>
+    /// <response code="401">Missing or invalid bearer token.</response>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<UserResource>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -87,6 +92,11 @@ public class UsersController(
     /// <summary>
     ///     Gets a user by ID.
     /// </summary>
+    /// <param name="id">The user id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">User found.</response>
+    /// <response code="401">Missing or invalid bearer token.</response>
+    /// <response code="404">User not found.</response>
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(UserResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -139,5 +149,82 @@ public class UsersController(
             errorLocalizer,
             problemDetailsFactory,
             user => Ok(user!.ToResource()));
+    }
+
+    /// <summary>
+    ///     Deactivates a user's account (REQ-DEACT-2). Danger-zone semantics —
+    ///     only <c>{ "active": false }</c> is accepted; no reactivation path
+    ///     exists via this endpoint.
+    /// </summary>
+    /// <remarks>
+    ///     No self-only/ownership guard on <paramref name="userId"/> — same
+    ///     inherited-risk idiom as <see cref="ChangePassword"/>/<see cref="GetById"/>.
+    /// </remarks>
+    [HttpPatch("{userId:int}")]
+    [ProducesResponseType(typeof(UserResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> UpdateActiveState(
+        [FromRoute] int userId,
+        [FromBody] UpdateUserResource resource,
+        CancellationToken cancellationToken)
+    {
+        // REQ-DEACT-2: active:true or omitted/null is rejected before the
+        // aggregate is ever touched — WA returns a proper ProblemDetails
+        // envelope here (diverges from OS's bare 400), matching this repo's
+        // own hard REST-compliance convention.
+        if (resource.Active != false)
+        {
+            var invalidResult = new Result<User?, Error>.Failure(IamErrors.InvalidAccountStateUpdate);
+            return IamActionResultAssembler.ToActionResult(
+                this,
+                invalidResult,
+                errorLocalizer,
+                problemDetailsFactory,
+                user => Ok(user!.ToResource()));
+        }
+
+        var command = new DeactivateUserCommand(userId);
+        var result = await userCommandService.Handle(command, cancellationToken);
+
+        return IamActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            user => Ok(user!.ToResource()));
+    }
+
+    /// <summary>
+    ///     Permanently deletes a user's account (Danger zone): the Iam user,
+    ///     their sessions and verification tokens, and their profile.
+    /// </summary>
+    /// <remarks>
+    ///     No self-only/ownership guard on <paramref name="userId"/> — same
+    ///     inherited-risk idiom as <see cref="ChangePassword"/>/<see cref="UpdateActiveState"/>,
+    ///     matching OS's <c>DELETE /{userId}</c> exactly. This cannot be undone.
+    /// </remarks>
+    /// <param name="userId">The user id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="204">Account deleted.</response>
+    /// <response code="404">User not found.</response>
+    [HttpDelete("{userId:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteAccount(
+        [FromRoute] int userId,
+        CancellationToken cancellationToken)
+    {
+        var command = new DeleteUserCommand(userId);
+        var result = await userCommandService.Handle(command, cancellationToken);
+
+        return IamActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            _ => NoContent());
     }
 }

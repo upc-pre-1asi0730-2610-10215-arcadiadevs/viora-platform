@@ -43,6 +43,8 @@ using ArcadiaDevs.Viora.Platform.Iam.Application.Internal.OutboundServices;
 using ArcadiaDevs.Viora.Platform.Iam.Application.Internal.QueryServices;
 using ArcadiaDevs.Viora.Platform.Iam.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Iam.Domain.Repositories;
+using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.ExternalServices.Email;
+using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.ExternalServices.Email.Configuration;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Hashing.BCrypt.Services;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
@@ -340,11 +342,30 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUserQueryService, UserQueryService>();
 builder.Services.AddScoped<IRoleQueryService, RoleQueryService>();
+builder.Services.AddScoped<IUserCommandService, UserCommandService>();
+builder.Services.AddScoped<IVerificationTokenRepository, VerificationTokenRepository>();
+builder.Services.AddScoped<IUserSessionRepository, UserSessionRepository>();
+builder.Services.AddScoped<ISessionCommandService, SessionCommandService>();
+builder.Services.AddScoped<ISessionQueryService, SessionQueryService>();
 builder.Services.AddScoped<IHashingService, HashingService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IIamContextFacade, IamContextFacade>();
 
-
+// Iam Email Integration (WU2, iam-auth-parity): Brevo adapter, composing the
+// same off-by-default DI shape established by MercadoPagoPaymentGatewayAdapter
+// — raw HttpClient via AddHttpClient<T>() + IOptions<T> +
+// AddOptionsWithValidateOnStart<T>(). Off by default (BrevoOptions.Enabled=
+// false) — builds/runs with zero real credentials; verification links are
+// logged instead of emailed until configured (REQ-EMAIL-2).
+builder.Services.AddHttpClient<BrevoEmailService>(client =>
+{
+    client.BaseAddress = new Uri("https://api.brevo.com");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.AddScoped<IEmailService>(sp => sp.GetRequiredService<BrevoEmailService>());
+builder.Services.AddSingleton<IValidateOptions<BrevoOptions>, BrevoOptionsValidator>();
+builder.Services.AddOptionsWithValidateOnStart<BrevoOptions>()
+    .Bind(builder.Configuration.GetSection(BrevoOptions.SectionName));
 
 // Intervention Bounded Context Injection Configuration
 // WU1 of 8 (specialist-and-matching, obs #268): Specialist slice.
@@ -368,6 +389,7 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<IInterventionRequestCommandService, InterventionRequestCommandService>();
 builder.Services.AddScoped<IInterventionRequestQueryService, InterventionRequestQueryService>();
 // specialist-dashboard-parity: specialist verify/decline + GET /specialist-dashboard.
+builder.Services.AddScoped<ISpecialistDashboardQueryService, SpecialistDashboardQueryService>();
 // WU4 of 8 (service-proposal, obs #268): ServiceProposal slice.
 builder.Services.AddScoped<IServiceProposalRepository, ServiceProposalRepository>();
 builder.Services.AddScoped<IServiceProposalCommandService, ServiceProposalCommandService>();

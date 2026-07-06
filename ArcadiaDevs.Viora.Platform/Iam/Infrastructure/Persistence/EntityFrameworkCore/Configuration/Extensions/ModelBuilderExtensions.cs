@@ -24,5 +24,7 @@ public static class ModelBuilderExtensions
     {
         builder.ApplyConfiguration(new UserConfiguration());
         builder.ApplyConfiguration(new RoleConfiguration());
+        builder.ApplyConfiguration(new VerificationTokenConfiguration());
+        builder.ApplyConfiguration(new UserSessionConfiguration());
     }
 }
