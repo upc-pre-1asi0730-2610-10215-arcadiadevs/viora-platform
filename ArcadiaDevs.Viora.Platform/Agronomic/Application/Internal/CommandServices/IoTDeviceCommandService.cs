@@ -49,6 +49,12 @@ public class IoTDeviceCommandService : IIoTDeviceCommandService
                 AgronomicErrors.PlotNotFound);
         }
 
+        if (!plot.BelongsTo(command.UserId))
+        {
+            return new Result<IoTDevice, Error>.Failure(
+                AgronomicErrors.UnauthorizedAccess);
+        }
+
         // A4 part 2: parse the activation code into the VO first. The VO's
         // constructor throws ArgumentException on null/blank/malformed input;
         // we surface that as a domain failure instead of letting it bubble up.
@@ -124,6 +130,12 @@ public class IoTDeviceCommandService : IIoTDeviceCommandService
                 AgronomicErrors.PlotNotFound);
         }
 
+        if (!plot.BelongsTo(command.UserId))
+        {
+            return new Result<IoTDevice, Error>.Failure(
+                AgronomicErrors.UnauthorizedAccess);
+        }
+
         var device = await _ioTDeviceRepository.FindByIdAndPlotIdAsync(command.DeviceId, command.PlotId);
         if (device == null)
         {
@@ -151,6 +163,12 @@ public class IoTDeviceCommandService : IIoTDeviceCommandService
         {
             return new Result<bool, Error>.Failure(
                 AgronomicErrors.PlotNotFound);
+        }
+
+        if (!plot.BelongsTo(command.UserId))
+        {
+            return new Result<bool, Error>.Failure(
+                AgronomicErrors.UnauthorizedAccess);
         }
 
         var device = await _ioTDeviceRepository.FindByIdAndPlotIdAsync(command.DeviceId, command.PlotId);

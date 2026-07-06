@@ -75,6 +75,7 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.CommandServi
 /// </summary>
 public class RecommendDynamicNutritionPlanCommandService(
     IDynamicNutritionPlanRepository dynamicNutritionPlanRepository,
+    PlotOwnershipValidator plotOwnershipValidator,
     IUnitOfWork unitOfWork,
     IMediator mediator,
     IAgronomicStatisticRepository agronomicStatisticRepository,
@@ -129,7 +130,17 @@ public class RecommendDynamicNutritionPlanCommandService(
             // N1: resolve effective user id. When AlertId is present the plan is
             // triggered by a Surveillance alert — use the plot owner, not the
             // command's UserId (which may be a dummy stand-in). When AlertId is
-            // null the existing manual flow is preserved.
+            // null the existing manual flow is preserved, and ownership must be
+            // checked since command.UserId is caller-supplied (token-derived).
+            if (!command.AlertId.HasValue)
+            {
+                var ownershipResult = await plotOwnershipValidator.ValidateAsync(command.UserId, command.PlotId, cancellationToken);
+                if (ownershipResult is Result<Plot, Error>.Failure ownershipFailure)
+                {
+                    return new Result<DynamicNutritionPlan, Error>.Failure(AgronomicErrors.PlotOwnership);
+                }
+            }
+
             var effectiveUserId = command.AlertId.HasValue ? plot.OwnerUserId : command.UserId;
 
             // Step 2: latest agronomic statistic (drives NDVI trend + chill portions).

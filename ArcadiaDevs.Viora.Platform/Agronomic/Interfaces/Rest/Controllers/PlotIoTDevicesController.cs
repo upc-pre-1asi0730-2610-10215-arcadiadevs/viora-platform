@@ -36,21 +36,24 @@ public class PlotIoTDevicesController(
     ///     Registers a new IoT device under the specified plot.
     /// </summary>
     /// <param name="plotId">The plot identifier (path variable).</param>
+    /// <param name="userId">The authenticated caller's id, derived from the token.</param>
     /// <param name="resource">The request body with deviceName and optional status.</param>
     /// <returns>
     ///     <c>201 Created</c> with the created <see cref="IoTDeviceResource"/>,
-    ///     or <c>400 Bad Request</c>/<c>404 Not Found</c> on domain failure.
+    ///     or <c>400 Bad Request</c>/<c>403 Forbidden</c>/<c>404 Not Found</c> on domain failure.
     /// </returns>
     [HttpPost]
     [Tags("IoTDevice")]
     [ProducesResponseType(typeof(IoTDeviceResource), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CreateIoTDevice(
         [FromRoute] int plotId,
+        [FromToken] int userId,
         [FromBody] CreateIoTDeviceResource resource)
     {
-        var command = CreateIoTDeviceCommandFromResourceAssembler.ToCommandFromResource(resource, plotId);
+        var command = CreateIoTDeviceCommandFromResourceAssembler.ToCommandFromResource(resource, plotId, userId);
         var result = await ioTDeviceCommandService.Handle(command);
 
         return AgronomicActionResultAssembler.ToActionResult(
@@ -60,7 +63,7 @@ public class PlotIoTDevicesController(
             problemDetailsFactory,
             device => CreatedAtAction(
                 nameof(GetIoTDevicesByPlotId),
-                new { plotId = device.PlotId, userId = command.PlotId },
+                new { plotId = device.PlotId },
                 IoTDeviceResourceFromEntityAssembler.ToResourceFromEntity(device, clock)));
     }
 
@@ -68,23 +71,26 @@ public class PlotIoTDevicesController(
     ///     Updates an existing IoT device's metadata under the specified plot.
     /// </summary>
     /// <param name="plotId">The plot identifier (path variable).</param>
+    /// <param name="userId">The authenticated caller's id, derived from the token.</param>
     /// <param name="deviceId">The device identifier (path variable).</param>
     /// <param name="resource">The request body with deviceName and status.</param>
     /// <returns>
     ///     <c>200 OK</c> with the updated <see cref="IoTDeviceResource"/>,
-    ///     or <c>400 Bad Request</c>/<c>404 Not Found</c> on failure.
+    ///     or <c>400 Bad Request</c>/<c>403 Forbidden</c>/<c>404 Not Found</c> on failure.
     /// </returns>
     [HttpPatch("{deviceId:int}")]
     [Tags("IoTDevice")]
     [ProducesResponseType(typeof(IoTDeviceResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateIoTDevice(
         [FromRoute] int plotId,
+        [FromToken] int userId,
         [FromRoute] int deviceId,
         [FromBody] UpdateIoTDeviceResource resource)
     {
-        var command = UpdateIoTDeviceCommandFromResourceAssembler.ToCommandFromResource(resource, plotId, deviceId);
+        var command = UpdateIoTDeviceCommandFromResourceAssembler.ToCommandFromResource(resource, plotId, userId, deviceId);
 
         var result = await ioTDeviceCommandService.Handle(command);
 
@@ -100,21 +106,24 @@ public class PlotIoTDevicesController(
     ///     Deletes an existing IoT device from the specified plot.
     /// </summary>
     /// <param name="plotId">The plot identifier (path variable).</param>
+    /// <param name="userId">The authenticated caller's id, derived from the token.</param>
     /// <param name="deviceId">The device identifier (path variable).</param>
     /// <returns>
     ///     <c>204 NoContent</c> if deleted successfully,
-    ///     or <c>400 Bad Request</c>/<c>404 Not Found</c> on failure.
+    ///     or <c>400 Bad Request</c>/<c>403 Forbidden</c>/<c>404 Not Found</c> on failure.
     /// </returns>
     [HttpDelete("{deviceId:int}")]
     [Tags("IoTDevice")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteIoTDevice(
         [FromRoute] int plotId,
+        [FromToken] int userId,
         [FromRoute] int deviceId)
     {
-        var command = new DeleteIoTDeviceCommand(plotId, deviceId);
+        var command = new DeleteIoTDeviceCommand(plotId, userId, deviceId);
 
         var result = await ioTDeviceCommandService.Handle(command);
 
@@ -142,7 +151,7 @@ public class PlotIoTDevicesController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetIoTDevicesByPlotId(
         [FromRoute] int plotId,
-        [FromQuery] int userId,
+        [FromToken] int userId,
         CancellationToken cancellationToken)
     {
         var query = new GetIoTDevicesByPlotIdQuery(plotId, userId);

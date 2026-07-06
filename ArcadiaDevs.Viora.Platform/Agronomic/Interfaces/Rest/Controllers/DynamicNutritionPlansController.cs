@@ -30,11 +30,18 @@ public class DynamicNutritionPlansController(
     /// <summary>
     ///     Recommends and generates a dynamic nutrition plan.
     /// </summary>
+    /// <param name="userId">The user identifier (query parameter).</param>
+    /// <param name="plotId">The plot identifier (query parameter).</param>
+    /// <param name="cancellationToken">The request cancellation token.</param>
+    /// <response code="201">Nutrition plan recommended and created.</response>
+    /// <response code="400">Recommendation failed due to invalid input or domain failure.</response>
+    /// <response code="403">The user does not own the plot.</response>
     [HttpPost]
     [ProducesResponseType(typeof(DynamicNutritionPlanResource), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> RecommendDynamicNutritionPlan(
-        [FromQuery] int userId,
+        [FromToken] int userId,
         [FromQuery] int plotId,
         CancellationToken cancellationToken)
     {
@@ -52,12 +59,21 @@ public class DynamicNutritionPlansController(
     /// <summary>
     ///     Certifies a dynamic nutrition plan application.
     /// </summary>
+    /// <param name="userId">The user identifier (query parameter).</param>
+    /// <param name="planId">The dynamic nutrition plan identifier (path variable).</param>
+    /// <param name="resource">The certification payload.</param>
+    /// <param name="cancellationToken">The request cancellation token.</param>
+    /// <response code="200">Application certified.</response>
+    /// <response code="400">Missing or invalid certification data.</response>
+    /// <response code="403">The user does not own the plan's plot.</response>
+    /// <response code="422">The plan cannot be certified in its current state.</response>
     [HttpPatch("{planId}")]
     [ProducesResponseType(typeof(DynamicNutritionPlanResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> CertifyDynamicNutritionPlan(
-        [FromQuery] int userId,
+        [FromToken] int userId,
         long planId,
         [FromBody] CertifyNutritionApplicationResource resource,
         CancellationToken cancellationToken)
@@ -84,16 +100,24 @@ public class DynamicNutritionPlansController(
     /// <summary>
     ///     Gets the active dynamic nutrition plan for a plot.
     /// </summary>
+    /// <param name="userId">The user identifier (query parameter).</param>
+    /// <param name="plotId">The plot identifier (query parameter).</param>
+    /// <param name="cancellationToken">The request cancellation token.</param>
+    /// <response code="200">Active nutrition plan found.</response>
+    /// <response code="400">Invalid request parameters.</response>
+    /// <response code="403">The user does not own the plot.</response>
+    /// <response code="404">No active nutrition plan found for the plot.</response>
     [HttpGet("active")]
     [ProducesResponseType(typeof(DynamicNutritionPlanResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetActiveDynamicNutritionPlan(
-        [FromQuery] int userId,
+        [FromToken] int userId,
         [FromQuery] int plotId,
         CancellationToken cancellationToken)
     {
-        var query = new GetDynamicNutritionPlanQuery(plotId);
+        var query = new GetDynamicNutritionPlanQuery(plotId, userId);
         var result = await dynamicNutritionQueryService.Handle(query, cancellationToken);
 
         return AgronomicActionResultAssembler.ToActionResult(
