@@ -22,6 +22,9 @@ public static class IamErrors
     public static readonly Error FullNameRequired =
         new("Iam.FullNameRequired", "Full name is required.");
 
+    public static readonly Error SpecialistPhoneRequired =
+        new("Iam.SpecialistPhoneRequired", "A contact phone is required for specialist accounts.");
+
     public static readonly Error UserNotFound =
         new("Iam.UserNotFound", "The specified user was not found.");
 

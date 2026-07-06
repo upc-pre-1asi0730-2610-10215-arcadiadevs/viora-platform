@@ -21,4 +21,5 @@ public record SignUpCommand(
     string Email,
     string FullName,
     string? Role = null,
-    string? ReferralCode = null);
+    string? ReferralCode = null,
+    string? Phone = null);
