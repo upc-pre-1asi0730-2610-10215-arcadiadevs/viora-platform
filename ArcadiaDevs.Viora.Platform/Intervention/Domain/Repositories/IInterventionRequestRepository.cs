@@ -27,4 +27,14 @@ public interface IInterventionRequestRepository : IBaseRepository<InterventionRe
         int specialistId,
         InterventionStatus status,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Lists every request assigned to a specialist, unfiltered by status
+    ///     (marketplace-and-cases-read-models — mirrors OS's
+    ///     <c>findBySpecialistId</c>) — distinct from
+    ///     <see cref="FindBySpecialistIdAndStatusAsync" />.
+    /// </summary>
+    Task<IReadOnlyList<InterventionRequest>> FindBySpecialistIdAsync(
+        int specialistId,
+        CancellationToken cancellationToken = default);
 }

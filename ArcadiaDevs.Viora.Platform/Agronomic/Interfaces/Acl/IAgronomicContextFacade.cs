@@ -16,6 +16,16 @@ public interface IAgronomicContextFacade
     Task<double?> FetchCurrentNdviByReporterAsync(int reporterUserId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    ///     Fetches the current NDVI for a specific plot, from its latest
+    ///     ingested <c>AgronomicStatistic</c> — mirrors OS's
+    ///     <c>fetchCurrentNdviByPlotId</c>. Returns <c>null</c> when the
+    ///     plot has no statistic yet (never a fabricated value).
+    /// </summary>
+    /// <param name="plotId">The plot identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    Task<double?> FetchCurrentNdviByPlotAsync(long plotId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     ///     Fetches a map of plot summaries keyed by plot identifier for all plots owned by a user.
     /// </summary>
     /// <param name="ownerUserId">The owner user identifier.</param>

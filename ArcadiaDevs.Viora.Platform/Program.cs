@@ -412,6 +412,9 @@ builder.Services.AddScoped<IInterventionOutcomeQueryService, InterventionOutcome
 builder.Services.AddScoped<InterventionOverviewComposer>();
 builder.Services.AddScoped<IInterventionOverviewQueryService, InterventionOverviewQueryService>();
 builder.Services.AddScoped<IInterventionRequestMetricsQueryService, InterventionRequestMetricsQueryService>();
+// marketplace-and-cases-read-models: GET /intervention-marketplace + GET /specialist-cases.
+builder.Services.AddScoped<ISpecialistMarketplaceQueryService, SpecialistMarketplaceQueryService>();
+builder.Services.AddScoped<ISpecialistCasesQueryService, SpecialistCasesQueryService>();
 
 // Billing Bounded Context Injection Configuration
 // WU1 of 9 (plan, obs #319): Plan catalog slice. WU2-WU9 extend this block.

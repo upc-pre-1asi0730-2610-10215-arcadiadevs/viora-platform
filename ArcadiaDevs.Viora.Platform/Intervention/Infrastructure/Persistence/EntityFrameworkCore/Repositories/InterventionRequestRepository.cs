@@ -38,4 +38,13 @@ public class InterventionRequestRepository(AppDbContext context)
             .Where(r => r.SpecialistId == specialistId && r.Status == status)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<InterventionRequest>> FindBySpecialistIdAsync(
+        int specialistId,
+        CancellationToken cancellationToken = default)
+    {
+        return await Context.Set<InterventionRequest>()
+            .Where(r => r.SpecialistId == specialistId)
+            .ToListAsync(cancellationToken);
+    }
 }
