@@ -3,4 +3,4 @@
 /// <summary>
 ///     Response body for a successfully created checkout session (REQ-GATE-3).
 /// </summary>
-public record CheckoutSessionResource(string RedirectUrl, string ExternalReference);
+public record CheckoutSessionResource(string CheckoutUrl, string ExternalReference);
