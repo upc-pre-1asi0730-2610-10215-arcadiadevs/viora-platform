@@ -29,6 +29,7 @@ public class PlansController(
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <response code="200">The full plan catalog.</response>
     [HttpGet]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(IEnumerable<PlanResource>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetPlans(CancellationToken cancellationToken = default)
