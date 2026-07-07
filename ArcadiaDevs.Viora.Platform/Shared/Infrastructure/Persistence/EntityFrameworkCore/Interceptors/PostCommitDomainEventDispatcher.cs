@@ -1,3 +1,4 @@
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model.Events;
 using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Model.Aggregates;
 using Cortex.Mediator;
@@ -252,11 +253,17 @@ public sealed class PostCommitDomainEventDispatcher : SaveChangesInterceptor
             // Clear only when the concrete aggregate exposes
             // ClearDomainEvents(). The IHasDomainEvents contract is
             // read-only; the clear method is a public member of the
-            // concrete aggregate (Alert in Phase 2; future aggregates
-            // extend this type check as they adopt the contract).
-            if (aggregate is Alert alert)
+            // concrete aggregate (Alert in Phase 2, IoTDevice added
+            // 2026-07-06 for IoTDeviceUpdated; future aggregates extend
+            // this type check as they adopt the contract).
+            switch (aggregate)
             {
-                alert.ClearDomainEvents();
+                case Alert alert:
+                    alert.ClearDomainEvents();
+                    break;
+                case IoTDevice ioTDevice:
+                    ioTDevice.ClearDomainEvents();
+                    break;
             }
         }
     }
