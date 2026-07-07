@@ -28,7 +28,7 @@ echo ""
 # 1. Sign-up → 201
 # ---------------------------------------------------------------
 echo "--- 1. Sign-up happy path ---"
-HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/authentication/sign-up" \
+HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/auth/sign-up" \
     -H "Content-Type: application/json" \
     -d '{"username":"alice","password":"P@ssw0rd!"}')
 if [ "$HTTP" = "201" ]; then
@@ -38,7 +38,7 @@ else
 fi
 
 # Get the sign-up response body
-SIGNUP_BODY=$(curl_body -X POST "$BASE_URL/api/v1/authentication/sign-up" \
+SIGNUP_BODY=$(curl_body -X POST "$BASE_URL/api/v1/auth/sign-up" \
     -H "Content-Type: application/json" \
     -d '{"username":"bob","password":"P@ssw0rd!"}')
 echo "  Sign-up body: $SIGNUP_BODY"
@@ -47,7 +47,7 @@ echo "  Sign-up body: $SIGNUP_BODY"
 # 2. Sign-up duplicate username → 400 Iam.UsernameAlreadyTaken
 # ---------------------------------------------------------------
 echo "--- 2. Sign-up duplicate username ---"
-HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/authentication/sign-up" \
+HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/auth/sign-up" \
     -H "Content-Type: application/json" \
     -d '{"username":"alice","password":"P@ssw0rd!"}')
 if [ "$HTTP" = "400" ]; then
@@ -60,7 +60,7 @@ fi
 # 3. Sign-up weak password → 400 Iam.WeakPassword
 # ---------------------------------------------------------------
 echo "--- 3. Sign-up weak password ---"
-HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/authentication/sign-up" \
+HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/auth/sign-up" \
     -H "Content-Type: application/json" \
     -d '{"username":"charlie","password":"short"}')
 if [ "$HTTP" = "400" ]; then
@@ -73,10 +73,10 @@ fi
 # 4. Sign-in happy path → 200 with token
 # ---------------------------------------------------------------
 echo "--- 4. Sign-in happy path ---"
-SIGNIN_BODY=$(curl_body -X POST "$BASE_URL/api/v1/authentication/sign-in" \
+SIGNIN_BODY=$(curl_body -X POST "$BASE_URL/api/v1/auth/sign-in" \
     -H "Content-Type: application/json" \
     -d '{"username":"alice","password":"P@ssw0rd!"}')
-SIGNIN_HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/authentication/sign-in" \
+SIGNIN_HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/auth/sign-in" \
     -H "Content-Type: application/json" \
     -d '{"username":"alice","password":"P@ssw0rd!"}')
 if [ "$SIGNIN_HTTP" = "200" ]; then
@@ -97,7 +97,7 @@ fi
 # 5. Sign-in wrong password → 401 Iam.InvalidCredentials
 # ---------------------------------------------------------------
 echo "--- 5. Sign-in wrong password ---"
-HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/authentication/sign-in" \
+HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/auth/sign-in" \
     -H "Content-Type: application/json" \
     -d '{"username":"alice","password":"WRONG"}')
 if [ "$HTTP" = "401" ]; then
@@ -110,7 +110,7 @@ fi
 # 6. Sign-in unknown user → 401 Iam.InvalidCredentials
 # ---------------------------------------------------------------
 echo "--- 6. Sign-in unknown user ---"
-HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/authentication/sign-in" \
+HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/auth/sign-in" \
     -H "Content-Type: application/json" \
     -d '{"username":"nobody","password":"P@ssw0rd!"}')
 if [ "$HTTP" = "401" ]; then

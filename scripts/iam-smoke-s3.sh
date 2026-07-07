@@ -31,7 +31,7 @@ echo ""
 # ---------------------------------------------------------------
 echo "--- 1. Sign-up ---"
 S3_USER="s3-smoke-$(date +%s)"
-HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/authentication/sign-up" \
+HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/auth/sign-up" \
     -H "Content-Type: application/json" \
     -d "{\"username\":\"$S3_USER\",\"password\":\"P@ssw0rd!\"}")
 if [ "$HTTP" = "201" ]; then
@@ -44,10 +44,10 @@ fi
 # 2. Sign-in still works
 # ---------------------------------------------------------------
 echo "--- 2. Sign-in ---"
-SIGNIN_BODY=$(curl_body -X POST "$BASE_URL/api/v1/authentication/sign-in" \
+SIGNIN_BODY=$(curl_body -X POST "$BASE_URL/api/v1/auth/sign-in" \
     -H "Content-Type: application/json" \
     -d "{\"username\":\"$S3_USER\",\"password\":\"P@ssw0rd!\"}")
-SIGNIN_HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/authentication/sign-in" \
+SIGNIN_HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/auth/sign-in" \
     -H "Content-Type: application/json" \
     -d "{\"username\":\"$S3_USER\",\"password\":\"P@ssw0rd!\"}")
 if [ "$SIGNIN_HTTP" = "200" ]; then
@@ -111,7 +111,7 @@ fi
 # 6. Sign-up duplicate → 400 (still rejects)
 # ---------------------------------------------------------------
 echo "--- 6. Sign-up duplicate → 400 ---"
-HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/authentication/sign-up" \
+HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/auth/sign-up" \
     -H "Content-Type: application/json" \
     -d "{\"username\":\"$S3_USER\",\"password\":\"P@ssw0rd!\"}")
 if [ "$HTTP" = "400" ]; then
@@ -124,7 +124,7 @@ fi
 # 7. Sign-in wrong password → 401
 # ---------------------------------------------------------------
 echo "--- 7. Sign-in wrong password → 401 ---"
-HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/authentication/sign-in" \
+HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/auth/sign-in" \
     -H "Content-Type: application/json" \
     -d "{\"username\":\"$S3_USER\",\"password\":\"WRONG\"}")
 if [ "$HTTP" = "401" ]; then

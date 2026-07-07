@@ -44,6 +44,61 @@ public abstract record Result<TValue, TError>
         };
 
     /// <summary>
+    /// Chains a dependent operation that itself returns a <see cref="Result{TNext, TError}"/>,
+    /// short-circuiting on the current Failure instead of nesting it.
+    /// </summary>
+    /// <typeparam name="TNext">The type of the next result value.</typeparam>
+    /// <param name="onSuccess">Function to apply if successful; returns the next Result.</param>
+    /// <returns>The Result returned by <paramref name="onSuccess"/>, or the current Failure.</returns>
+    public Result<TNext, TError> FlatMap<TNext>(Func<TValue, Result<TNext, TError>> onSuccess) =>
+        this switch
+        {
+            Success s => onSuccess(s.Value),
+            Failure f => new Result<TNext, TError>.Failure(f.Error),
+            _ => throw new InvalidOperationException("Unknown Result type")
+        };
+
+    /// <summary>
+    /// Applies a transformation function to the error if the result is a failure.
+    /// </summary>
+    /// <typeparam name="TNextError">The type of the transformed error.</typeparam>
+    /// <param name="onFailure">Function to apply to the error if failed.</param>
+    /// <returns>A new Result with the transformed error, or the current Success.</returns>
+    public Result<TValue, TNextError> MapError<TNextError>(Func<TError, TNextError> onFailure) =>
+        this switch
+        {
+            Success s => new Result<TValue, TNextError>.Success(s.Value),
+            Failure f => new Result<TValue, TNextError>.Failure(onFailure(f.Error)),
+            _ => throw new InvalidOperationException("Unknown Result type")
+        };
+
+    /// <summary>
+    /// Attempts to recover from a Failure by producing a fallback Result. The current
+    /// Success, if any, passes through untouched.
+    /// </summary>
+    /// <param name="onFailure">Function that attempts a fallback Result from the error.</param>
+    /// <returns>The current Success, or the Result returned by <paramref name="onFailure"/>.</returns>
+    public Result<TValue, TError> Recover(Func<TError, Result<TValue, TError>> onFailure) =>
+        this switch
+        {
+            Success => this,
+            Failure f => onFailure(f.Error),
+            _ => throw new InvalidOperationException("Unknown Result type")
+        };
+
+    /// <summary>
+    /// Returns the success value, or <paramref name="defaultValue"/> if this is a Failure.
+    /// </summary>
+    public TValue GetOrElse(TValue defaultValue) =>
+        this is Success s ? s.Value : defaultValue;
+
+    /// <summary>
+    /// Returns the success value, or <c>default</c> if this is a Failure.
+    /// </summary>
+    public TValue? ToOptional() =>
+        this is Success s ? s.Value : default;
+
+    /// <summary>
     /// Applies a function to either the success or failure case.
     /// </summary>
     /// <typeparam name="TResult">The type of the final result.</typeparam>

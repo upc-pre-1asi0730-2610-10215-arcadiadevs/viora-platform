@@ -5,6 +5,24 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.56.0] - 2026-07-06
+
+### security
+- `AgronomicStatisticsController` (all 3 endpoints) and `MonitoringSummariesController.GetCurrent` now derive `userId` from the token (`[FromToken]`) instead of accepting it as a client-suppliable query parameter — closes a spoofing gap, including a header-fallback pattern (`X-Authenticated-User-Id` optional header defaulting to the spoofable query value) that was easily bypassed by simply omitting the header
+- `PestSightingReportsController.ReviewPestSightingReport` (PATCH) now derives `reporterUserId` from the token instead of a query parameter, consistent with the other 2 endpoints on that controller
+
+### added
+- Implemented `CheckoutsController.CreateCheckout` (`POST /api/v1/checkouts`) — was an empty stub despite `ICheckoutCommandService`/`IPaymentGateway`/the MercadoPago adapter already being fully wired up. `CreateCheckoutResource` no longer accepts `UserId` in the body (would have reintroduced the same spoofing class above) — bound via `[FromToken]` instead, matching Invoices/Coupons/PaymentMethods
+- `Result<TValue, TError>` gains `FlatMap`, `MapError`, `Recover`, `GetOrElse`, `ToOptional`, matching OS's `Result<T, E>`. Purely additive
+
+### changed
+- Auth route prefix renamed from `/api/v1/authentication` to `/api/v1/auth`, matching OS. wa-viora-webapp already targets `/auth` in both dev and prod env config, so this requires no frontend change
+- `AgronomicStatistics` series, `MonitoringSummaries` current, and `DynamicNutritionPlans` active now live on their resource's root GET, disambiguated by `?view=series` / `?status=ACTIVE` query params (`MonitoringSummaries` also gains OS's currently-unused `?limit=` placeholder) instead of dedicated sub-routes, matching OS's REST shape. The old sub-routes (`/series`, `/current`, `/active`) remain as thin alias actions delegating to the new root handlers — no frontend change required
+
+### notes
+- Closes out `docs/os-wa-parity-audit-2026-07-06.md`'s P0/P1/P2/P3 findings, except the P2 missing domain events (`PlotRegisteredEvent`, `IoTDeviceUpdated`), left open
+- Feature-first per standing convention — no tests written for this release; the test project currently fails to build independent of this work (pre-existing breakage from the specialist-marketplace phases' `CreateOrUpdateProfileCommand`/`IProfileContextFacade` signature changes, deferred to Phase 8)
+
 ## [1.55.0] - 2026-07-06
 
 ### changed
