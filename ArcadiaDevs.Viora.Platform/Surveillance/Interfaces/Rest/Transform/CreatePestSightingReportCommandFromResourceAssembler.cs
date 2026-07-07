@@ -13,9 +13,8 @@ public static class CreatePestSightingReportCommandFromResourceAssembler
     /// </summary>
     /// <param name="resource">The incoming REST resource.</param>
     /// <param name="reporterUserId">
-    ///     The authenticated caller's id, derived from the token — takes precedence
-    ///     over <see cref="CreatePestSightingReportResource.ReporterUserId"/>, which
-    ///     is client-supplied and therefore not trusted for identity.
+    ///     The authenticated caller's id, derived from the token. The resource
+    ///     itself carries no reporter identity field — it is never client-supplied.
     /// </param>
     /// <returns>The generated command.</returns>
     public static CreatePestSightingReportCommand ToCommandFromResource(
