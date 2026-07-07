@@ -5,6 +5,25 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.53.0] - 2026-07-06
+
+### added
+- `GET /api/v1/intervention-marketplace` — the signed-in specialist's inbox of incoming (`PENDING`) producer cases, headline counters (`newCasesCount`, `acceptanceRatePercent`, `activeCasesCount`), each case enriched across Surveillance (alert severity/problem), Agronomic (plot name/location/area/crop, plot-keyed NDVI), and Profile (producer name/photo/plot count)
+- `GET /api/v1/specialist-cases` — the signed-in specialist's own pipeline (My Requests + Field Inspection), counters bucketed by request status and on-site `fieldStage` (`NEEDS_VISIT → FINDINGS_LOGGED → PRESCRIBED → CLOSED`, derived by walking `InterventionRequest → ServiceProposal → TreatmentPrescription → InterventionExecution → InterventionOutcome`)
+- `IInterventionRequestRepository.FindBySpecialistIdAsync` — unfiltered by status, distinct from the existing `FindBySpecialistIdAndStatusAsync`
+- `IAgronomicContextFacade.FetchCurrentNdviByPlotAsync(plotId)` — plot-keyed NDVI lookup off the latest `AgronomicStatistic`, complementing the existing reporter-keyed `FetchCurrentNdviByReporterAsync`
+- `PhotoUrl` on `SpecialistPublicProfile`/`SpecialistResource`; `Role`/`PhotoUrl` on `SpecialistContact`/`SpecialistContactResource`
+- Real `successRatePercent` derivation on `GET /api/v1/specialists/{id}` and `GET /api/v1/specialist-candidates` — walks each specialist's accepted-proposal → prescription → execution → closed-outcome chain, `RESOLVED` share of closed cases; `null` (never `0`) until the specialist has a closed case
+
+### fixed
+- `CurrentUserIdModelBinder`'s conditional expression unified its `int`/`long` arms to `long` per C#'s common-type rule regardless of which branch actually ran, so every `[FromToken] int` action parameter received a boxed `long` and threw `InvalidCastException` at action invocation. This had been silently broken for every `[FromToken] int` endpoint in the codebase (e.g. `GET /api/v1/interventions`, `GET /api/v1/specialist-dashboard`), found while verifying this phase's two new endpoints end-to-end
+
+### notes
+- Phase 5 of the specialist-marketplace/payment-first execution plan (`docs/implementation-plan-specialist-marketplace-and-payment-first-2026-07-06.md`)
+- Verified end-to-end against a local Postgres: seeded a plot/alert/NDVI statistic, a pending request (marketplace) and an accepted request with a full accepted-proposal → prescribed-treatment → execution → closed-resolved-outcome chain (specialist-cases + success rate), hit all 4 affected endpoints through the live HTTP pipeline
+- Version jumps 1.34.0 → 1.53.0 per the project's versioning-convention override: releases going forward match the pre-existing orphan tag sequence (`1.33.0`...`1.52.0`), not the "true" `Directory.Build.props` history
+- Feature-first per standing convention — no tests written; deferred to Phase 8
+
 ## [1.34.0] - 2026-07-06
 
 ### changed
