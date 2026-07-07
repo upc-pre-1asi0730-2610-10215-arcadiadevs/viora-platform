@@ -147,5 +147,9 @@ public class AgronomicStatisticIngestionScheduler : BackgroundService
         // 3. Run hydric stress producer (1.16.2 — D17: scoped via IServiceScopeFactory)
         var producer = scope.ServiceProvider.GetRequiredService<IHydricStressDetectedIntegrationEventProducer>();
         await producer.ProduceHydricStressEventsAsync(ct);
+
+        // 4. Run NDVI-drop producer
+        var ndviDroppedProducer = scope.ServiceProvider.GetRequiredService<INdviDroppedIntegrationEventProducer>();
+        await ndviDroppedProducer.ProduceNdviDroppedEventsAsync(ct);
     }
 }
