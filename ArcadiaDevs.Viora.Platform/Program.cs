@@ -253,6 +253,7 @@ builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.Quer
 builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices.IGetPlotWeatherForecastQueryService, ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices.GetPlotWeatherForecastQueryService>();
 builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.QueryServices.IGetPlotNdviTileQueryService, ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices.GetPlotNdviTileQueryService>();
 builder.Services.AddScoped<IIoTDeviceRepository, IoTDeviceRepository>();
+builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.CommandServices.IIoTDeviceCommandService, ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.CommandServices.IoTDeviceCommandService>();
 builder.Services.AddScoped<IMonitoringSummaryQueryService, MonitoringSummaryQueryService>();
 builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.ClimateRiskEvaluator>();
 builder.Services.AddSingleton<ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services.PhenologicalRiskEvaluator>();
@@ -586,7 +587,13 @@ app.UseAuthorization();
 
 app.UseRequestAuthorization();
 
-app.MapHealthChecks("/healthz").AllowAnonymous();
+// .AllowAnonymous() here would attach the framework's own
+// Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute, which
+// RequestAuthorizationMiddleware does NOT recognize (it checks for this
+// project's own custom AllowAnonymousAttribute type) — attach that one
+// directly so /healthz is reachable without a bearer token.
+app.MapHealthChecks("/healthz")
+    .WithMetadata(new ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Pipeline.Middleware.Attributes.AllowAnonymousAttribute());
 
 app.MapControllers();
 

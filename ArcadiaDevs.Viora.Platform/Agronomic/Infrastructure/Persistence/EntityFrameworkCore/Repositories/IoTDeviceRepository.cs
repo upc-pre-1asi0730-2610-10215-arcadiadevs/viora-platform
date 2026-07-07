@@ -109,7 +109,7 @@ public class IoTDeviceRepository : BaseRepository<IoTDevice>, IIoTDeviceReposito
          return await Context.Set<IoTDevice>()
              .AsNoTracking()
              .AnyAsync(
-                 d => d.ActivationCode != null && d.ActivationCode.Value == code.Value,
+                 d => d.ActivationCode != null && d.ActivationCode == code,
                  cancellationToken);
      }
 }
