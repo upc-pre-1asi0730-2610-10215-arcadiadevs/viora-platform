@@ -27,6 +27,10 @@ namespace ArcadiaDevs.Viora.Platform.Intervention.Application.Internal.QueryServ
 public class SpecialistQueryService(
     ISpecialistRepository specialistRepository,
     IInterventionRequestRepository interventionRequestRepository,
+    IServiceProposalRepository serviceProposalRepository,
+    ITreatmentPrescriptionRepository treatmentPrescriptionRepository,
+    IInterventionExecutionRepository interventionExecutionRepository,
+    IInterventionOutcomeRepository interventionOutcomeRepository,
     IProfileContextFacade profileContextFacade,
     SpecialistMatchingPolicy matchingPolicy,
     ILogger<SpecialistQueryService> logger)
@@ -46,8 +50,10 @@ public class SpecialistQueryService(
             }
 
             var caseCount = await CountAcceptedCasesAsync(query.Id, cancellationToken);
+            var successRate = await SuccessRatePercentAsync(query.Id, cancellationToken);
 
-            return new Result<SpecialistPublicProfile, Error>.Success(ToPublicProfile(profile, caseCount, distanceKm: null));
+            return new Result<SpecialistPublicProfile, Error>.Success(
+                ToPublicProfile(profile, caseCount, distanceKm: null, successRate));
         }
         catch (OperationCanceledException)
         {
@@ -103,9 +109,16 @@ public class SpecialistQueryService(
             }
 
             var specialist = await specialistRepository.FindByProfileUserIdAsync(query.SpecialistId, cancellationToken);
+            var specialistProfile = await profileContextFacade.GetSpecialistProfileAsync(query.SpecialistId, cancellationToken);
 
             return new Result<SpecialistContact, Error>.Success(
-                new SpecialistContact(query.SpecialistId, profileSummary.Email, profileSummary.Phone, specialist?.Whatsapp));
+                new SpecialistContact(
+                    query.SpecialistId,
+                    profileSummary.Email,
+                    profileSummary.Phone,
+                    specialist?.Whatsapp,
+                    nameof(ProfileRole.Specialist),
+                    specialistProfile?.PhotoUrl));
         }
         catch (OperationCanceledException)
         {
@@ -141,7 +154,8 @@ public class SpecialistQueryService(
         foreach (var candidate in ranked.Take(query.Limit))
         {
             var caseCount = await CountAcceptedCasesAsync(candidate.Profile.UserId, cancellationToken);
-            results.Add(ToPublicProfile(candidate.Profile, caseCount, candidate.DistanceKm));
+            var successRate = await SuccessRatePercentAsync(candidate.Profile.UserId, cancellationToken);
+            results.Add(ToPublicProfile(candidate.Profile, caseCount, candidate.DistanceKm, successRate));
         }
 
         return results.AsReadOnly();
@@ -154,10 +168,66 @@ public class SpecialistQueryService(
         return accepted.Count;
     }
 
+    /// <summary>
+    ///     Service success rate for the specialist: the share of their closed
+    ///     cases whose outcome resolved the threat, walking the real
+    ///     accepted-proposal → prescription → execution → closed-outcome
+    ///     chain (mirrors OS's <c>successRatePercent</c>). Returns
+    ///     <c>null</c> when the specialist has no closed cases yet — never a
+    ///     fabricated <c>0</c>.
+    /// </summary>
+    private async Task<double?> SuccessRatePercentAsync(int profileUserId, CancellationToken cancellationToken)
+    {
+        var proposals = await serviceProposalRepository.FindBySpecialistIdAsync(profileUserId, cancellationToken);
+
+        var closed = 0;
+        var resolved = 0;
+
+        foreach (var proposal in proposals)
+        {
+            if (proposal.Status != ServiceProposalStatus.ACCEPTED)
+            {
+                continue;
+            }
+
+            var prescription = await treatmentPrescriptionRepository.FindByServiceProposalIdAsync(proposal.Id, cancellationToken);
+            if (prescription is null)
+            {
+                continue;
+            }
+
+            var execution = await interventionExecutionRepository.FindByTreatmentPrescriptionIdAsync(prescription.Id, cancellationToken);
+            if (execution is null)
+            {
+                continue;
+            }
+
+            var outcome = await interventionOutcomeRepository.FindByInterventionExecutionIdAsync(execution.Id, cancellationToken);
+            if (outcome is null || outcome.Status != InterventionOutcomeStatus.CLOSED)
+            {
+                continue;
+            }
+
+            closed++;
+            if (string.Equals(outcome.ServiceEvaluation?.ServiceResult, "RESOLVED", StringComparison.OrdinalIgnoreCase))
+            {
+                resolved++;
+            }
+        }
+
+        if (closed == 0)
+        {
+            return null;
+        }
+
+        return Math.Round(resolved * 100.0 / closed, 1);
+    }
+
     private static SpecialistPublicProfile ToPublicProfile(
         SpecialistProfileSummary profile,
         int caseCount,
-        double? distanceKm)
+        double? distanceKm,
+        double? successRate)
     {
         var tags = string.IsNullOrWhiteSpace(profile.ServiceTags)
             ? Array.Empty<string>()
@@ -167,10 +237,11 @@ public class SpecialistQueryService(
             profile.UserId,
             profile.DisplayName,
             nameof(ProfileRole.Specialist),
-            null, // SuccessRate: no closed-case derivation yet — deliberately null, not fabricated.
+            successRate,
             caseCount,
             distanceKm,
             tags,
-            (profile.Availability ?? ESpecialistAvailability.AvailableThisWeek).ToString());
+            (profile.Availability ?? ESpecialistAvailability.AvailableThisWeek).ToString(),
+            profile.PhotoUrl);
     }
 }

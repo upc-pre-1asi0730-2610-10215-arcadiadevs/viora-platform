@@ -21,7 +21,8 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Acl;
 /// </param>
 public class AgronomicContextFacade(
     IMonitoringSummaryQueryService monitoringSummaryQueryService,
-    IPlotRepository plotRepository) : IAgronomicContextFacade
+    IPlotRepository plotRepository,
+    IAgronomicStatisticRepository agronomicStatisticRepository) : IAgronomicContextFacade
 {
     // inheritedDoc
     public async Task<double?> FetchCurrentNdviByReporterAsync(int reporterUserId, CancellationToken cancellationToken = default)
@@ -35,6 +36,13 @@ public class AgronomicContextFacade(
         }
 
         return null;
+    }
+
+    // inheritedDoc
+    public async Task<double?> FetchCurrentNdviByPlotAsync(long plotId, CancellationToken cancellationToken = default)
+    {
+        var latestStatistic = await agronomicStatisticRepository.FindLatestByPlotIdAsync(plotId, cancellationToken);
+        return latestStatistic?.NdviValue;
     }
 
     // inheritedDoc

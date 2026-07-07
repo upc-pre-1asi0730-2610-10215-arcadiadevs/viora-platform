@@ -22,11 +22,12 @@ public static class SpecialistResourceFromDtoAssembler
             dto.CaseCount,
             dto.DistanceKm,
             dto.Tags,
-            dto.Availability);
+            dto.Availability,
+            dto.PhotoUrl);
     }
 
     public static SpecialistContactResource ToResourceFromDto(SpecialistContact dto)
     {
-        return new SpecialistContactResource(dto.Id, dto.Email, dto.Phone, dto.Whatsapp);
+        return new SpecialistContactResource(dto.Id, dto.Email, dto.Phone, dto.Whatsapp, dto.Role, dto.PhotoUrl);
     }
 }

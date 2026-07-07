@@ -22,4 +22,5 @@ public record SpecialistPublicProfile(
     int CaseCount,
     double? DistanceKm,
     IReadOnlyList<string> Tags,
-    string Availability);
+    string Availability,
+    string? PhotoUrl);

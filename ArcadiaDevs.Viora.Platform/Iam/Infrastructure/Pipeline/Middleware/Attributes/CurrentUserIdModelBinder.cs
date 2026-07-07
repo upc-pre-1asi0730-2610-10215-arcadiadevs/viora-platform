@@ -24,11 +24,22 @@ public class CurrentUserIdModelBinder : IModelBinder
         {
             // Convert to the target parameter's type (int or long) so a single
             // binder can serve both — the underlying identity is always the
-            // same int stored by RequestAuthorizationMiddleware.
-            object boundValue = Nullable.GetUnderlyingType(bindingContext.ModelType) == typeof(long)
-                || bindingContext.ModelType == typeof(long)
-                ? (long)userId
-                : userId;
+            // same int stored by RequestAuthorizationMiddleware. Each branch
+            // must box its own type explicitly: a ternary with an int arm and
+            // a long arm forces C#'s common-type conversion to long for BOTH
+            // arms (even the one not taken), so `? (long)userId : userId`
+            // always boxes a long — silently breaking every `[FromToken] int`
+            // parameter's unboxing cast in the action-invocation pipeline.
+            object boundValue;
+            if (Nullable.GetUnderlyingType(bindingContext.ModelType) == typeof(long)
+                || bindingContext.ModelType == typeof(long))
+            {
+                boundValue = (long)userId;
+            }
+            else
+            {
+                boundValue = userId;
+            }
 
             bindingContext.Result = ModelBindingResult.Success(boundValue);
         }
