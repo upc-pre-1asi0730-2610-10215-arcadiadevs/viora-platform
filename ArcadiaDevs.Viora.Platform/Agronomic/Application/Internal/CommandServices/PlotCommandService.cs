@@ -2,6 +2,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Errors;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Events;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Services;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
@@ -9,6 +10,8 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Infrastructure.ExternalServices;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Repositories;
+using Cortex.Mediator;
+using Unit = ArcadiaDevs.Viora.Platform.Shared.Domain.Model.Unit;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.CommandServices;
 
@@ -20,7 +23,8 @@ public class PlotCommandService(
     IUnitOfWork unitOfWork,
     AgroMonitoringApiClient agroMonitoringClient,
     ILogger<PlotCommandService> logger,
-    ChillRequirementResolver chillRequirementResolver) : IPlotCommandService
+    ChillRequirementResolver chillRequirementResolver,
+    IMediator mediator) : IPlotCommandService
 {
     private readonly PlotDeletionPolicy _plotDeletionPolicy = new();
     /// <inheritdoc />
@@ -73,6 +77,21 @@ public class PlotCommandService(
 
         await plotRepository.AddAsync(plot, cancellationToken);
         await unitOfWork.CompleteAsync(cancellationToken);
+
+        // Published directly (not via IHasDomainEvents) because Plot.Id is
+        // database-generated and only known after the save above completes —
+        // see PlotRegisteredEvent's remarks. Best-effort: a handler failure
+        // must not fail plot creation, matching CC-9's dispatch contract.
+        try
+        {
+            await mediator.PublishAsync(
+                new PlotRegisteredEvent(plot.Id, plot.OwnerUserId),
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to dispatch PlotRegisteredEvent for plot {PlotId}", plot.Id);
+        }
 
         return new Result<Plot, Error>.Success(plot);
     }
