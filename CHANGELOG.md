@@ -5,6 +5,17 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.55.0] - 2026-07-06
+
+### changed
+- Sign-up now creates every account as `Verified=true` unconditionally (any role) instead of `false` + an emailed verification token. Matches OS's `2f656f3` exactly. Drops the verification-token issuance and email send from the sign-up path; `VerifyCommand`/`ResendVerificationCommand` stay wired for any pre-existing unverified account but become dead paths for any new signup — a resend attempt on a freshly-created account will always 422 "already verified"
+
+### notes
+- Phase 7 of the specialist-marketplace/payment-first execution plan (`docs/implementation-plan-specialist-marketplace-and-payment-first-2026-07-06.md`) — gated by a Phase 0 product decision, resolved this session: the commit message frames this as scoped to the payment-first model, but the actual code (both OS's and now WA's) is unconditional across every role. Confirmed with the user this is the intended product model: the plan-selection screen is meant to be the sole entry point for new sign-ups (`register → checkout → active subscription`), so by the time this command runs the caller has already committed to a plan via the frontend flow — access is meant to be gated behind an active subscription, not email verification
+- **Known gap, ported as-is from OS**: this is a frontend-enforced flow, not a backend one — `POST /api/v1/authentication/sign-up` called directly (bypassing the plan-selection screen) sets `Verified=true` with no payment ever happening; the backend alone provides no protection against this
+- Verified end-to-end against a local Postgres: signed up a fresh grower, response and DB both showed `verified=true` immediately, no `verification_tokens` row was created, no verification email was logged/sent, and sign-in succeeded right away with no email-verification gate in the way
+- Feature-first per standing convention — no tests written; deferred to Phase 8
+
 ## [1.54.0] - 2026-07-06
 
 ### added
