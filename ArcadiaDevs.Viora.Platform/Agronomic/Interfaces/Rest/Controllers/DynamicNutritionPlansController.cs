@@ -98,11 +98,11 @@ public class DynamicNutritionPlansController(
     }
 
     /// <summary>
-    ///     Gets the active dynamic nutrition plan for a plot (REQ parity with OS:
-    ///     root GET + <c>?status=ACTIVE</c>, not a dedicated sub-route). WA only
-    ///     supports the <c>ACTIVE</c> filter today — any other explicit value is
-    ///     rejected rather than silently returning an empty stub list like OS
-    ///     does, since WA has no "list all plans" feature behind this endpoint yet.
+    ///     Gets the active dynamic nutrition plan for a plot (root GET +
+    ///     <c>?status=ACTIVE</c>, not a dedicated sub-route). Only the
+    ///     <c>ACTIVE</c> filter is supported today — any other explicit value
+    ///     is rejected, since there is no "list all plans" feature behind this
+    ///     endpoint yet.
     /// </summary>
     /// <param name="userId">The user identifier (query parameter).</param>
     /// <param name="plotId">The plot identifier (query parameter).</param>

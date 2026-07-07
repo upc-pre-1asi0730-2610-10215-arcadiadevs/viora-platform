@@ -24,14 +24,13 @@ public class MonitoringSummariesController(
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
     /// <summary>
-    ///     Returns aggregated KPI metrics for the caller (REQ parity with OS:
-    ///     root GET, not a dedicated <c>/current</c> sub-route). <paramref name="limit"/>
-    ///     is accepted for parity with OS's own placeholder param but is not
-    ///     yet used server-side — OS doesn't use it either today, it's reserved
+    ///     Returns aggregated KPI metrics for the caller (root GET, not a
+    ///     dedicated <c>/current</c> sub-route). <paramref name="limit"/>
+    ///     is accepted but is not yet used server-side — it's reserved
     ///     for future pagination/history.
     /// </summary>
     /// <param name="userId">The authenticated caller's id, derived from the token.</param>
-    /// <param name="limit">Reserved for future pagination/history; unused today (matches OS).</param>
+    /// <param name="limit">Reserved for future pagination/history; unused today.</param>
     /// <param name="cancellationToken">The request cancellation token.</param>
     /// <returns>200 OK with the monitoring summary, or 400 Bad Request with error details.</returns>
     [HttpGet]

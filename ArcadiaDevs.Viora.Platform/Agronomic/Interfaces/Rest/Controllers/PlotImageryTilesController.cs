@@ -11,7 +11,7 @@ using Microsoft.Extensions.Localization;
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Controllers;
 
 /// <summary>
-///     REST controller for plot imagery tiles (OS parity route).
+///     REST controller for plot imagery tiles.
 /// </summary>
 [ApiController]
 [Route("api/v1/plots/{plotId:int}/images")]

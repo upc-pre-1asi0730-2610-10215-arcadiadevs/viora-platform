@@ -14,7 +14,7 @@ namespace ArcadiaDevs.Viora.Platform.Billing.Interfaces.Rest.Controllers;
 /// <summary>
 ///     REST controller for invoices (REQ-INV-3). List-only — invoices are
 ///     created exclusively via WU6's internal webhook reconciliation
-///     (REQ-INV-1, REQ-INV-2), matching OS. Only the list endpoint is
+///     (REQ-INV-1, REQ-INV-2). Only the list endpoint is
 ///     exposed: spec's REQ-CC-1 route table and REQ-INV-3 both only require
 ///     <c>GET /invoices?userId=</c>, so no <c>GET /invoices/{id}</c> endpoint
 ///     is added in this slice (same reasoning as WU1's Plan deviation —
