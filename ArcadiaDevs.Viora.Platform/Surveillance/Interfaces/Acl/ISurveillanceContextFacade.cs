@@ -20,4 +20,12 @@ public interface ISurveillanceContextFacade
     Task<AlertCardSummary?> GetAlertCardSummaryAsync(long alertId, CancellationToken cancellationToken = default);
 
     Task<AlertMatchContext?> GetAlertMatchContextAsync(long alertId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Counts the active alerts (status <c>ACTIVE</c>) raised on each of the given plots.
+    /// </summary>
+    /// <param name="plotIds">The plot identifiers to look up.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A map of plot id to active alert count. Plots with no active alerts are omitted.</returns>
+    Task<IReadOnlyDictionary<long, int>> CountActiveAlertsByPlotIdsAsync(IEnumerable<long> plotIds, CancellationToken cancellationToken = default);
 }
