@@ -5,6 +5,11 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-07-07
+
+### changed
+- Swagger UI and the OpenAPI JSON document are now served in every environment, including Production, and are reachable without a bearer token — matching the existing Development/Staging behavior. Requested to make the API contract publicly browsable from anywhere without requiring authentication.
+
 ## [2.0.0] - 2026-07-07
 
 ### notes

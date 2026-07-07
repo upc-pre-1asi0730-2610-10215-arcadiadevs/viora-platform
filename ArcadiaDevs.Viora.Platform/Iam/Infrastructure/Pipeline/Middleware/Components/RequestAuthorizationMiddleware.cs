@@ -6,7 +6,6 @@ using ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Pipeline.Middleware.Attribut
 using ArcadiaDevs.Viora.Platform.Iam.Interfaces.Rest.Transform;
 using ArcadiaDevs.Viora.Platform.Shared.Resources.Errors;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Localization;
 
 namespace ArcadiaDevs.Viora.Platform.Iam.Infrastructure.Pipeline.Middleware.Components;
@@ -29,14 +28,13 @@ public class RequestAuthorizationMiddleware(RequestDelegate next)
         ITokenService tokenService,
         IStringLocalizer<ErrorMessages> errorLocalizer,
         ProblemDetailsFactory problemDetailsFactory,
-        ILogger<RequestAuthorizationMiddleware> logger,
-        IHostEnvironment environment)
+        ILogger<RequestAuthorizationMiddleware> logger)
     {
         var cancellationToken = context.RequestAborted;
 
-        // Swagger UI needs to be reachable without a bearer token, but only in Development —
-        // Program.cs also enables it in Staging, and that must stay behind auth.
-        if (environment.IsDevelopment() && context.Request.Path.StartsWithSegments("/swagger"))
+        // Swagger UI is reachable without a bearer token in every environment,
+        // including Production — Program.cs enables it everywhere for the same reason.
+        if (context.Request.Path.StartsWithSegments("/swagger"))
         {
             await next(context);
             return;
