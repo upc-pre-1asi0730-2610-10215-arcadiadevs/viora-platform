@@ -5,6 +5,14 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.58.0] - 2026-07-06
+
+### fixed
+- `CheckoutSessionResource`/`CheckoutSession` field renamed from `redirectUrl` to `checkoutUrl` — wa-viora-webapp's subscription store reads `session?.checkoutUrl` to redirect the browser to the MercadoPago-hosted checkout; the field never matched, so a real checkout response would silently fail to redirect. Also now matches OS's own `CheckoutResource.checkoutUrl` field name.
+
+### notes
+- Known, deliberately deprioritized simplification: `MercadoPagoWebhookController` only reads the payment id from the JSON body (`[FromBody]`), not from query-string params (`id`/`data.id`/`type`) the way OS's `MercadoPagoWebhookController` does. A real MercadoPago delivery that sends these as query params (their documented real-world format) would fail to reconcile silently (still 200s, so no retry). Left as-is: it's a server-to-server integration detail the frontend never touches directly, not part of the checkout contract the frontend depends on.
+
 ## [1.57.0] - 2026-07-06
 
 ### added
