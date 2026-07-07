@@ -5,6 +5,11 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-07-07
+
+### notes
+- first published GitHub release since 1.0.0 (2026-06-19), rolling up identity/sign-up, billing & subscriptions (MercadoPago), the specialist marketplace, and agronomic/IoT monitoring work, plus a REST-shape and security cleanup pass. See the GitHub release notes for the full user-facing breakdown, including breaking API changes (auth route prefix, checkout field rename, plan catalog replacement, IoT activation code, role model simplification, and several verb-in-URL route consolidations)
+
 ## [1.59.0] - 2026-07-07
 
 ### fixed
