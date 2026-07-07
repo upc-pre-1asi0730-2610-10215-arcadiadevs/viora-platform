@@ -5,6 +5,11 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2026-07-07
+
+### changed
+- Checkout (`POST /api/v1/checkouts`) no longer returns 503 when the MercadoPago gateway has no sandbox token configured. Instead it auto-approves the payment synchronously through the same reconciliation path a real webhook delivery would take (Invoice created, Subscription activated/renewed), returning a synthetic checkout session. Requested as a fake/demo payment bypass — no real gateway credentials exist yet.
+
 ## [2.0.1] - 2026-07-07
 
 ### changed

@@ -1,5 +1,6 @@
 ﻿using ArcadiaDevs.Viora.Platform.Billing.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Billing.Application.Internal.OutboundServices;
+using ArcadiaDevs.Viora.Platform.Billing.Domain.Model.Aggregates;
 using ArcadiaDevs.Viora.Platform.Billing.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Billing.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Billing.Domain.Model.ValueObjects;
@@ -14,23 +15,18 @@ namespace ArcadiaDevs.Viora.Platform.Billing.Application.Internal.CommandService
 /// </summary>
 public class CheckoutCommandService(
     IPaymentGateway paymentGateway,
-    IPlanRepository planRepository)
+    IPlanRepository planRepository,
+    IWebhookReconciliationCommandService webhookReconciliationCommandService)
     : ICheckoutCommandService
 {
+    private const string ApprovedStatus = "approved";
+
     public async Task<Result<CheckoutSession, Error>> Handle(
         CreateCheckoutCommand command,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            // REQ-GATE-3: fail gracefully (mapped 503), never an unhandled
-            // exception — short-circuits before any Plan lookup or outbound
-            // HTTP call is attempted when the gateway has no sandbox token.
-            if (!paymentGateway.IsConfigured)
-            {
-                return new Result<CheckoutSession, Error>.Failure(BillingErrors.PaymentGatewayNotConfigured);
-            }
-
             var plan = await planRepository.FindByCodeAsync(command.PlanCode, cancellationToken);
             if (plan is null)
             {
@@ -40,6 +36,11 @@ public class CheckoutCommandService(
             // ExternalReference threads {userId}:{planCode}:{interval} through
             // to WU6's webhook reconciliation (design's Webhook flow section).
             var externalReference = $"{command.UserId}:{command.PlanCode}:{command.Interval}";
+
+            if (!paymentGateway.IsConfigured)
+            {
+                return await CreateAutoApprovedSessionAsync(plan, externalReference, cancellationToken);
+            }
 
             var request = new CheckoutRequest(
                 command.UserId,
@@ -59,5 +60,42 @@ public class CheckoutCommandService(
         {
             return new Result<CheckoutSession, Error>.Failure(BillingErrors.InternalServerError);
         }
+    }
+
+    /// <summary>
+    ///     No sandbox token configured (REQ-GATE-2): instead of failing with
+    ///     503, reconciles the payment immediately as approved through the
+    ///     same path a real MercadoPago webhook delivery would take
+    ///     (<see cref="IWebhookReconciliationCommandService" />), so the
+    ///     caller's Subscription/Invoice effects land synchronously. Returns
+    ///     a synthetic <see cref="CheckoutSession" /> — there is no real
+    ///     gateway-hosted page to redirect to.
+    /// </summary>
+    private async Task<Result<CheckoutSession, Error>> CreateAutoApprovedSessionAsync(
+        Plan plan,
+        string externalReference,
+        CancellationToken cancellationToken)
+    {
+        var reconcileCommand = new ReconcilePaymentCommand(
+            Id: null,
+            Type: null,
+            PaymentId: $"fake-{Guid.NewGuid():N}",
+            ExternalReference: externalReference,
+            Status: ApprovedStatus,
+            Amount: plan.PriceAmount,
+            Currency: plan.Currency,
+            CardBrand: null,
+            CardLast4: null,
+            CardExpMonth: null,
+            CardExpYear: null);
+
+        var reconcileResult = await webhookReconciliationCommandService.Handle(reconcileCommand, cancellationToken);
+        if (reconcileResult is Result<Unit, Error>.Failure reconcileFailure)
+        {
+            return new Result<CheckoutSession, Error>.Failure(reconcileFailure.Error);
+        }
+
+        return new Result<CheckoutSession, Error>.Success(
+            new CheckoutSession($"fake-checkout://approved?ref={externalReference}", externalReference));
     }
 }
