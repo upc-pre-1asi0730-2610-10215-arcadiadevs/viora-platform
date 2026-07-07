@@ -77,9 +77,15 @@ public class UserCommandService(
         var passwordHash = hashingService.HashPassword(command.Password);
 
         // Create the user. Persists Email/FullName on Iam's own User (REQ-AUTH-1,
-        // in addition to forwarding them to Profile below) and defaults to
-        // Verified=false — new signups must verify their email before signing in.
-        var user = new User(command.Username, passwordHash, command.Email, command.FullName, verified: false);
+        // in addition to forwarding them to Profile below). Payment-first
+        // onboarding: the account is created active (Verified=true) for every
+        // role — sign-up is only reachable from the plan-selection screen, so
+        // by the time this command runs the caller has already committed to a
+        // plan; the app is gated behind an active subscription, not email
+        // verification. Matches OS's `2f656f3` exactly (unconditional, not
+        // scoped to any one role) — confirmed as the intended product model,
+        // not a literal-vs-intent mismatch in OS's code.
+        var user = new User(command.Username, passwordHash, command.Email, command.FullName, verified: true);
         user.Roles.Add(role);
 
         try
@@ -109,17 +115,11 @@ public class UserCommandService(
         await billingContextFacade.GrantReferralRewardToCodeOwner(
             command.ReferralCode, user.Id, cancellationToken);
 
-        // REQ-EV-1: issue an email-verification token and fire-and-forget the
-        // notification. Outside the signup's core try/catch — same idiom as
-        // EnsureProfile/GrantReferralRewardToCodeOwner above — so an email
-        // delivery issue can never make this response falsely report signup
-        // failure (REQ-EMAIL-3).
-        var verificationToken = VerificationToken.IssueEmailVerification(user.Id, clock.UtcNow);
-        await verificationTokenRepository.AddAsync(verificationToken, cancellationToken);
-        await unitOfWork.CompleteAsync(cancellationToken);
-        await emailService.SendVerificationEmailAsync(
-            command.Email, command.FullName, verificationToken.Token, cancellationToken);
-
+        // Payment-first onboarding: the account is already Verified=true above,
+        // so there is no verification step to issue a token/email for anymore.
+        // VerifyCommand/ResendVerificationCommand remain wired below for any
+        // pre-existing unverified account, but are dead paths for any signup
+        // from this point forward — matches OS's `2f656f3` exactly.
         return new Result<User?, Error>.Success(user);
     }
 
