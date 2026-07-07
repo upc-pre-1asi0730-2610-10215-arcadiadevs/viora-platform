@@ -11,8 +11,8 @@ namespace ArcadiaDevs.Viora.Platform.Intervention.Interfaces.Rest.Resources;
 ///     alert severity/problem, Agronomic for the plot and NDVI, Profile for
 ///     the producer's name) via ACL facades. Fields with no real source for
 ///     a given case are returned <c>null</c> — never fabricated — so the
-///     client renders empty states. Case distance is intentionally absent:
-///     the specialist has no real geolocation wired into this card.
+///     client renders empty states. <c>DistanceKm</c> is <c>null</c> when
+///     the specialist has no geolocation set on their profile.
 /// </remarks>
 public record SpecialistMarketplaceResource(
     int NewCasesCount,
@@ -36,5 +36,6 @@ public record SpecialistMarketplaceResource(
         string? Location,
         decimal? AreaHectares,
         int? PlotCount,
-        string? CreatedAt);
+        string? CreatedAt,
+        double? DistanceKm);
 }

@@ -17,8 +17,9 @@ namespace ArcadiaDevs.Viora.Platform.Billing.Interfaces.Rest.Controllers;
 ///     with WU5 alongside the <c>IPaymentGateway</c> port/adapter — despite
 ///     WU6's branch name "checkout-and-webhook", the checkout endpoint
 ///     itself lives here (design's WU5/WU6 sequencing note, tasks obs #319).
-///     Returns 503 (<c>BillingErrors.PaymentGatewayNotConfigured</c>) until
-///     the adapter is configured.
+///     When the adapter has no sandbox token configured, <c>CheckoutCommandService</c>
+///     auto-approves the payment synchronously instead of returning 503 —
+///     see its remarks.
 /// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]

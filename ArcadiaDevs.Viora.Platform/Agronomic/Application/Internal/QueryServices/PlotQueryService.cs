@@ -12,6 +12,7 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
+using ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Acl;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.QueryServices;
 
@@ -22,7 +23,8 @@ public class PlotQueryService(
     IAgronomicStatisticRepository agronomicStatisticRepository,
     PlotHealthEvaluator plotHealthEvaluator,
     PhenologicalRiskEvaluator phenologicalRiskEvaluator,
-    ChillRequirementResolver chillRequirementResolver) : IPlotQueryService
+    ChillRequirementResolver chillRequirementResolver,
+    ISurveillanceContextFacade surveillanceContextFacade) : IPlotQueryService
 {
     public async Task<Result<PlotResource, Error>> Handle(GetPlotByIdQuery query, CancellationToken cancellationToken = default)
     {
@@ -89,6 +91,10 @@ public class PlotQueryService(
 
         var now = new DateTimeOffset(clock.UtcNow, TimeSpan.Zero);
 
+        var activeAlertCounts = userPlotIds.Any()
+            ? await surveillanceContextFacade.CountActiveAlertsByPlotIdsAsync(userPlotIds.Select(id => (long)id), cancellationToken)
+            : new Dictionary<long, int>();
+
         var overviewPlots = userPlots.Select(p =>
         {
             var polygon = p.PolygonCoordinates.Points
@@ -121,7 +127,7 @@ public class PlotQueryService(
                 healthStatus.ToString(),
                 phenologicalRisk.ToString(),
                 plotDevicesCount,
-                0,
+                activeAlertCounts.GetValueOrDefault(p.Id, 0),
                 now,
                 "active",
                 "active"

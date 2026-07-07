@@ -30,11 +30,10 @@ public class AuthenticationController(
     ///     Registers a new user.
     /// </summary>
     /// <remarks>
-    ///     Sign-up is unconditionally open in every environment, matching OS's
-    ///     ungated <c>POST /api/v1/auth/sign-up</c>. There is no admin-gate here:
-    ///     no seeder anywhere assigns the Administrator role to any user, so a
-    ///     production admin-only gate would be an unconditional deadlock (see
-    ///     spec REQ-1).
+    ///     Sign-up is unconditionally open in every environment. There is no
+    ///     admin-gate here: no seeder anywhere assigns the Administrator role
+    ///     to any user, so a production admin-only gate would be an
+    ///     unconditional deadlock (see spec REQ-1).
     /// </remarks>
     /// <param name="resource">The sign-up payload.</param>
     /// <param name="cancellationToken">Cancellation token.</param>

@@ -14,7 +14,7 @@ namespace ArcadiaDevs.Viora.Platform.Billing.Interfaces.Rest.Controllers;
 /// <summary>
 ///     REST controller for payment methods (REQ-PM-3). List-only — writes
 ///     happen exclusively via WU6's internal webhook reconciliation
-///     (REQ-PM-2), matching OS.
+///     (REQ-PM-2).
 /// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]

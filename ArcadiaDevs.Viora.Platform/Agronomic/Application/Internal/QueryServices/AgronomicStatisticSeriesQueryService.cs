@@ -49,8 +49,15 @@ public class AgronomicStatisticSeriesQueryService : IAgronomicStatisticSeriesQue
             );
         }
 
+        if (query.PlotId is null)
+        {
+            return new Result<AgronomicStatisticSeriesResource, Error>.Failure(
+                AgronomicErrors.InvalidInput with { Message = "plotId is required for the series view." }
+            );
+        }
+
         var chillRequirement = _chillRequirementResolver.ResolveDefault();
-        
+
         var plot = await _plotRepository.FindByIdAsync((int)query.PlotId.Value, cancellationToken);
         if (plot == null || plot.IsDeleted)
         {

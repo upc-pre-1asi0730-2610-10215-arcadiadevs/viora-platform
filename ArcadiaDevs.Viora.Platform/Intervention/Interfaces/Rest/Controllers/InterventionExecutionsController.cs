@@ -32,9 +32,9 @@ public class InterventionExecutionsController(
     /// </summary>
     /// <remarks>
     ///     Fails 409 unless <c>treatmentPrescriptionId</c> resolves to a
-    ///     prescription in <c>PRESCRIBED</c> status (REQ-IE-1, deliberate
-    ///     improvement over OS parity). Fails 409 if an execution already
-    ///     exists for the given prescription (REQ-IE-2 idempotency).
+    ///     prescription in <c>PRESCRIBED</c> status (REQ-IE-1). Fails 409 if
+    ///     an execution already exists for the given prescription (REQ-IE-2
+    ///     idempotency).
     /// </remarks>
     /// <param name="resource">The certification payload.</param>
     /// <param name="cancellationToken">Cancellation token.</param>

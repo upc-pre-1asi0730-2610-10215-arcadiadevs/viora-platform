@@ -14,7 +14,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 
@@ -46,13 +45,6 @@ public class RequestAuthorizationMiddlewareTests
     private static ProblemDetailsFactory StubProblemDetailsFactory()
     {
         return new TestProblemDetailsFactory();
-    }
-
-    private static IHostEnvironment StubEnvironment(string name = "Development")
-    {
-        var environment = Substitute.For<IHostEnvironment>();
-        environment.EnvironmentName.Returns(name);
-        return environment;
     }
 
     private sealed class TestProblemDetailsFactory : ProblemDetailsFactory
@@ -99,43 +91,11 @@ public class RequestAuthorizationMiddlewareTests
             Substitute.For<ITokenService>(),
             StubErrorLocalizer(),
             StubProblemDetailsFactory(),
-            StubLogger(),
-            StubEnvironment());
+            StubLogger());
 
         // Assert — next was called, no token validation happened
         Assert.True(nextCalled);
         Assert.Equal(200, httpContext.Response.StatusCode);
-    }
-
-    [Fact]
-    public async Task SwaggerPath_NotDevelopment_RequiresAuth()
-    {
-        // Arrange — /swagger path but environment is Staging → bypass must NOT apply,
-        // since Program.cs also enables Swagger UI in Staging and that must stay behind auth.
-        var nextCalled = false;
-        RequestDelegate next = ctx => { nextCalled = true; return Task.CompletedTask; };
-        var middleware = new RequestAuthorizationMiddleware(next);
-
-        var httpContext = new DefaultHttpContext
-        {
-            Request = { Path = new PathString("/swagger/index.html") },
-            Response = { StatusCode = 0, Body = new MemoryStream() },
-            RequestServices = new ServiceCollection().BuildServiceProvider(),
-        };
-
-        // Act
-        await middleware.InvokeAsync(
-            httpContext,
-            Substitute.For<IUserQueryService>(),
-            Substitute.For<ITokenService>(),
-            StubErrorLocalizer(),
-            StubProblemDetailsFactory(),
-            StubLogger(),
-            StubEnvironment(Environments.Staging));
-
-        // Assert — falls through to normal auth flow, no header → 401
-        Assert.False(nextCalled);
-        Assert.Equal(StatusCodes.Status401Unauthorized, httpContext.Response.StatusCode);
     }
 
     [Fact]
@@ -169,8 +129,7 @@ public class RequestAuthorizationMiddlewareTests
             Substitute.For<ITokenService>(),
             StubErrorLocalizer(),
             StubProblemDetailsFactory(),
-            StubLogger(),
-            StubEnvironment());
+            StubLogger());
 
         // Assert — next was called, no token validation
         Assert.True(nextCalled);
@@ -202,8 +161,7 @@ public class RequestAuthorizationMiddlewareTests
             Substitute.For<ITokenService>(),
             StubErrorLocalizer(),
             StubProblemDetailsFactory(),
-            StubLogger(),
-            StubEnvironment());
+            StubLogger());
 
         // Assert — 401 Unauthorized with TokenRequired error code
         Assert.Equal(StatusCodes.Status401Unauthorized, httpContext.Response.StatusCode);
@@ -239,8 +197,7 @@ public class RequestAuthorizationMiddlewareTests
             Substitute.For<ITokenService>(),
             StubErrorLocalizer(),
             StubProblemDetailsFactory(),
-            StubLogger(),
-            StubEnvironment());
+            StubLogger());
 
         // Assert — 401 with TokenMalformed error code
         Assert.Equal(StatusCodes.Status401Unauthorized, httpContext.Response.StatusCode);
@@ -291,8 +248,7 @@ public class RequestAuthorizationMiddlewareTests
             tokenService,
             StubErrorLocalizer(),
             StubProblemDetailsFactory(),
-            StubLogger(),
-            StubEnvironment());
+            StubLogger());
 
         // Assert — HttpContext.User has role claim
         Assert.True(httpContext.User.Identity?.IsAuthenticated);

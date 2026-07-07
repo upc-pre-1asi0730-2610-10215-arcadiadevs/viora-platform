@@ -6,8 +6,7 @@ namespace ArcadiaDevs.Viora.Platform.Iam.Interfaces.Rest.Resources;
  * </summary>
  * <remarks>
  *     This resource represents the data required to sign up a new user.
- *     Role is optional and defaults to "Grower" when omitted or blank,
- *     mirroring OS's SignUpResource.role + Role.getDefaultRole() contract.
+ *     Role is optional and defaults to "Grower" when omitted or blank.
  *     ReferralCode is optional (REQ-REF-6) — an unknown/invalid code never
  *     blocks signup, it is simply a no-op for reward-granting purposes.
  * </remarks>

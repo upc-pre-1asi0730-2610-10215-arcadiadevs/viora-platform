@@ -5,6 +5,38 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.4] - 2026-07-07
+
+### fixed
+- `GET /api/v1/agronomic-statistics?view=series` (and its `/series` alias) threw an unhandled `InvalidOperationException` (500) when called without `plotId` — the query's `PlotId` is nullable but was unwrapped with `.Value` unconditionally. Now returns 400.
+- `activeAlertCount` on the plots overview (`GET /api/v1/plots/overview`) was hardcoded to `0` regardless of real alert data. Now computed from Surveillance's `Alert` aggregate via a new `ISurveillanceContextFacade.CountActiveAlertsByPlotIdsAsync` method.
+- `POST /api/v1/pest-sighting-reports` required a `ReporterUserId` field that the server always discarded in favor of the token-derived id — a client following the documented "never pass your own userId" contract got a spurious 400. The field is removed.
+
+### added
+- Scheduled alert generation (`ScheduledIngestionEnabled`) is now on by default — the chill-deficit and hydric-stress alert producers already wired into `AgronomicStatisticIngestionScheduler` were never actually running.
+- New `NdviDroppedIntegrationEventProducer`: raises a `PHENOLOGICAL_RISK` alert when a plot's latest NDVI reading drops ≥15% below its own 14-day historical average (Surveillance already had a consumer for this event; nothing produced it before).
+- Specialist marketplace cards (`GET /api/v1/intervention-marketplace`) now include a real `distanceKm` per case, computed from the signed-in specialist's own `Profile` geolocation to each case's plot centroid — the underlying Haversine distance and `ServiceRadiusKm` filtering already existed in `SpecialistMatchingPolicy`, just wasn't wired into this endpoint.
+
+## [2.0.3] - 2026-07-07
+
+### changed
+- `POST /api/v1/checkouts` response now matches wa-viora-webapp's mock checkout contract exactly (`server/index.js`) when MercadoPago is unconfigured: `{ checkoutUrl: "/dashboard", preferenceId: "mock-<epoch-ms>", externalReference }` with the subscription already ACTIVE, 201 status. `CheckoutSession`/`CheckoutSessionResource` gained `PreferenceId`; the real MercadoPago adapter now also captures the gateway's preference `id` for parity.
+
+## [2.0.2] - 2026-07-07
+
+### changed
+- Checkout (`POST /api/v1/checkouts`) no longer returns 503 when the MercadoPago gateway has no sandbox token configured. Instead it auto-approves the payment synchronously through the same reconciliation path a real webhook delivery would take (Invoice created, Subscription activated/renewed), returning a synthetic checkout session. Requested as a fake/demo payment bypass — no real gateway credentials exist yet.
+
+## [2.0.1] - 2026-07-07
+
+### changed
+- Swagger UI and the OpenAPI JSON document are now served in every environment, including Production, and are reachable without a bearer token — matching the existing Development/Staging behavior. Requested to make the API contract publicly browsable from anywhere without requiring authentication.
+
+## [2.0.0] - 2026-07-07
+
+### notes
+- first published GitHub release since 1.0.0 (2026-06-19), rolling up identity/sign-up, billing & subscriptions (MercadoPago), the specialist marketplace, and agronomic/IoT monitoring work, plus a REST-shape and security cleanup pass. See the GitHub release notes for the full user-facing breakdown, including breaking API changes (auth route prefix, checkout field rename, plan catalog replacement, IoT activation code, role model simplification, and several verb-in-URL route consolidations)
+
 ## [1.59.0] - 2026-07-07
 
 ### fixed

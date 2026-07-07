@@ -301,6 +301,9 @@ builder.Services.AddScoped<IIoTDeviceQueryService, IoTDeviceQueryService>();
 // 1.16.2: HydricStressDetectedIntegrationEvent producer — Scoped because it uses
 // repositories (Scoped). Resolved via IServiceScopeFactory in the scheduler (D17).
 builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services.IHydricStressDetectedIntegrationEventProducer, ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services.HydricStressDetectedIntegrationEventProducer>();
+// NdviDroppedIntegrationEvent producer — Scoped for the same reason as the hydric
+// stress producer above; resolved via IServiceScopeFactory in the scheduler.
+builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services.INdviDroppedIntegrationEventProducer, ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services.NdviDroppedIntegrationEventProducer>();
 builder.Services.AddAgronomicStatisticsHosting(builder.Configuration);
 // 1.18.0: Expense BC slice (THE LAST phase-3 release)
 builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
@@ -563,12 +566,10 @@ using (var scope = app.Services.CreateScope())
 // Configure the HTTP request pipeline.
 app.UseGlobalExceptionHandler();
 
-// Swagger UI is enabled only in Development and Staging.
-if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Swagger UI is enabled in all environments, including Production, and is
+// reachable without authentication (see RequestAuthorizationMiddleware).
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // Localization Configuration
 string[] supportedCultures = ["en", "en-US", "es", "es-PE"];

@@ -123,7 +123,7 @@ public class InterventionRequestsController(
     /// </summary>
     /// <remarks>
     ///     The only supported target <c>status</c> is <c>DECLINED</c>. Per
-    ///     REQ-IREQ-3 (OS parity), the transition is NOT self-guarded
+    ///     REQ-IREQ-3, the transition is NOT self-guarded
     ///     against the current status — it succeeds regardless of the
     ///     request's current state.
     /// </remarks>
@@ -168,8 +168,7 @@ public class InterventionRequestsController(
 
     /// <summary>
     ///     The assigned specialist verifies (takes on) the request, moving
-    ///     it out of their pending inbox while a proposal is prepared
-    ///     (specialist-dashboard-parity).
+    ///     it out of their pending inbox while a proposal is prepared.
     /// </summary>
     /// <param name="id">The intervention request id.</param>
     /// <param name="specialistId">The authenticated caller's id, derived from the token.</param>
@@ -198,8 +197,7 @@ public class InterventionRequestsController(
     /// <summary>
     ///     The assigned specialist declines the request. Distinct from the
     ///     grower-side decline (<c>PATCH /{id}</c>): here the actor is the
-    ///     specialist, and a default reason is used when none is provided
-    ///     (specialist-dashboard-parity).
+    ///     specialist, and a default reason is used when none is provided.
     /// </summary>
     /// <param name="id">The intervention request id.</param>
     /// <param name="specialistId">The authenticated caller's id, derived from the token.</param>

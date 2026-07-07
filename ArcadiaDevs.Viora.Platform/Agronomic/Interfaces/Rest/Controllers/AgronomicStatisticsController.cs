@@ -33,9 +33,9 @@ public class AgronomicStatisticsController(
 {
     /// <summary>
     ///     Gets agronomic statistics for the caller, or the chart-series shape
-    ///     when <c>?view=series</c> is given (REQ parity with OS: a single root
-    ///     GET disambiguated by a <c>view</c> query param, not a dedicated
-    ///     <c>/series</c> sub-route).
+    ///     when <c>?view=series</c> is given: a single root GET disambiguated
+    ///     by a <c>view</c> query param, not a dedicated <c>/series</c>
+    ///     sub-route.
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<AgronomicStatisticResource>), StatusCodes.Status200OK)]

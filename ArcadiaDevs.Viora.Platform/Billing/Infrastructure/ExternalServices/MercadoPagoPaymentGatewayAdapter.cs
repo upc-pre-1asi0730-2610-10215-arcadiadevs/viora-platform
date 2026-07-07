@@ -111,7 +111,7 @@ public class MercadoPagoPaymentGatewayAdapter : IPaymentGateway
             return payload is null
                 ? new Result<CheckoutSession, Error>.Failure(BillingErrors.InternalServerError)
                 : new Result<CheckoutSession, Error>.Success(
-                    new CheckoutSession(payload.InitPoint, request.ExternalReference));
+                    new CheckoutSession(payload.InitPoint, payload.Id, request.ExternalReference));
         }
         catch (HttpRequestException ex)
         {
@@ -170,7 +170,8 @@ public class MercadoPagoPaymentGatewayAdapter : IPaymentGateway
 ///     on a WU flagged "Medium — watch" for its line budget.
 /// </summary>
 internal sealed record MercadoPagoCheckoutResponse(
-    [property: JsonPropertyName("init_point")] string InitPoint);
+    [property: JsonPropertyName("init_point")] string InitPoint,
+    [property: JsonPropertyName("id")] string Id);
 
 /// <summary>
 ///     Minimal stub deserialization shape for MercadoPago's payment-lookup

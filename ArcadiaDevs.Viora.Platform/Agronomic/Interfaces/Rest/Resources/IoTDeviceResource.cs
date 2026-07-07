@@ -22,7 +22,7 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 ///         string. 5 new nullable telemetry fields
 ///         (<see cref="Health"/>, <see cref="DeviceType"/>, <see cref="SoilMoisture"/>,
 ///         <see cref="Temperature"/>, <see cref="LeafHumidity"/>) round out the
-///         OS parity (the OS's <c>IoTDeviceResource.java</c> has 10 fields).
+///         response to 10 total fields.
 ///     </para>
 /// </remarks>
 /// <param name="Id">The unique device identifier.</param>
