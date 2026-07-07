@@ -5,6 +5,17 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.57.0] - 2026-07-06
+
+### added
+- `PlotRegisteredEvent` — published directly from `PlotCommandService` post-commit via `IMediator.PublishAsync`, not through the `IHasDomainEvents` collection pattern used elsewhere: `Plot.Id` is database-generated and unknown until after `SaveChanges`, so constructing the event inside `Plot.Create()` would have permanently captured `Id = 0`. Mirrors `AlertCommandService`'s existing post-save direct-publish pattern for `AlertCreatedEvent`
+- `IoTDeviceUpdated` — `IoTDevice` now implements `IHasDomainEvents`; `UpdateInformation` registers the event (only when `Status` actually changes) via the standard collection + `PostCommitDomainEventDispatcher` pattern, since the device is always already-persisted at update time. Dispatcher's aggregate-clear switch extended to include `IoTDevice` alongside `Alert`
+
+### notes
+- Closes the last open item from `docs/os-wa-parity-audit-2026-07-06.md` (P2's missing domain events) — the audit is now fully remediated
+- Both events are additive with no consumers yet, matching OS's own `PlotRegisteredEvent` (defined but never actually published in OS either) and `IoTDeviceUpdated` (published, zero consumers)
+- Feature-first per standing convention — no tests written; deferred along with the rest of the specialist-marketplace/payment-first initiative's Phase 8
+
 ## [1.56.0] - 2026-07-06
 
 ### security
