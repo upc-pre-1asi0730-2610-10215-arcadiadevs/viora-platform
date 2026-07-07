@@ -8,4 +8,4 @@ namespace ArcadiaDevs.Viora.Platform.Iam.Domain.Model;
  *     This record is used to return the result of a successful sign-in.
  * </remarks>
  */
-public record AuthenticatedUser(int Id, string Username, string Token);
+public record AuthenticatedUser(int Id, string Username, string Token, string Role);

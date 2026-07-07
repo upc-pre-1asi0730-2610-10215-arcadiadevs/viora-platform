@@ -5,6 +5,17 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.59.0] - 2026-07-07
+
+### fixed
+- Missing DI registration for `IIoTDeviceCommandService` — every `POST /api/v1/plots/{plotId}/iot-devices` call 500'd since the controller could never be activated.
+- `CreateIoTDeviceResource`'s `[property: Required]`/`[property: StringLength]` validation attributes on `DeviceName`/`ActivationCode` — ASP.NET Core's record-type model validation requires these on the primary constructor parameter, not the `property:`-targeted generated property; the mismatch itself threw a 500 on every request instead of validating.
+- `IoTDeviceRepository.ExistsByActivationCodeAsync` compared `d.ActivationCode.Value == code.Value` — EF Core cannot translate a `.Value` member access on a converted value-object property inside a LINQ predicate. Now compares `d.ActivationCode == code` directly, letting the existing `HasConversion` do the translation.
+- Sign-in/verify response (`AuthenticatedUserResource`) never included the user's `Role` — the frontend always defaulted to Grower routing regardless of the account's real role. Added `Role`, formatted as OS's `ROLE_*` claim convention (`ROLE_GROWER`/`ROLE_SPECIALIST`) to match the frontend's session/routing contract.
+- `GET /healthz` returned 401 — `.AllowAnonymous()` on the health-check endpoint attaches the framework's own `Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute`, which `RequestAuthorizationMiddleware` doesn't recognize (it checks for this project's own custom attribute type). Now attaches the custom attribute directly.
+- Plan catalog seed (`PlanCommandService`) still shipped 4 legacy grower plans (`FREE`/`BASIC`/`PRO`/`ENTERPRISE`) that don't exist in `os-viora-platform`. Replaced with the real catalog: `grower-plus` (S/149 monthly) and `grower-pro` (S/1490 annual), matching OS's `BillingSeedCommandService` exactly. Existing legacy rows need a one-time manual cleanup on already-seeded databases (see deploy notes).
+- Dockerfile's `ASPNETCORE_URLS` was baked in via a static `ENV` (`http://+:8080`) — Render injects `PORT` at container start (default 10000) and the container must bind to it. Now resolved at container start via a shell-form `ENTRYPOINT` reading `${PORT:-8080}`.
+
 ## [1.58.0] - 2026-07-06
 
 ### fixed

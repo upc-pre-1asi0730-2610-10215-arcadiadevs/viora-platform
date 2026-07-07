@@ -1,3 +1,4 @@
+using System.Linq;
 using ArcadiaDevs.Viora.Platform.Billing.Interfaces.Acl;
 using ArcadiaDevs.Viora.Platform.Iam.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Iam.Application.Internal.OutboundServices;
@@ -169,7 +170,7 @@ public class UserCommandService(
         await unitOfWork.CompleteAsync(cancellationToken);
 
         return new Result<AuthenticatedUser, Error>.Success(
-            new AuthenticatedUser(user.Id, user.Username, token));
+            new AuthenticatedUser(user.Id, user.Username, token, ToRoleClaim(user.Roles.FirstOrDefault()?.Name)));
     }
 
     /// <inheritdoc />
@@ -244,7 +245,7 @@ public class UserCommandService(
         // NOT record a UserSession — only SignInCommand records sessions.
         var token = tokenService.GenerateToken(user);
         return new Result<AuthenticatedUser, Error>.Success(
-            new AuthenticatedUser(user.Id, user.Username, token));
+            new AuthenticatedUser(user.Id, user.Username, token, ToRoleClaim(user.Roles.FirstOrDefault()?.Name)));
     }
 
     /// <inheritdoc />
@@ -325,5 +326,16 @@ public class UserCommandService(
         await unitOfWork.CompleteAsync(cancellationToken);
 
         return new Result<bool, Error>.Success(true);
+    }
+
+    /// <summary>
+    ///     Formats a stored Role name (e.g. "Grower") as OS's
+    ///     <c>ROLE_*</c> claim convention (e.g. "ROLE_GROWER") — the format
+    ///     the frontend's session/routing logic expects, mirroring OS's
+    ///     <c>Roles</c> enum wire format.
+    /// </summary>
+    private static string ToRoleClaim(string? roleName)
+    {
+        return "ROLE_" + (roleName ?? "Grower").ToUpperInvariant();
     }
 }

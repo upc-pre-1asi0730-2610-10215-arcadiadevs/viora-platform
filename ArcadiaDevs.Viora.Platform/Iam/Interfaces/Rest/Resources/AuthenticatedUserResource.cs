@@ -8,4 +8,4 @@ namespace ArcadiaDevs.Viora.Platform.Iam.Interfaces.Rest.Resources;
  *     This resource represents an authenticated user with a JWT token.
  * </remarks>
  */
-public record AuthenticatedUserResource(int Id, string Username, string Token);
+public record AuthenticatedUserResource(int Id, string Username, string Token, string Role);
