@@ -37,10 +37,9 @@ public class AgronomicStatisticsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAgronomicStatistics(
-        [FromQuery] long userId,
+        [FromToken] long userId,
         [FromQuery] string timeRange,
         [FromQuery] long? plotId = null,
-        [FromHeader(Name = "X-Authenticated-User-Id")] long? authenticatedUserId = null,
         CancellationToken cancellationToken = default)
     {
         // Validate explicitly instead of Enum.Parse: an unrecognized timeRange value
@@ -54,11 +53,9 @@ public class AgronomicStatisticsController(
             });
         }
 
-        var effectiveAuthenticatedUserId = authenticatedUserId ?? userId;
-
         var query = new GetAgronomicStatisticsQuery(
             userId,
-            effectiveAuthenticatedUserId,
+            userId,
             plotId,
             parsedTimeRange
         );
@@ -91,10 +88,9 @@ public class AgronomicStatisticsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAgronomicStatisticSeries(
-        [FromQuery] long userId,
+        [FromToken] long userId,
         [FromQuery] string timeRange,
         [FromQuery] long? plotId = null,
-        [FromHeader(Name = "X-Authenticated-User-Id")] long? authenticatedUserId = null,
         CancellationToken cancellationToken = default)
     {
         // Same invalid-input guard as GetAgronomicStatistics above — see comment there.
@@ -106,11 +102,9 @@ public class AgronomicStatisticsController(
             });
         }
 
-        var effectiveAuthenticatedUserId = authenticatedUserId ?? userId;
-
         var query = new GetAgronomicStatisticSeriesQuery(
             userId,
-            effectiveAuthenticatedUserId,
+            userId,
             plotId,
             parsedTimeRange
         );
@@ -136,7 +130,7 @@ public class AgronomicStatisticsController(
     [ProducesResponseType(typeof(AgronomicStatisticsIngestionReportResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> IngestAgronomicStatistics(
-        [FromQuery] long userId,
+        [FromToken] long userId,
         CancellationToken cancellationToken = default)
     {
         var command = new IngestAgronomicStatisticsCommand(userId, new DateTimeOffset(clock.UtcNow, TimeSpan.Zero));

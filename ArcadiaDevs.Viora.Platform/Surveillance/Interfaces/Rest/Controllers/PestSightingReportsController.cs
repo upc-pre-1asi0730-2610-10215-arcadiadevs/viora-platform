@@ -85,7 +85,7 @@ public class PestSightingReportsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ReviewPestSightingReport(
         [FromRoute] long reportId,
-        [FromQuery] long reporterUserId,
+        [FromToken] long reporterUserId,
         [FromBody] ReviewPestSightingReportResource resource,
         CancellationToken ct = default)
     {
