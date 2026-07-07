@@ -1,8 +1,10 @@
 ﻿using System;
+using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Events;
 using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Shared.Application.Model;
 using ArcadiaDevs.Viora.Platform.Shared.Domain;
 using ArcadiaDevs.Viora.Platform.Shared.Domain.Model;
+using ArcadiaDevs.Viora.Platform.Shared.Domain.Model.Events;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 
@@ -13,7 +15,7 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.Aggregates;
 ///     <c>RecordReading</c> domain methods, which validate transitions and
 ///     return a <see cref="Result{TValue, TError}"/>.
 /// </summary>
-public partial class IoTDevice
+public partial class IoTDevice : IHasDomainEvents
 {
     public long Id { get; private set; }
     public long PlotId { get; private set; }
@@ -32,6 +34,19 @@ public partial class IoTDevice
     ///     </para>
     /// </summary>
     public ActivationCode? ActivationCode { get; private set; }
+
+    private readonly List<IEvent> _domainEvents = new();
+
+    /// <inheritdoc />
+    public IReadOnlyCollection<IEvent> DomainEvents => _domainEvents.AsReadOnly();
+
+    /// <summary>
+    ///     Clears the <see cref="DomainEvents"/> collection. Invoked by
+    ///     <c>PostCommitDomainEventDispatcher</c> after each pending event has
+    ///     been (attempted to be) dispatched, so the next <c>SaveChanges</c>
+    ///     does not re-dispatch the same events.
+    /// </summary>
+    public void ClearDomainEvents() => _domainEvents.Clear();
 
     // Parameterless constructor for EF Core materialization.
     private IoTDevice() { }
@@ -197,8 +212,15 @@ public partial class IoTDevice
                 new Error("STATUS_REQUIRED", "Status is required."));
         }
 
+        var oldStatus = Status;
         DeviceName = newName.Value;
         Status = newStatus.Value;
+
+        if (oldStatus != Status)
+        {
+            _domainEvents.Add(new IoTDeviceUpdated(Id, PlotId, oldStatus, Status));
+        }
+
         return new Result<Unit, Error>.Success(Unit.Value);
     }
 }
