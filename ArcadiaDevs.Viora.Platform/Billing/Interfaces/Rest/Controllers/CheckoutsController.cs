@@ -1,7 +1,6 @@
-﻿using System.Net.Mime;
+using System.Net.Mime;
 using ArcadiaDevs.Viora.Platform.Billing.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Billing.Domain.Model.Commands;
-using ArcadiaDevs.Viora.Platform.Billing.Domain.Model.Errors;
 using ArcadiaDevs.Viora.Platform.Billing.Domain.Model.ValueObjects;
 using ArcadiaDevs.Viora.Platform.Billing.Interfaces.Rest.Resources;
 using ArcadiaDevs.Viora.Platform.Billing.Interfaces.Rest.Transform;
@@ -30,5 +29,44 @@ public class CheckoutsController(
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
+    /// <summary>
+    ///     Creates a checkout session for the authenticated caller and a target plan (REQ-GATE-3).
+    /// </summary>
+    /// <param name="resource">The plan code and billing interval.</param>
+    /// <param name="userId">The authenticated caller's id, derived from the token.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="201">Checkout session created.</response>
+    /// <response code="400">Invalid interval value.</response>
+    /// <response code="404">Unknown plan code.</response>
+    /// <response code="503">Payment gateway not configured.</response>
+    [HttpPost]
+    [ProducesResponseType(typeof(CheckoutSessionResource), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> CreateCheckout(
+        [FromBody] CreateCheckoutResource resource,
+        [FromToken] int userId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!Enum.TryParse<PlanInterval>(resource.Interval, ignoreCase: true, out var interval))
+        {
+            return BadRequest(new
+            {
+                error = $"Invalid interval '{resource.Interval}'. Valid values: {string.Join(", ", Enum.GetNames<PlanInterval>())}."
+            });
+        }
 
+        var command = new CreateCheckoutCommand(userId, resource.PlanCode, interval);
+        var result = await checkoutCommandService.Handle(command, cancellationToken);
+
+        return BillingActionResultAssembler.ToActionResult(
+            this,
+            result,
+            errorLocalizer,
+            problemDetailsFactory,
+            session => StatusCode(
+                StatusCodes.Status201Created,
+                CheckoutSessionResourceFromEntityAssembler.ToResourceFromEntity(session)));
+    }
 }

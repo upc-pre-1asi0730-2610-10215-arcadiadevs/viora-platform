@@ -43,7 +43,7 @@ echo ""
 echo "--- 1. Sign-up is open (no Authorization header, no admin gate) ---"
 
 DEFAULT_ROLE_USERNAME="default-role-$(date +%s)"
-HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/authentication/sign-up" \
+HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/auth/sign-up" \
     -H "Content-Type: application/json" \
     -d "{\"username\":\"$DEFAULT_ROLE_USERNAME\",\"password\":\"P@ssw0rd!\"}")
 if [ "$HTTP" = "201" ]; then
@@ -58,7 +58,7 @@ fi
 echo "--- 2. Sign-up with explicit valid role ---"
 
 SPECIALIST_USERNAME="specialist-$(date +%s)"
-HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/authentication/sign-up" \
+HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/auth/sign-up" \
     -H "Content-Type: application/json" \
     -d "{\"username\":\"$SPECIALIST_USERNAME\",\"password\":\"P@ssw0rd!\",\"role\":\"Specialist\"}")
 if [ "$HTTP" = "201" ]; then
@@ -73,7 +73,7 @@ fi
 echo "--- 3. Sign-up with invalid role → 400 ---"
 
 INVALID_ROLE_USERNAME="invalid-role-$(date +%s)"
-HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/authentication/sign-up" \
+HTTP=$(curl_silent -X POST "$BASE_URL/api/v1/auth/sign-up" \
     -H "Content-Type: application/json" \
     -d "{\"username\":\"$INVALID_ROLE_USERNAME\",\"password\":\"P@ssw0rd!\",\"role\":\"Administrator\"}")
 if [ "$HTTP" = "400" ]; then
@@ -87,7 +87,7 @@ fi
 # ---------------------------------------------------------------
 echo "--- 4. Sign in ---"
 
-SIGNIN_BODY=$(curl_body -X POST "$BASE_URL/api/v1/authentication/sign-in" \
+SIGNIN_BODY=$(curl_body -X POST "$BASE_URL/api/v1/auth/sign-in" \
     -H "Content-Type: application/json" \
     -d "{\"username\":\"$DEFAULT_ROLE_USERNAME\",\"password\":\"P@ssw0rd!\"}")
 TOKEN=$(echo "$SIGNIN_BODY" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)

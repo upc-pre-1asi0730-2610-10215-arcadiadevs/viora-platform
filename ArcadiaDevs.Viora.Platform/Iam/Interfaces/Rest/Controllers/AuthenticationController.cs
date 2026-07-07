@@ -19,7 +19,7 @@ namespace ArcadiaDevs.Viora.Platform.Iam.Interfaces.Rest.Controllers;
 ///     REST controller for authentication operations.
 /// </summary>
 [ApiController]
-[Route("api/v1/authentication")]
+[Route("api/v1/auth")]
 [Produces("application/json")]
 public class AuthenticationController(
     IUserCommandService userCommandService,
