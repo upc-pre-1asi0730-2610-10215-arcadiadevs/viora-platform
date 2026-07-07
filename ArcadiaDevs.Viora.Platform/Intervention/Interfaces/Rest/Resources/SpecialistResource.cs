@@ -11,4 +11,5 @@ public record SpecialistResource(
     int CaseCount,
     double? DistanceKm,
     IReadOnlyList<string> Tags,
-    string Availability);
+    string Availability,
+    string? PhotoUrl);
