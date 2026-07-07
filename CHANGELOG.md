@@ -5,6 +5,18 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.4] - 2026-07-07
+
+### fixed
+- `GET /api/v1/agronomic-statistics?view=series` (and its `/series` alias) threw an unhandled `InvalidOperationException` (500) when called without `plotId` — the query's `PlotId` is nullable but was unwrapped with `.Value` unconditionally. Now returns 400.
+- `activeAlertCount` on the plots overview (`GET /api/v1/plots/overview`) was hardcoded to `0` regardless of real alert data. Now computed from Surveillance's `Alert` aggregate via a new `ISurveillanceContextFacade.CountActiveAlertsByPlotIdsAsync` method.
+- `POST /api/v1/pest-sighting-reports` required a `ReporterUserId` field that the server always discarded in favor of the token-derived id — a client following the documented "never pass your own userId" contract got a spurious 400. The field is removed.
+
+### added
+- Scheduled alert generation (`ScheduledIngestionEnabled`) is now on by default — the chill-deficit and hydric-stress alert producers already wired into `AgronomicStatisticIngestionScheduler` were never actually running.
+- New `NdviDroppedIntegrationEventProducer`: raises a `PHENOLOGICAL_RISK` alert when a plot's latest NDVI reading drops ≥15% below its own 14-day historical average (Surveillance already had a consumer for this event; nothing produced it before).
+- Specialist marketplace cards (`GET /api/v1/intervention-marketplace`) now include a real `distanceKm` per case, computed from the signed-in specialist's own `Profile` geolocation to each case's plot centroid — the underlying Haversine distance and `ServiceRadiusKm` filtering already existed in `SpecialistMatchingPolicy`, just wasn't wired into this endpoint.
+
 ## [2.0.3] - 2026-07-07
 
 ### changed

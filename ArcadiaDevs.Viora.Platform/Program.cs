@@ -301,6 +301,9 @@ builder.Services.AddScoped<IIoTDeviceQueryService, IoTDeviceQueryService>();
 // 1.16.2: HydricStressDetectedIntegrationEvent producer — Scoped because it uses
 // repositories (Scoped). Resolved via IServiceScopeFactory in the scheduler (D17).
 builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services.IHydricStressDetectedIntegrationEventProducer, ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services.HydricStressDetectedIntegrationEventProducer>();
+// NdviDroppedIntegrationEvent producer — Scoped for the same reason as the hydric
+// stress producer above; resolved via IServiceScopeFactory in the scheduler.
+builder.Services.AddScoped<ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services.INdviDroppedIntegrationEventProducer, ArcadiaDevs.Viora.Platform.Agronomic.Application.Internal.Services.NdviDroppedIntegrationEventProducer>();
 builder.Services.AddAgronomicStatisticsHosting(builder.Configuration);
 // 1.18.0: Expense BC slice (THE LAST phase-3 release)
 builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();

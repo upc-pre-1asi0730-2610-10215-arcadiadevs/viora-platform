@@ -21,10 +21,12 @@ namespace ArcadiaDevs.Viora.Platform.Intervention.Application.Internal.QueryServ
 /// </summary>
 /// <remarks>
 ///     No fabricated data: a field with no source for a given case is left
-///     <c>null</c> (the client renders an empty state), and case distance is
-///     omitted entirely because the specialist has no real geolocation
-///     wired into this card. The acceptance rate is <c>null</c> until the
-///     specialist has decided proposals, matching the dashboard.
+///     <c>null</c> (the client renders an empty state). <c>DistanceKm</c> is
+///     computed from the signed-in specialist's own <c>Profile</c>
+///     geolocation to each case's plot centroid via the Agronomic ACL, and
+///     is <c>null</c> when the specialist hasn't set a location. The
+///     acceptance rate is <c>null</c> until the specialist has decided
+///     proposals, matching the dashboard.
 /// </remarks>
 public class SpecialistMarketplaceQueryService(
     IInterventionRequestRepository interventionRequestRepository,
@@ -45,11 +47,13 @@ public class SpecialistMarketplaceQueryService(
             query.SpecialistId, InterventionStatus.ACCEPTED, cancellationToken);
         var proposals = await serviceProposalRepository.FindBySpecialistIdAsync(
             query.SpecialistId, cancellationToken);
+        var specialistProfile = await profileContextFacade.GetSpecialistProfileAsync(
+            query.SpecialistId, cancellationToken);
 
         var cases = new List<SpecialistMarketplaceResource.MarketplaceCase>(pending.Count);
         foreach (var request in pending)
         {
-            cases.Add(await ToCaseAsync(request, cancellationToken));
+            cases.Add(await ToCaseAsync(request, specialistProfile, cancellationToken));
         }
 
         return new SpecialistMarketplaceResource(
@@ -62,6 +66,7 @@ public class SpecialistMarketplaceQueryService(
 
     private async Task<SpecialistMarketplaceResource.MarketplaceCase> ToCaseAsync(
         InterventionRequest request,
+        SpecialistProfileSummary? specialistProfile,
         CancellationToken cancellationToken)
     {
         var alert = request.AlertId is { } alertId
@@ -73,6 +78,11 @@ public class SpecialistMarketplaceQueryService(
             ?? $"Grower #{request.GrowerId}";
         var producerPhotoUrl = await profileContextFacade.GetPhotoUrlAsync(request.GrowerId, cancellationToken);
         var plotCount = await agronomicContextFacade.CountPlotsByUserAsync(request.GrowerId, cancellationToken);
+
+        double? distanceKm = specialistProfile is { Latitude: not null, Longitude: not null }
+            ? await agronomicContextFacade.DistanceKmFromPlotCentroidAsync(
+                request.PlotId, specialistProfile.Latitude.Value, specialistProfile.Longitude.Value, cancellationToken)
+            : null;
 
         return new SpecialistMarketplaceResource.MarketplaceCase(
             request.Id,
@@ -88,7 +98,8 @@ public class SpecialistMarketplaceQueryService(
             BlankToNull(plot?.Location),
             plot?.AreaHectares,
             plotCount,
-            request.CreatedAt?.ToString("O"));
+            request.CreatedAt?.ToString("O"),
+            distanceKm);
     }
 
     /// <summary>Prefers the alert's problem label; falls back to the request's stated reason.</summary>

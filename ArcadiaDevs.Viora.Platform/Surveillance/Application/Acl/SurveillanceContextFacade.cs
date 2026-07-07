@@ -2,6 +2,7 @@ using ArcadiaDevs.Viora.Platform.Surveillance.Domain.Repositories;
 using ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Acl;
 
 using Microsoft.Extensions.Logging;
+using System.Linq;
 
 namespace ArcadiaDevs.Viora.Platform.Surveillance.Application.Acl;
 
@@ -58,5 +59,15 @@ public class SurveillanceContextFacade(
         }
 
         return new AlertMatchContext(alert.PlotId.Value, alert.Type.ToString());
+    }
+
+    // inheritedDoc
+    public async Task<IReadOnlyDictionary<long, int>> CountActiveAlertsByPlotIdsAsync(IEnumerable<long> plotIds, CancellationToken cancellationToken = default)
+    {
+        var activeAlerts = await alertRepository.FindActiveByPlotIdInAsync(plotIds, cancellationToken);
+
+        return activeAlerts
+            .GroupBy(a => a.PlotId.Value)
+            .ToDictionary(g => g.Key, g => g.Count());
     }
 }
