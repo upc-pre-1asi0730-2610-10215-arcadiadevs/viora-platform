@@ -46,7 +46,13 @@ public class PlanCommandService(
             new[] { "20 plots", "10 IoT devices", "Specialist matching", "Priority support" }, 20, 10),
         new("ENTERPRISE", "Enterprise", 349.90m, PlanInterval.MONTHLY,
             "For large operations with advanced monitoring needs.",
-            new[] { "100 plots", "50 IoT devices", "Dedicated account manager", "24/7 support" }, 100, 50)
+            new[] { "100 plots", "50 IoT devices", "Dedicated account manager", "24/7 support" }, 100, 50),
+        new("specialist-plus", "Specialist Plus", 79.00m, PlanInterval.MONTHLY,
+            "For specialists building their case pipeline.",
+            new[] { "Marketplace access", "Unlimited cases", "Specialist dashboard" }, 0, 0),
+        new("specialist-pro", "Specialist Pro", 790.00m, PlanInterval.ANNUAL,
+            "For specialists who want to stand out to producers.",
+            new[] { "Marketplace access", "Unlimited cases", "Specialist dashboard", "Pro badge", "Priority placement" }, 0, 0)
     }.AsReadOnly();
 
     public async Task Handle(SeedPlanCatalogCommand command, CancellationToken cancellationToken = default)
