@@ -5,6 +5,21 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.54.0] - 2026-07-06
+
+### added
+- `specialist-plus` ($79.00/mo) and `specialist-pro` ($790.00/yr) rows in the Plan catalog — `PlotLimit`/`IotLimit` both `0` (case-based usage, not plot/IoT-based); `specialist-pro`'s feature list additionally advertises the Pro badge + priority placement
+- `GET /api/v1/plans` reachable with no bearer token (`[AllowAnonymous]` on `GetPlans()` only — every other Billing action keeps requiring auth) — powers the pre-auth plans screen
+
+### changed
+- `SubscriptionCommandService.Handle(SwitchPlanCommand)` is now an upsert: when the user has no subscription yet, one is created directly as `ACTIVE` for the requested plan (mirroring `WebhookReconciliationCommandService.ApplySubscriptionEffectAsync`'s null-branch), instead of failing with `NotFound`. After a successful save, syncs `Profile.ShowProBadge` via `IProfileContextFacade.SetProBadgeAsync` when `PlanCode` starts with `"specialist-"` — enabled only for `specialist-pro`, left untouched for grower plans
+
+### notes
+- Phase 6 of the specialist-marketplace/payment-first execution plan (`docs/implementation-plan-specialist-marketplace-and-payment-first-2026-07-06.md`)
+- Verified live: `GET /api/v1/plans` returns all 6 plans (4 existing + 2 new) with HTTP 200 and no `Authorization` header
+- `Handle(SwitchPlanCommand)` has no controller route anywhere in the codebase (confirmed by project-wide search) — its own doc comment already states it is internal-only. The upsert + Pro-badge-sync logic was verified by code review against the already-verified `WebhookReconciliationCommandService` reference pattern, not by driving it through a live HTTP request, since no such entry point exists yet
+- Feature-first per standing convention — no tests written; deferred to Phase 8
+
 ## [1.53.0] - 2026-07-06
 
 ### added
