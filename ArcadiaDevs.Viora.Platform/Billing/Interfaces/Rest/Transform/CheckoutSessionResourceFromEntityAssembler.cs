@@ -11,6 +11,6 @@ public static class CheckoutSessionResourceFromEntityAssembler
 {
     public static CheckoutSessionResource ToResourceFromEntity(CheckoutSession session)
     {
-        return new CheckoutSessionResource(session.CheckoutUrl, session.ExternalReference);
+        return new CheckoutSessionResource(session.CheckoutUrl, session.PreferenceId, session.ExternalReference);
     }
 }

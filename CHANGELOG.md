@@ -5,6 +5,11 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.3] - 2026-07-07
+
+### changed
+- `POST /api/v1/checkouts` response now matches wa-viora-webapp's mock checkout contract exactly (`server/index.js`) when MercadoPago is unconfigured: `{ checkoutUrl: "/dashboard", preferenceId: "mock-<epoch-ms>", externalReference }` with the subscription already ACTIVE, 201 status. `CheckoutSession`/`CheckoutSessionResource` gained `PreferenceId`; the real MercadoPago adapter now also captures the gateway's preference `id` for parity.
+
 ## [2.0.2] - 2026-07-07
 
 ### changed

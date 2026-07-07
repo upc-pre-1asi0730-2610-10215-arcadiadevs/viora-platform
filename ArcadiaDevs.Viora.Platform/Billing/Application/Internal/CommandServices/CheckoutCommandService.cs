@@ -67,9 +67,11 @@ public class CheckoutCommandService(
     ///     503, reconciles the payment immediately as approved through the
     ///     same path a real MercadoPago webhook delivery would take
     ///     (<see cref="IWebhookReconciliationCommandService" />), so the
-    ///     caller's Subscription/Invoice effects land synchronously. Returns
-    ///     a synthetic <see cref="CheckoutSession" /> — there is no real
-    ///     gateway-hosted page to redirect to.
+    ///     caller's Subscription/Invoice effects land synchronously. Mirrors
+    ///     wa-viora-webapp's mock checkout contract (server/index.js) exactly
+    ///     — <c>preferenceId: "mock-{epoch-ms}"</c>, <c>checkoutUrl: "/dashboard"</c> —
+    ///     since the real MercadoPago integration was dropped in favor of
+    ///     instant approval on both sides (decided 2026-07-06).
     /// </summary>
     private async Task<Result<CheckoutSession, Error>> CreateAutoApprovedSessionAsync(
         Plan plan,
@@ -96,6 +98,9 @@ public class CheckoutCommandService(
         }
 
         return new Result<CheckoutSession, Error>.Success(
-            new CheckoutSession($"fake-checkout://approved?ref={externalReference}", externalReference));
+            new CheckoutSession(
+                CheckoutUrl: "/dashboard",
+                PreferenceId: $"mock-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}",
+                ExternalReference: externalReference));
     }
 }
