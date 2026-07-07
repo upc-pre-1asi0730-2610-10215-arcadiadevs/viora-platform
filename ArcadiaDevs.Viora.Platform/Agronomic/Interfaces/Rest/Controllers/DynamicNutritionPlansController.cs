@@ -98,16 +98,21 @@ public class DynamicNutritionPlansController(
     }
 
     /// <summary>
-    ///     Gets the active dynamic nutrition plan for a plot.
+    ///     Gets the active dynamic nutrition plan for a plot (REQ parity with OS:
+    ///     root GET + <c>?status=ACTIVE</c>, not a dedicated sub-route). WA only
+    ///     supports the <c>ACTIVE</c> filter today — any other explicit value is
+    ///     rejected rather than silently returning an empty stub list like OS
+    ///     does, since WA has no "list all plans" feature behind this endpoint yet.
     /// </summary>
     /// <param name="userId">The user identifier (query parameter).</param>
     /// <param name="plotId">The plot identifier (query parameter).</param>
+    /// <param name="status">Optional status filter; defaults to <c>ACTIVE</c>, the only supported value.</param>
     /// <param name="cancellationToken">The request cancellation token.</param>
     /// <response code="200">Active nutrition plan found.</response>
-    /// <response code="400">Invalid request parameters.</response>
+    /// <response code="400">Invalid request parameters, or an unsupported status filter.</response>
     /// <response code="403">The user does not own the plot.</response>
     /// <response code="404">No active nutrition plan found for the plot.</response>
-    [HttpGet("active")]
+    [HttpGet]
     [ProducesResponseType(typeof(DynamicNutritionPlanResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
@@ -115,8 +120,14 @@ public class DynamicNutritionPlansController(
     public async Task<IActionResult> GetActiveDynamicNutritionPlan(
         [FromToken] int userId,
         [FromQuery] int plotId,
-        CancellationToken cancellationToken)
+        [FromQuery] string status = "ACTIVE",
+        CancellationToken cancellationToken = default)
     {
+        if (!string.Equals(status, "ACTIVE", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { error = $"Unsupported status '{status}'. Only 'ACTIVE' is supported." });
+        }
+
         var query = new GetDynamicNutritionPlanQuery(plotId, userId);
         var result = await dynamicNutritionQueryService.Handle(query, cancellationToken);
 
@@ -127,4 +138,21 @@ public class DynamicNutritionPlansController(
             problemDetailsFactory,
             plan => Ok(plan));
     }
+
+    /// <summary>
+    ///     Legacy alias for <see cref="GetActiveDynamicNutritionPlan"/>. Kept so
+    ///     existing clients hitting the old dedicated sub-route keep working
+    ///     without a coordinated frontend change; new clients should use the
+    ///     root route with <c>?status=ACTIVE</c>.
+    /// </summary>
+    [HttpGet("active")]
+    [ProducesResponseType(typeof(DynamicNutritionPlanResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public Task<IActionResult> GetActiveDynamicNutritionPlanLegacy(
+        [FromToken] int userId,
+        [FromQuery] int plotId,
+        CancellationToken cancellationToken = default) =>
+        GetActiveDynamicNutritionPlan(userId, plotId, "ACTIVE", cancellationToken);
 }

@@ -31,8 +31,15 @@ public class AgronomicStatisticsController(
     ProblemDetailsFactory problemDetailsFactory,
     IClock clock) : ControllerBase
 {
+    /// <summary>
+    ///     Gets agronomic statistics for the caller, or the chart-series shape
+    ///     when <c>?view=series</c> is given (REQ parity with OS: a single root
+    ///     GET disambiguated by a <c>view</c> query param, not a dedicated
+    ///     <c>/series</c> sub-route).
+    /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<AgronomicStatisticResource>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AgronomicStatisticSeriesResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
@@ -40,6 +47,7 @@ public class AgronomicStatisticsController(
         [FromToken] long userId,
         [FromQuery] string timeRange,
         [FromQuery] long? plotId = null,
+        [FromQuery] string? view = null,
         CancellationToken cancellationToken = default)
     {
         // Validate explicitly instead of Enum.Parse: an unrecognized timeRange value
@@ -51,6 +59,26 @@ public class AgronomicStatisticsController(
             {
                 error = $"Invalid timeRange '{timeRange}'. Valid values: {string.Join(", ", Enum.GetNames<ETimeRange>())}."
             });
+        }
+
+        if (string.Equals(view, "series", StringComparison.OrdinalIgnoreCase))
+        {
+            var seriesQuery = new GetAgronomicStatisticSeriesQuery(userId, userId, plotId, parsedTimeRange);
+            var seriesResult = await agronomicStatisticSeriesQueryService.Handle(seriesQuery, cancellationToken);
+
+            return AgronomicActionResultAssembler.ToActionResult(
+                this,
+                seriesResult,
+                errorLocalizer,
+                problemDetailsFactory,
+                series =>
+                {
+                    if (series.Labels == null || series.Labels.Count == 0)
+                    {
+                        return Ok("");
+                    }
+                    return Ok(series);
+                });
         }
 
         var query = new GetAgronomicStatisticsQuery(
@@ -82,49 +110,23 @@ public class AgronomicStatisticsController(
             });
     }
 
+    /// <summary>
+    ///     Legacy alias for <see cref="GetAgronomicStatistics"/> with <c>view=series</c>
+    ///     implied. Kept so existing clients hitting the old dedicated sub-route
+    ///     keep working without a coordinated frontend change; new clients should
+    ///     use <c>?view=series</c> on the root route instead.
+    /// </summary>
     [HttpGet("series")]
     [ProducesResponseType(typeof(AgronomicStatisticSeriesResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetAgronomicStatisticSeries(
+    public Task<IActionResult> GetAgronomicStatisticSeriesLegacy(
         [FromToken] long userId,
         [FromQuery] string timeRange,
         [FromQuery] long? plotId = null,
-        CancellationToken cancellationToken = default)
-    {
-        // Same invalid-input guard as GetAgronomicStatistics above — see comment there.
-        if (!Enum.TryParse<ETimeRange>(timeRange, ignoreCase: true, out var parsedTimeRange))
-        {
-            return BadRequest(new
-            {
-                error = $"Invalid timeRange '{timeRange}'. Valid values: {string.Join(", ", Enum.GetNames<ETimeRange>())}."
-            });
-        }
-
-        var query = new GetAgronomicStatisticSeriesQuery(
-            userId,
-            userId,
-            plotId,
-            parsedTimeRange
-        );
-
-        var result = await agronomicStatisticSeriesQueryService.Handle(query, cancellationToken);
-
-        return AgronomicActionResultAssembler.ToActionResult(
-            this,
-            result,
-            errorLocalizer,
-            problemDetailsFactory,
-            series =>
-            {
-                if (series.Labels == null || series.Labels.Count == 0)
-                {
-                    return Ok("");
-                }
-                return Ok(series);
-            });
-    }
+        CancellationToken cancellationToken = default) =>
+        GetAgronomicStatistics(userId, timeRange, plotId, view: "series", cancellationToken);
 
     [HttpPost]
     [ProducesResponseType(typeof(AgronomicStatisticsIngestionReportResource), StatusCodes.Status200OK)]
