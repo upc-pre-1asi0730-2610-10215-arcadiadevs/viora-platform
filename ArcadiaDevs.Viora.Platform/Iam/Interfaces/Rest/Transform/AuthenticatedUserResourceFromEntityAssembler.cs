@@ -12,6 +12,6 @@ public static class AuthenticatedUserResourceFromEntityAssembler
 {
     public static AuthenticatedUserResource ToResource(this AuthenticatedUser authenticatedUser)
     {
-        return new AuthenticatedUserResource(authenticatedUser.Id, authenticatedUser.Username, authenticatedUser.Token);
+        return new AuthenticatedUserResource(authenticatedUser.Id, authenticatedUser.Username, authenticatedUser.Token, authenticatedUser.Role);
     }
 }

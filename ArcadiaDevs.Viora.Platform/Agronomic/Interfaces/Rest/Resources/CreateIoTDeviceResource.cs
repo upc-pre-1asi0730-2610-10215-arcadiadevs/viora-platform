@@ -13,13 +13,13 @@ namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 /// <param name="Status">The desired status; Active by default when omitted.</param>
 /// <param name="ActivationCode">The pre-issued code printed on the device label (required).</param>
 public record CreateIoTDeviceResource(
-    [property: Required(ErrorMessage = "deviceName is required")]
-    [property: StringLength(150, ErrorMessage = "deviceName must not exceed 150 characters")]
+    [Required(ErrorMessage = "deviceName is required")]
+    [StringLength(150, ErrorMessage = "deviceName must not exceed 150 characters")]
     string DeviceName,
 
     IoTDeviceStatus? Status,
 
-    [property: Required(ErrorMessage = "activationCode is required")]
-    [property: StringLength(20, ErrorMessage = "activationCode must not exceed 20 characters")]
+    [Required(ErrorMessage = "activationCode is required")]
+    [StringLength(20, ErrorMessage = "activationCode must not exceed 20 characters")]
     string ActivationCode
 );

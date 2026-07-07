@@ -35,18 +35,22 @@ public class PlanCommandService(
 
     private static readonly IReadOnlyList<CatalogPlan> Catalog = new List<CatalogPlan>
     {
-        new("FREE", "Free", 0m, PlanInterval.MONTHLY,
-            "Get started with basic plot monitoring.",
-            new[] { "1 plot", "Weather overview", "Community alerts" }, 1, 0),
-        new("BASIC", "Basic", 49.90m, PlanInterval.MONTHLY,
-            "For small producers ready to go digital.",
-            new[] { "5 plots", "2 IoT devices", "Pest & disease alerts", "Email support" }, 5, 2),
-        new("PRO", "Pro", 129.90m, PlanInterval.MONTHLY,
-            "For growing operations that need specialist support.",
-            new[] { "20 plots", "10 IoT devices", "Specialist matching", "Priority support" }, 20, 10),
-        new("ENTERPRISE", "Enterprise", 349.90m, PlanInterval.MONTHLY,
-            "For large operations with advanced monitoring needs.",
-            new[] { "100 plots", "50 IoT devices", "Dedicated account manager", "24/7 support" }, 100, 50),
+        new("grower-plus", "Grower Plus", 149.00m, PlanInterval.MONTHLY,
+            "Growing operations with multiple fincas.",
+            new[]
+            {
+                "Up to 10 plots", "10 IoT devices", "Daily NDVI + chill tracking",
+                "Pest surveillance alerts", "Dynamic nutrition recommendations",
+                "Access to crop protection specialists when risk rises"
+            }, 10, 10),
+        new("grower-pro", "Grower Pro", 1490.00m, PlanInterval.ANNUAL,
+            "Multi-region operations at scale.",
+            new[]
+            {
+                "Up to 50 plots", "100 IoT devices", "Daily NDVI + chill tracking",
+                "Pest surveillance alerts", "Dynamic nutrition recommendations",
+                "Access to crop protection specialists when risk rises"
+            }, 50, 100),
         new("specialist-plus", "Specialist Plus", 79.00m, PlanInterval.MONTHLY,
             "For specialists building their case pipeline.",
             new[] { "Marketplace access", "Unlimited cases", "Specialist dashboard" }, 0, 0),
