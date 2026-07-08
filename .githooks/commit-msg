@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Enforces simple conventional commits: type(scope): lowercase description.
+# - subject <= 72 chars, no trailing period
+# - no bullet-list bodies (keep it to a plain sentence, or drop the body)
+set -e
+
+msg_file="$1"
+subject="$(head -n1 "$msg_file")"
+
+allowed_types="feat|fix|docs|chore|refactor|test|ci|style|perf|build|revert|merge"
+
+if ! echo "$subject" | grep -qE "^(${allowed_types})(\([a-z0-9/_,.-]+\))?: [a-z0-9\`\"'/].*$"; then
+  echo "commit-msg: subject must be 'type(scope): description' in lowercase" >&2
+  echo "  allowed types: ${allowed_types//|/, }" >&2
+  echo "  got: $subject" >&2
+  exit 1
+fi
+
+if [ "${subject: -1}" = "." ]; then
+  echo "commit-msg: subject must not end with a period" >&2
+  exit 1
+fi
+
+len=${#subject}
+if [ "$len" -gt 72 ]; then
+  echo "commit-msg: subject is $len chars, keep it <= 72" >&2
+  echo "  got: $subject" >&2
+  exit 1
+fi
+
+if grep -qE "^[[:space:]]*[-*•]" "$msg_file"; then
+  echo "commit-msg: no bullet lists in the body — keep it to a plain sentence, or drop the body" >&2
+  exit 1
+fi
+
+exit 0
