@@ -7,18 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ArcadiaDevs.Viora.Platform.Iam.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     REST controller for role operations.
-/// </summary>
 [ApiController]
 [Route("api/v1/roles")]
 [Produces("application/json")]
 [Authorize]
 public class RolesController(IRoleQueryService roleQueryService) : ControllerBase
 {
-    /// <summary>
-    ///     Gets all roles.
-    /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<RoleResource>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]

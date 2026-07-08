@@ -7,11 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ArcadiaDevs.Viora.Platform.Intervention.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     REST controller for the signed-in specialist's own cases, powering
-///     My Requests and Field Inspection. The specialist is derived from the
-///     bearer token.
-/// </summary>
 [ApiController]
 [Route("api/v1/specialist-cases")]
 [Produces(MediaTypeNames.Application.Json)]

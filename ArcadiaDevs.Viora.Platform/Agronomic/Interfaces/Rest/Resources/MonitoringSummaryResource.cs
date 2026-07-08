@@ -2,9 +2,6 @@ using System;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 
-/// <summary>
-///     Resource for monitoring summary KPI metrics.
-/// </summary>
 public record MonitoringSummaryResource
 {
     public int TotalPlots { get; init; }

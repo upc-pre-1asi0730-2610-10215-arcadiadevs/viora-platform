@@ -25,14 +25,6 @@ public class PestSightingReportsController(
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    /// <summary>
-    ///     Creates a new pest sighting report.
-    /// </summary>
-    /// <param name="resource">The create pest sighting report resource.</param>
-    /// <param name="reporterUserId">The authenticated caller's id, derived from the token.</param>
-    /// <response code="201">Report created successfully</response>
-    /// <response code="400">Invalid request data</response>
-    /// <response code="500">Unexpected server error</response>
     [HttpPost]
     [ProducesResponseType(typeof(PestSightingReportResource), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -54,12 +46,6 @@ public class PestSightingReportsController(
         );
     }
 
-    /// <summary>
-    ///     Lists the reports submitted by a given reporter, newest first.
-    /// </summary>
-    /// <param name="reporterUserId">The authenticated caller's id, derived from the token.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Reports retrieved successfully (empty list when none exist)</response>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<PestSightingReportResource>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetReports(
@@ -71,15 +57,6 @@ public class PestSightingReportsController(
         return Ok(resources);
     }
 
-    /// <summary>
-    ///     Reviews a pest sighting report
-    /// </summary>
-    /// <param name="reportId">The id of the pest sighting report.</param>
-    /// <param name="reporterUserId">The id of the reporting user.</param>
-    /// <param name="resource">The review payload.</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <response code="200">Report reviewed successfully</response>
-    /// <response code="400">Invalid request data</response>
     [HttpPatch("{reportId}")]
     [ProducesResponseType(typeof(PestSightingReportResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

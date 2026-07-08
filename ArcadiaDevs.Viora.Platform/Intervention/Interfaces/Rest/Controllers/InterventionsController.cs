@@ -8,23 +8,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ArcadiaDevs.Viora.Platform.Intervention.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     REST controller for the composed producer-facing intervention
-///     overview (REQ-OV-1, REQ-OV-2).
-/// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
 [Authorize]
 public class InterventionsController(IInterventionOverviewQueryService interventionOverviewQueryService) : ControllerBase
 {
-    /// <summary>
-    ///     Gets the composed overview of every intervention request for a
-    ///     grower, including the downstream chain and a derived status.
-    /// </summary>
-    /// <param name="growerId">The authenticated caller's id, derived from the token.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Overview rows returned (possibly empty).</response>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<InterventionOverviewResource>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetInterventionsOverview(

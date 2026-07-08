@@ -1,4 +1,4 @@
-﻿using System.Net.Mime;
+using System.Net.Mime;
 using ArcadiaDevs.Viora.Platform.Billing.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Billing.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Billing.Interfaces.Rest.Resources;
@@ -11,9 +11,6 @@ using Microsoft.Extensions.Localization;
 
 namespace ArcadiaDevs.Viora.Platform.Billing.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     REST controller for the Plan catalog (REQ-PLAN-2).
-/// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
@@ -23,11 +20,6 @@ public class PlansController(
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    /// <summary>
-    ///     Lists the full seeded Plan catalog.
-    /// </summary>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">The full plan catalog.</response>
     [HttpGet]
     [AllowAnonymous]
     [ProducesResponseType(typeof(IEnumerable<PlanResource>), StatusCodes.Status200OK)]

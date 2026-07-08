@@ -13,10 +13,6 @@ using Microsoft.Extensions.Localization;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     REST controller for plot operations.
-///     View representation is dispatched via <c>?view=</c> query parameter.
-/// </summary>
 [ApiController]
 [Route("api/v1/plots")]
 [Produces("application/json")]
@@ -31,13 +27,6 @@ public class PlotsController(
     ProblemDetailsFactory problemDetailsFactory,
     IClock clock) : ControllerBase
 {
-    /// <summary>
-    ///     Creates a new plot with geospatial polygon coordinates.
-    /// </summary>
-    /// <param name="resource">The request body with the plot data and polygon coordinates.</param>
-    /// <param name="cancellationToken">The request cancellation token.</param>
-    /// <response code="201">Plot created.</response>
-    /// <response code="400">Validation failure.</response>
     [HttpPost]
     [ProducesResponseType(typeof(CreatedPlotResource), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -56,17 +45,6 @@ public class PlotsController(
             plot => Created($"/api/v1/plots/{plot.Id}", plot.ToCreatedResource()));
     }
 
-    /// <summary>
-    ///     Declares the winter-chill requirement for a plot.
-    /// </summary>
-    /// <param name="plotId">The plot identifier (path variable).</param>
-    /// <param name="userId">The user identifier (query parameter).</param>
-    /// <param name="resource">The request body with the chill requirement data.</param>
-    /// <param name="cancellationToken">The request cancellation token.</param>
-    /// <response code="200">Chill requirement configured.</response>
-    /// <response code="400">Validation failure.</response>
-    /// <response code="403">The user does not own the plot.</response>
-    /// <response code="404">Plot not found.</response>
     [HttpPut("{plotId:int}/chill-requirement")]
     [ProducesResponseType(typeof(ChillRequirementResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -89,16 +67,6 @@ public class PlotsController(
             chillRequirement => Ok(chillRequirement.ToResource()));
     }
 
-    /// <summary>
-    ///     Clears a plot's declared chill requirement.
-    /// </summary>
-    /// <param name="plotId">The plot identifier (path variable).</param>
-    /// <param name="userId">The user identifier (query parameter).</param>
-    /// <param name="cancellationToken">The request cancellation token.</param>
-    /// <response code="200">Chill requirement cleared.</response>
-    /// <response code="400">Validation failure.</response>
-    /// <response code="403">The user does not own the plot.</response>
-    /// <response code="404">Plot not found.</response>
     [HttpDelete("{plotId:int}/chill-requirement")]
     [ProducesResponseType(typeof(ChillRequirementResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -120,17 +88,6 @@ public class PlotsController(
             chillRequirement => Ok(chillRequirement.ToResource()));
     }
 
-    /// <summary>
-    ///     Updates an existing plot.
-    /// </summary>
-    /// <param name="plotId">The plot identifier (path variable).</param>
-    /// <param name="userId">The authenticated caller's id, derived from the token.</param>
-    /// <param name="resource">The request body with the fields to update.</param>
-    /// <param name="cancellationToken">The request cancellation token.</param>
-    /// <response code="200">Plot updated.</response>
-    /// <response code="400">Validation failure.</response>
-    /// <response code="403">The user does not own the plot.</response>
-    /// <response code="404">Plot not found.</response>
     [HttpPatch("{plotId:int}")]
     [ProducesResponseType(typeof(PlotResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -153,16 +110,6 @@ public class PlotsController(
             plot => Ok(plot.ToResource(clock)));
     }
 
-    /// <summary>
-    ///     Deletes an existing plot.
-    /// </summary>
-    /// <param name="plotId">The plot identifier (path variable).</param>
-    /// <param name="userId">The authenticated caller's id, derived from the token.</param>
-    /// <param name="cancellationToken">The request cancellation token.</param>
-    /// <response code="200">Plot deleted; returns a confirmation message.</response>
-    /// <response code="400">Validation failure.</response>
-    /// <response code="403">The user does not own the plot.</response>
-    /// <response code="404">Plot not found.</response>
     [HttpDelete("{plotId:int}")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -184,25 +131,6 @@ public class PlotsController(
             message => Ok(message));
     }
 
-    /// <summary>
-    ///     Gets plots owned by a user, or a summary overview when <c>?view=overview</c>.
-    ///     When <c>?includeCurrentImagery=true</c>, returns <see cref="PlotWithCurrentImageryResource"/>.
-    /// </summary>
-    /// <remarks>
-    ///     Response shape depends on <c>view</c> and <c>includeCurrentImagery</c>:
-    ///     <list type="bullet">
-    ///         <item><description><c>view</c> omitted and <c>includeCurrentImagery=false</c> (default) — a plain list of <see cref="PlotResource"/> for the user.</description></item>
-    ///         <item><description><c>includeCurrentImagery=true</c> — a list of <see cref="PlotWithCurrentImageryResource"/>, each plot enriched with its current imagery.</description></item>
-    ///         <item><description><c>view=overview</c> — a single <see cref="MyPlotsOverviewResource"/> summarizing all of the user's plots.</description></item>
-    ///     </list>
-    ///     Any other <c>view</c> value returns <c>400 Bad Request</c>.
-    /// </remarks>
-    /// <param name="userId">The user identifier (query parameter).</param>
-    /// <param name="view">Optional view mode; only <c>overview</c> is supported for this endpoint (query parameter).</param>
-    /// <param name="includeCurrentImagery">When <c>true</c>, enriches each plot with its current imagery (query parameter).</param>
-    /// <param name="cancellationToken">The request cancellation token.</param>
-    /// <response code="200">Plots (or overview) returned. See remarks for the response shape per <c>view</c>/<c>includeCurrentImagery</c>.</response>
-    /// <response code="400">Invalid <c>view</c> value for this endpoint.</response>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<PlotResource>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(IEnumerable<PlotWithCurrentImageryResource>), StatusCodes.Status200OK)]
@@ -254,28 +182,6 @@ public class PlotsController(
             plots => Ok(plots));
     }
 
-    /// <summary>
-    ///     Gets a specific plot by its ID, or a view-specific representation
-    ///     when <c>?view=detail</c>, <c>monitoring</c>, or <c>weather</c>.
-    /// </summary>
-    /// <remarks>
-    ///     Response shape depends on <c>view</c>:
-    ///     <list type="bullet">
-    ///         <item><description><c>view</c> omitted — a plain <see cref="PlotResource"/> for the plot.</description></item>
-    ///         <item><description><c>view=detail</c> — a <see cref="PlotDetailResource"/> with the plot's extended detail data.</description></item>
-    ///         <item><description><c>view=monitoring</c> — a <see cref="PlotMonitoringSummaryResource"/> with the plot's monitoring summary.</description></item>
-    ///         <item><description><c>view=weather</c> — a <see cref="PlotWeatherForecastResource"/> with the plot's weather forecast.</description></item>
-    ///     </list>
-    ///     Any other <c>view</c> value returns <c>400 Bad Request</c>.
-    /// </remarks>
-    /// <param name="plotId">The plot identifier (path variable).</param>
-    /// <param name="view">Optional view mode: <c>detail</c>, <c>monitoring</c>, or <c>weather</c> (query parameter).</param>
-    /// <param name="userId">The user identifier (query parameter).</param>
-    /// <param name="cancellationToken">The request cancellation token.</param>
-    /// <response code="200">Plot (or view-specific representation) returned. See remarks for the response shape per <c>view</c>.</response>
-    /// <response code="400">Invalid <c>view</c> value.</response>
-    /// <response code="403">The user does not have access to the requested plot.</response>
-    /// <response code="404">Plot not found.</response>
     [HttpGet("{plotId:int}")]
     [ProducesResponseType(typeof(PlotResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(PlotDetailResource), StatusCodes.Status200OK)]

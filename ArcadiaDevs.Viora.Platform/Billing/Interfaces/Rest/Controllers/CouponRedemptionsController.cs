@@ -1,4 +1,4 @@
-﻿using System.Net.Mime;
+using System.Net.Mime;
 using ArcadiaDevs.Viora.Platform.Billing.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Billing.Domain.Model.Commands;
 using ArcadiaDevs.Viora.Platform.Billing.Interfaces.Rest.Resources;
@@ -12,11 +12,6 @@ using Microsoft.Extensions.Localization;
 
 namespace ArcadiaDevs.Viora.Platform.Billing.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     REST controller for coupon redemptions (REQ-COUP-2). Noun-resource
-///     route (<c>/coupon-redemptions</c>) — NOT <c>POST /coupons/redeem</c>,
-///     which would be a verb-in-URL violation (REQ-CC-1).
-/// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
@@ -27,15 +22,6 @@ public class CouponRedemptionsController(
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    /// <summary>
-    ///     Redeems a catalog code for a user (REQ-COUP-2).
-    /// </summary>
-    /// <param name="resource">The redemption payload (<c>code</c>).</param>
-    /// <param name="userId">The authenticated caller's id, derived from the token.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="201">Coupon redeemed.</response>
-    /// <response code="404">Unknown user, or unknown catalog code.</response>
-    /// <response code="409">That user already redeemed this code (REQ-COUP-2).</response>
     [HttpPost]
     [ProducesResponseType(typeof(CouponResource), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
