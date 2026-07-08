@@ -10,9 +10,6 @@ using Microsoft.Extensions.Localization;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     REST controller for plot imagery tiles.
-/// </summary>
 [ApiController]
 [Route("api/v1/plots/{plotId:int}/images")]
 [Produces("application/json")]
@@ -22,17 +19,6 @@ public class PlotImageryTilesController(
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    /// <summary>
-    ///     Gets the current NDVI tile for a plot.
-    /// </summary>
-    /// <param name="plotId">The plot identifier (path variable).</param>
-    /// <param name="zoom">The tile zoom level (query parameter).</param>
-    /// <param name="x">The tile X coordinate (query parameter).</param>
-    /// <param name="y">The tile Y coordinate (query parameter).</param>
-    /// <param name="userId">The user identifier (query parameter).</param>
-    /// <param name="cancellationToken">The request cancellation token.</param>
-    /// <response code="200">The PNG tile image.</response>
-    /// <response code="404">No NDVI tile available for the requested plot/coordinates.</response>
     [HttpGet]
     [Produces("image/png", "application/json")]
     [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK, "image/png")]

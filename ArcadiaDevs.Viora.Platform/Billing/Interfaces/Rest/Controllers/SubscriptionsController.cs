@@ -1,4 +1,4 @@
-﻿using System.Net.Mime;
+using System.Net.Mime;
 using ArcadiaDevs.Viora.Platform.Billing.Application.CommandServices;
 using ArcadiaDevs.Viora.Platform.Billing.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Billing.Domain.Model.Commands;
@@ -14,9 +14,6 @@ using Microsoft.Extensions.Localization;
 
 namespace ArcadiaDevs.Viora.Platform.Billing.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     REST controller for subscriptions (REQ-SUB-2, REQ-SUB-4).
-/// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
@@ -27,17 +24,6 @@ public class SubscriptionsController(
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    /// <summary>
-    ///     Gets a user's subscription (REQ-SUB-4).
-    /// </summary>
-    /// <remarks>
-    ///     404 either when the user is unknown to IAM (REQ-CC-2) or when the
-    ///     user has no subscription — both surface identically as 404.
-    /// </remarks>
-    /// <param name="userId">The user id.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Subscription found.</response>
-    /// <response code="404">Unknown user, or the user has no subscription.</response>
     [HttpGet("{userId:int}")]
     [ProducesResponseType(typeof(SubscriptionResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -55,23 +41,6 @@ public class SubscriptionsController(
             subscription => Ok(SubscriptionResourceFromEntityAssembler.ToResourceFromEntity(subscription)));
     }
 
-    /// <summary>
-    ///     Cancels a user's subscription (REQ-SUB-2).
-    /// </summary>
-    /// <remarks>
-    ///     The only supported target <c>status</c> value is <c>CANCELED</c>
-    ///     — plan-switch (REQ-SUB-3) stays internal-only, no public
-    ///     endpoint. Self-guarded on the aggregate: only succeeds from
-    ///     <c>ACTIVE</c> (409 otherwise, including an already-<c>CANCELED</c>
-    ///     subscription).
-    /// </remarks>
-    /// <param name="userId">The user id.</param>
-    /// <param name="resource">The update payload.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Subscription canceled.</response>
-    /// <response code="400">Missing/unsupported <c>status</c> value.</response>
-    /// <response code="404">Unknown user, or the user has no subscription.</response>
-    /// <response code="409">The subscription is not currently <c>ACTIVE</c>.</response>
     [HttpPatch("{userId:int}")]
     [ProducesResponseType(typeof(SubscriptionResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

@@ -4,9 +4,6 @@ using ArcadiaDevs.Viora.Platform.Agronomic.Domain.Model.ValueObjects;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Resources;
 
-/// <summary>
-///     Chart-oriented projection of agronomic statistics over a time window.
-/// </summary>
 public record AgronomicStatisticSeriesResource
 {
     public AgronomicStatisticSeriesResource(

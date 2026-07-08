@@ -17,9 +17,6 @@ using Microsoft.Extensions.Localization;
 
 namespace ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Rest.Controllers;
 
-/// <summary>
-/// An empty resource to represent an empty JSON object {}
-/// </summary>
 public record EmptyResource();
 
 [ApiController]
@@ -32,22 +29,6 @@ public class AlertsController(
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    /// <summary>
-    ///     Get alerts
-    /// </summary>
-    /// <remarks>
-    ///     Retrieves alerts for the given user. Supported sort keys:
-    ///     <c>?sort=recent</c> (most recent first, default),
-    ///     <c>?sort=severity</c> (highest severity first),
-    ///     <c>?sort=type</c> (alphabetical by threat type).
-    ///     Any unknown sort key falls back to <c>recent</c>.
-    ///     Returns <c>[]</c> (200) on an empty timeline, not 500.
-    /// </remarks>
-    /// <param name="userId">The authenticated caller's id, derived from the token.</param>
-    /// <param name="sort">Sorting criteria (e.g. <c>recent</c>, <c>severity</c>, <c>type</c>).</param>
-    /// <param name="limit">The maximum number of alerts to return.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Alerts retrieved successfully (or empty list)</response>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<AlertSummaryResource>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAlerts(
@@ -70,18 +51,6 @@ public class AlertsController(
         return Ok(summaries ?? Enumerable.Empty<AlertSummaryResource>());
     }
 
-    /// <summary>
-    ///     Get alert details or timeline
-    /// </summary>
-    /// <remarks>
-    ///     Retrieves the complete data of an alert. Use <c>?view=timeline</c> to get only
-    ///     the historical timeline records.
-    /// </remarks>
-    /// <param name="alertId">The ID of the alert.</param>
-    /// <param name="userId">The authenticated caller's id, derived from the token.</param>
-    /// <param name="view">Projection view. Supported values: <c>timeline</c>.</param>
-    /// <response code="200">Alert found or timeline retrieved</response>
-    /// <response code="404">Alert not found</response>
     [HttpGet("{alertId:long}")]
     [ProducesResponseType(typeof(AlertResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(EmptyResource), StatusCodes.Status404NotFound)]
@@ -112,29 +81,6 @@ public class AlertsController(
         return Ok(resource);
     }
 
-    /// <summary>
-    ///     Update alert status
-    /// </summary>
-    /// <remarks>
-    ///     Partially updates an alert. Supported target <c>status</c> values:
-    ///     <c>UNDER_REVIEW</c> (marks the alert as reviewed), <c>RESOLVED</c>
-    ///     (unconditional terminal transition), and <c>DISMISSED</c> (terminal
-    ///     transition; optionally pass <c>{"reason": "..."}</c> to record a
-    ///     caller-supplied dismissal reason on the timeline, REQ-5). Pass
-    ///     <c>{"raiseSeverity": true}</c> to raise the alert's severity by one
-    ///     level: combined with <c>status: "UNDER_REVIEW"</c> this confirms
-    ///     the alert from inspection (severity +1, status becomes
-    ///     <c>UNDER_REVIEW</c>); with <c>status</c> omitted, it escalates
-    ///     severity only, with no status change. Omitting both <c>status</c>
-    ///     and <c>raiseSeverity</c> (or passing an unsupported status)
-    ///     returns 400.
-    /// </remarks>
-    /// <param name="alertId">The ID of the alert.</param>
-    /// <param name="resource">The update payload.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Alert updated successfully</response>
-    /// <response code="400">Nothing to do, invalid status, or the transition failed (RFC 7807 ProblemDetails when raising severity)</response>
-    /// <response code="404">Alert not found</response>
     [HttpPatch("{alertId:long}")]
     [ProducesResponseType(typeof(AlertResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(EmptyResource), StatusCodes.Status400BadRequest)]
@@ -191,18 +137,6 @@ public class AlertsController(
 
     // confirm/dismiss/escalate/link-report folded into PATCH+PUT below for REST uniformity (no verb-in-URL actions)
 
-    /// <summary>
-    ///     Link a pest sighting report to an alert
-    /// </summary>
-    /// <remarks>
-    ///     Idempotently sets the alert's linked report to <paramref name="reportId"/>;
-    ///     no status or severity change (SURV-003).
-    /// </remarks>
-    /// <param name="alertId">The alert id.</param>
-    /// <param name="reportId">The pest sighting report id to attach.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Report linked; no state change.</response>
-    /// <response code="404">Alert not found.</response>
     [HttpPut("{alertId:long}/report/{reportId:long}")]
     [ProducesResponseType(typeof(AlertResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -224,12 +158,6 @@ public class AlertsController(
     // ProblemDetails (CC-6).
     // ----------------------------------------------------------------
 
-    /// <summary>
-    ///     Maps a <see cref="Result{TValue, TError}"/> using the legacy
-    ///     (pre-SURV-003) <see cref="EmptyResource"/> failure-body style used
-    ///     by the original status-only PATCH branches, then loads and
-    ///     returns the updated alert on success.
-    /// </summary>
     private async Task<IActionResult> HandleLegacyResultAsync(Result<long, Error> result)
     {
         if (result is Result<long, Error>.Failure failure)

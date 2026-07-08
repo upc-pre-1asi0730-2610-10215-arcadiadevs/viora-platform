@@ -1,8 +1,5 @@
 namespace ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Rest.Resources;
 
-/// <summary>
-/// Resource used to represent a pest sighting report in HTTP responses.
-/// </summary>
 public record PestSightingReportResource(
     long Id,
     long PlotId,

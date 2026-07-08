@@ -16,9 +16,6 @@ using Microsoft.Extensions.Localization;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     Agronomic statistics REST controller.
-/// </summary>
 [ApiController]
 [Route("api/v1/agronomic-statistics")]
 [Produces("application/json")]
@@ -31,12 +28,6 @@ public class AgronomicStatisticsController(
     ProblemDetailsFactory problemDetailsFactory,
     IClock clock) : ControllerBase
 {
-    /// <summary>
-    ///     Gets agronomic statistics for the caller, or the chart-series shape
-    ///     when <c>?view=series</c> is given: a single root GET disambiguated
-    ///     by a <c>view</c> query param, not a dedicated <c>/series</c>
-    ///     sub-route.
-    /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<AgronomicStatisticResource>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(AgronomicStatisticSeriesResource), StatusCodes.Status200OK)]
@@ -110,12 +101,6 @@ public class AgronomicStatisticsController(
             });
     }
 
-    /// <summary>
-    ///     Legacy alias for <see cref="GetAgronomicStatistics"/> with <c>view=series</c>
-    ///     implied. Kept so existing clients hitting the old dedicated sub-route
-    ///     keep working without a coordinated frontend change; new clients should
-    ///     use <c>?view=series</c> on the root route instead.
-    /// </summary>
     [HttpGet("series")]
     [ProducesResponseType(typeof(AgronomicStatisticSeriesResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

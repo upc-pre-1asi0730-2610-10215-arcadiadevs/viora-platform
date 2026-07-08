@@ -7,11 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ArcadiaDevs.Viora.Platform.Intervention.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     REST controller for the specialist Intervention Marketplace read
-///     model. The signed-in specialist is derived from the bearer token, so
-///     no id travels in the URL.
-/// </summary>
 [ApiController]
 [Route("api/v1/intervention-marketplace")]
 [Produces(MediaTypeNames.Application.Json)]

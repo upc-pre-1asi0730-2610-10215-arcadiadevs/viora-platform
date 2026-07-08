@@ -14,15 +14,6 @@ using Microsoft.Extensions.Localization;
 
 namespace ArcadiaDevs.Viora.Platform.Iam.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     REST controller for user-session operations (REQ-SESS-2, REQ-SESS-3).
-/// </summary>
-/// <remarks>
-///     No self-only/ownership guard on <c>userId</c> — matches the same
-///     already-documented inherited-risk idiom as
-///     <see cref="UsersController.ChangePassword" />/<see cref="UsersController.GetById" />,
-///     not a new gap introduced here.
-/// </remarks>
 [ApiController]
 [Route("api/v1/users/{userId:int}/sessions")]
 [Produces("application/json")]
@@ -33,13 +24,6 @@ public class UserSessionsController(
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    /// <summary>
-    ///     Lists sessions belonging to the given user.
-    /// </summary>
-    /// <param name="userId">The user id.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Sessions returned (possibly empty).</response>
-    /// <response code="401">Missing or invalid bearer token.</response>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<UserSessionResource>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -52,16 +36,6 @@ public class UserSessionsController(
         return Ok(resources);
     }
 
-    /// <summary>
-    ///     Revokes a session belonging to the given user (REQ-SESS-3).
-    /// </summary>
-    /// <param name="userId">The user id.</param>
-    /// <param name="sessionId">The session id to revoke.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Session revoked.</response>
-    /// <response code="401">Missing or invalid bearer token.</response>
-    /// <response code="404">Session not found.</response>
-    /// <response code="409">Session already revoked.</response>
     [HttpDelete("{sessionId:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]

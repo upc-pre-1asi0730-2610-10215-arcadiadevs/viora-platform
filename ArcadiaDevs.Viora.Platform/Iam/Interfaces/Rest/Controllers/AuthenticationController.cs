@@ -15,9 +15,6 @@ using Microsoft.Extensions.Localization;
 
 namespace ArcadiaDevs.Viora.Platform.Iam.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     REST controller for authentication operations.
-/// </summary>
 [ApiController]
 [Route("api/v1/auth")]
 [Produces("application/json")]
@@ -26,19 +23,6 @@ public class AuthenticationController(
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    /// <summary>
-    ///     Registers a new user.
-    /// </summary>
-    /// <remarks>
-    ///     Sign-up is unconditionally open in every environment. There is no
-    ///     admin-gate here: no seeder anywhere assigns the Administrator role
-    ///     to any user, so a production admin-only gate would be an
-    ///     unconditional deadlock (see spec REQ-1).
-    /// </remarks>
-    /// <param name="resource">The sign-up payload.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="201">User created.</response>
-    /// <response code="400">Validation failure.</response>
     [HttpPost("sign-up")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(UserResource), StatusCodes.Status201Created)]
@@ -58,14 +42,6 @@ public class AuthenticationController(
             user => Created($"/api/v1/users/{user?.Id}", user!.ToResource()));
     }
 
-    /// <summary>
-    ///     Authenticates a user and returns a JWT token.
-    /// </summary>
-    /// <param name="resource">The sign-in credentials.</param>
-    /// <param name="userAgent">The requesting client's user agent, recorded on the resulting session.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Authentication succeeded.</response>
-    /// <response code="401">Invalid credentials.</response>
     [HttpPost("sign-in")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(AuthenticatedUserResource), StatusCodes.Status200OK)]
@@ -86,15 +62,6 @@ public class AuthenticationController(
             authenticatedUser => Ok(authenticatedUser.ToResource()));
     }
 
-    /// <summary>
-    ///     Consumes a verification token and marks the account as verified.
-    ///     Auto signs-in on success (REQ-EV-2).
-    /// </summary>
-    /// <param name="resource">The verification token payload.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Account verified; authenticated session returned.</response>
-    /// <response code="404">Token not found.</response>
-    /// <response code="400">Token expired or already used.</response>
     [HttpPost("verifications")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(AuthenticatedUserResource), StatusCodes.Status200OK)]
@@ -115,14 +82,6 @@ public class AuthenticationController(
             authenticatedUser => Ok(authenticatedUser.ToResource()));
     }
 
-    /// <summary>
-    ///     Issues a new verification token for an unverified account (REQ-EV-3).
-    /// </summary>
-    /// <param name="resource">The account identifier to resend a verification token for.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Verification token reissued.</response>
-    /// <response code="404">Account not found.</response>
-    /// <response code="422">Account is already verified.</response>
     [HttpPost("verification-requests")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(UserResource), StatusCodes.Status200OK)]
