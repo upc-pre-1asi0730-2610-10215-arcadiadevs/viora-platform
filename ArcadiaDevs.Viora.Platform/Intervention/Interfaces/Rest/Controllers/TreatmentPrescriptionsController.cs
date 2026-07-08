@@ -33,7 +33,7 @@ public class TreatmentPrescriptionsController(
     /// </summary>
     /// <remarks>
     ///     Validates <c>serviceProposalId</c> exists (REQ-CC-2: missing FK
-    ///     maps to 404). Per OS parity, creation is NOT blocked by the
+    ///     maps to 404). Creation is NOT blocked by the
     ///     proposal's status (REQ-TP-1). Fails 409 if a prescription already
     ///     exists for the given proposal (REQ-TP-4 idempotency).
     /// </remarks>

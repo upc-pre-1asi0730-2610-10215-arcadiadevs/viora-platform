@@ -4,7 +4,7 @@ namespace ArcadiaDevs.Viora.Platform.Intervention.Interfaces.Rest.Resources;
 ///     Read model for the specialist segment dashboard (Overview). Aggregates
 ///     the signed-in specialist's headline KPIs, the zonal prospecting radar,
 ///     their incoming producer requests, and the accepted-cases performance
-///     series. Matches OS's <c>SpecialistDashboardResource.java</c> exactly.
+///     series.
 /// </summary>
 /// <remarks>
 ///     All fields are derived from real repository data. Metrics with no
@@ -13,8 +13,7 @@ namespace ArcadiaDevs.Viora.Platform.Intervention.Interfaces.Rest.Resources;
 ///     and <see cref="PhytosanitaryEfficiencyPercent" />/
 ///     <see cref="PhytosanitaryStatus" /> may be <c>null</c>, and
 ///     <see cref="ZonalRisks" /> may be empty, until their outcome/geospatial
-///     read models exist — mirrors OS's own "no fabricated data" contract
-///     (<c>90bc928</c> refactor).
+///     read models exist.
 /// </remarks>
 public record SpecialistDashboardResource(
     int ResolvedInterventions,

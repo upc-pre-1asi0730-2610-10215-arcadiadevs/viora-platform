@@ -124,11 +124,9 @@ public class UsersController(
     ///     Changes a user's password.
     /// </summary>
     /// <remarks>
-    ///     Matches OS's <c>PUT /{userId}/password</c> exactly: bearerAuth-only,
-    ///     no self-only/ownership guard on <paramref name="userId"/> — any
-    ///     authenticated caller may change any user's password. This is an
-    ///     inherited contract risk from OS, not fixed here per the exact-parity
-    ///     directive (see spec REQ-3).
+    ///     This endpoint is bearerAuth-only with no self-only/ownership guard on
+    ///     <paramref name="userId"/> — any authenticated caller may change any
+    ///     user's password.
     /// </remarks>
     [HttpPut("{userId:int}/password")]
     [ProducesResponseType(typeof(UserResource), StatusCodes.Status200OK)]
@@ -202,9 +200,8 @@ public class UsersController(
     ///     their sessions and verification tokens, and their profile.
     /// </summary>
     /// <remarks>
-    ///     No self-only/ownership guard on <paramref name="userId"/> — same
-    ///     inherited-risk idiom as <see cref="ChangePassword"/>/<see cref="UpdateActiveState"/>,
-    ///     matching OS's <c>DELETE /{userId}</c> exactly. This cannot be undone.
+    ///     No self-only/ownership guard on <paramref name="userId"/> — same as
+    ///     <see cref="ChangePassword"/>/<see cref="UpdateActiveState"/>. This cannot be undone.
     /// </remarks>
     /// <param name="userId">The user id.</param>
     /// <param name="cancellationToken">Cancellation token.</param>

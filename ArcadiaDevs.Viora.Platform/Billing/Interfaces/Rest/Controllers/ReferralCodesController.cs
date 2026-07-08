@@ -35,9 +35,8 @@ public class ReferralCodesController(
     ///     (REQ-REF-1, REQ-REF-4).
     /// </summary>
     /// <remarks>
-    ///     Idempotent side-effecting read — matches OS behavior, intentional
-    ///     per REQ-REF-4 (documented/spec-locked, not a REST-purity
-    ///     violation).
+    ///     Idempotent side-effecting read — intentional per REQ-REF-4
+    ///     (documented/spec-locked, not a REST-purity violation).
     /// </remarks>
     /// <param name="userId">The user id.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
