@@ -5,6 +5,11 @@ all notable changes to this project will be documented in this file.
 the format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.5] - 2026-07-07
+
+### changed
+- Removed all XML doc comments (`<summary>`, `<remarks>`, `<param>`, `<response>`) from every REST controller and resource, across all bounded contexts. They had accumulated internal-only detail (spec REQ ids, phase/work-unit numbers, source-system porting notes) that didn't belong in a public-facing Swagger surface. Endpoints and schemas are unchanged; Swagger UI now shows no descriptions.
+
 ## [2.0.4] - 2026-07-07
 
 ### fixed
