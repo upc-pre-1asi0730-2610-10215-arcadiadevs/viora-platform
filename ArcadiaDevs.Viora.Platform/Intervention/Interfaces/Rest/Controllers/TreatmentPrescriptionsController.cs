@@ -15,9 +15,6 @@ using Microsoft.Extensions.Localization;
 
 namespace ArcadiaDevs.Viora.Platform.Intervention.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     REST controller for treatment prescriptions (REQ-TP-1..5).
-/// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
@@ -28,20 +25,6 @@ public class TreatmentPrescriptionsController(
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    /// <summary>
-    ///     Creates a new treatment prescription for an accepted service proposal.
-    /// </summary>
-    /// <remarks>
-    ///     Validates <c>serviceProposalId</c> exists (REQ-CC-2: missing FK
-    ///     maps to 404). Creation is NOT blocked by the
-    ///     proposal's status (REQ-TP-1). Fails 409 if a prescription already
-    ///     exists for the given proposal (REQ-TP-4 idempotency).
-    /// </remarks>
-    /// <param name="resource">The creation payload.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="201">Prescription created (status <c>PENDING_INSPECTION</c>).</response>
-    /// <response code="404">The referenced serviceProposalId does not exist.</response>
-    /// <response code="409">A prescription already exists for the given serviceProposalId.</response>
     [HttpPost]
     [ProducesResponseType(typeof(TreatmentPrescriptionResource), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -64,14 +47,6 @@ public class TreatmentPrescriptionsController(
                 TreatmentPrescriptionResourceFromEntityAssembler.ToResourceFromEntity(entity)));
     }
 
-    /// <summary>
-    ///     Finds the (at most one) prescription linked to a service proposal
-    ///     (REQ-TP-4 idempotency lookup, reused as a read endpoint).
-    /// </summary>
-    /// <param name="serviceProposalId">The service proposal id.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Prescription found.</response>
-    /// <response code="404">No prescription exists for the given serviceProposalId.</response>
     [HttpGet]
     [ProducesResponseType(typeof(TreatmentPrescriptionResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -93,13 +68,6 @@ public class TreatmentPrescriptionsController(
         return Ok(TreatmentPrescriptionResourceFromEntityAssembler.ToResourceFromEntity(prescription));
     }
 
-    /// <summary>
-    ///     Gets a treatment prescription by id.
-    /// </summary>
-    /// <param name="id">The prescription id.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Prescription found.</response>
-    /// <response code="404">Prescription not found.</response>
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(TreatmentPrescriptionResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -121,25 +89,6 @@ public class TreatmentPrescriptionsController(
         return Ok(TreatmentPrescriptionResourceFromEntityAssembler.ToResourceFromEntity(prescription));
     }
 
-    /// <summary>
-    ///     Logs the field inspection or issues the agrochemical prescription,
-    ///     depending on <c>stage</c>.
-    /// </summary>
-    /// <remarks>
-    ///     <c>stage=INSPECTION</c> logs the field inspection (REQ-TP-2,
-    ///     self-guarded — only succeeds from <c>PENDING_INSPECTION</c>).
-    ///     <c>stage=PRESCRIPTION</c> issues the agrochemical prescription
-    ///     (REQ-TP-3, self-guarded — only succeeds from <c>INSPECTED</c>).
-    ///     Mirrors <c>AlertsController.UpdateAlert</c>'s stage-branch PATCH
-    ///     pattern (REQ-TP-5, design decision 2).
-    /// </remarks>
-    /// <param name="id">The prescription id.</param>
-    /// <param name="resource">The update payload.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Stage transition applied.</response>
-    /// <response code="400">Missing/invalid <c>stage</c>, or invalid field values.</response>
-    /// <response code="404">Prescription not found.</response>
-    /// <response code="409">The prescription is not in the expected status for the requested stage.</response>
     [HttpPatch("{id:int}")]
     [ProducesResponseType(typeof(TreatmentPrescriptionResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

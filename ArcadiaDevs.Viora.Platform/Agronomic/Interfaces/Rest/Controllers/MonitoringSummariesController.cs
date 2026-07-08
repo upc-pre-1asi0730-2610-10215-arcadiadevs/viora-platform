@@ -12,9 +12,6 @@ using Microsoft.Extensions.Localization;
 
 namespace ArcadiaDevs.Viora.Platform.Agronomic.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     REST controller for monitoring summaries.
-/// </summary>
 [ApiController]
 [Route("api/v1/monitoring-summaries")]
 [Authorize]
@@ -23,16 +20,6 @@ public class MonitoringSummariesController(
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    /// <summary>
-    ///     Returns aggregated KPI metrics for the caller (root GET, not a
-    ///     dedicated <c>/current</c> sub-route). <paramref name="limit"/>
-    ///     is accepted but is not yet used server-side — it's reserved
-    ///     for future pagination/history.
-    /// </summary>
-    /// <param name="userId">The authenticated caller's id, derived from the token.</param>
-    /// <param name="limit">Reserved for future pagination/history; unused today.</param>
-    /// <param name="cancellationToken">The request cancellation token.</param>
-    /// <returns>200 OK with the monitoring summary, or 400 Bad Request with error details.</returns>
     [HttpGet]
     [ProducesResponseType(typeof(MonitoringSummaryResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -52,11 +39,6 @@ public class MonitoringSummariesController(
             summary => Ok(summary));
     }
 
-    /// <summary>
-    ///     Legacy alias for <see cref="GetCurrent"/>. Kept so existing clients
-    ///     hitting the old dedicated sub-route keep working without a
-    ///     coordinated frontend change; new clients should use the root route.
-    /// </summary>
     [HttpGet("current")]
     [ProducesResponseType(typeof(MonitoringSummaryResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

@@ -1,8 +1,5 @@
 namespace ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Rest.Resources;
 
-/// <summary>
-///     Resource DTO representing an alert detail.
-/// </summary>
 public record AlertResource(
     long Id,
     long PlotId,

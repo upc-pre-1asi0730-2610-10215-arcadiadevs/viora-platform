@@ -14,9 +14,6 @@ using Microsoft.Extensions.Localization;
 
 namespace ArcadiaDevs.Viora.Platform.Intervention.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     REST controller for service proposals (REQ-SP-1..4).
-/// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
@@ -27,21 +24,6 @@ public class ServiceProposalsController(
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    /// <summary>
-    ///     Submits a new service proposal for an intervention request.
-    /// </summary>
-    /// <remarks>
-    ///     Validates <c>interventionRequestId</c>/<c>specialistId</c>
-    ///     through their repositories (REQ-CC-2: missing FK maps to 404)
-    ///     and the <c>costEstimate</c> fields (REQ-CC-2: validation failure
-    ///     maps to 400). Side-effects the parent intervention request to
-    ///     <c>PROPOSAL_RECEIVED</c> (REQ-SP-1).
-    /// </remarks>
-    /// <param name="resource">The proposal payload.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="201">Proposal created (status <c>PENDING</c>).</response>
-    /// <response code="400">Validation failure (e.g. negative cost estimate).</response>
-    /// <response code="404">The referenced interventionRequestId/specialistId does not exist.</response>
     [HttpPost]
     [ProducesResponseType(typeof(ServiceProposalResource), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -73,13 +55,6 @@ public class ServiceProposalsController(
                 ServiceProposalResourceFromEntityAssembler.ToResourceFromEntity(entity)));
     }
 
-    /// <summary>
-    ///     Lists service proposals for an intervention request (REQ-SP-4).
-    /// </summary>
-    /// <param name="requestId">The intervention request id.</param>
-    /// <param name="growerId">The authenticated caller's id, derived from the token — enforced as the request's owner.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Proposals returned (possibly empty).</response>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ServiceProposalResource>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetServiceProposals(
@@ -93,25 +68,6 @@ public class ServiceProposalsController(
         return Ok(proposals.Select(ServiceProposalResourceFromEntityAssembler.ToResourceFromEntity));
     }
 
-    /// <summary>
-    ///     Accepts or rejects a service proposal.
-    /// </summary>
-    /// <remarks>
-    ///     The only supported target <c>status</c> values are
-    ///     <c>ACCEPTED</c> (REQ-SP-2) and <c>REJECTED</c> (REQ-SP-3); both
-    ///     are self-guarded on the aggregate (PENDING only, 409 otherwise)
-    ///     and side-effect the parent intervention request (
-    ///     <c>ACCEPTED</c> → request <c>ACCEPTED</c>; <c>REJECTED</c> →
-    ///     request terminal <c>DECLINED</c>, no re-routing).
-    /// </remarks>
-    /// <param name="id">The service proposal id.</param>
-    /// <param name="growerId">The authenticated caller's id, derived from the token — enforced as the parent request's owner.</param>
-    /// <param name="resource">The update payload.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Proposal accepted/rejected.</response>
-    /// <response code="400">Missing/invalid <c>status</c>.</response>
-    /// <response code="404">Proposal not found.</response>
-    /// <response code="409">The proposal is not in <c>PENDING</c>.</response>
     [HttpPatch("{id:int}")]
     [ProducesResponseType(typeof(ServiceProposalResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

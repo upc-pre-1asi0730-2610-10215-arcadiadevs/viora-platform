@@ -1,8 +1,5 @@
 namespace ArcadiaDevs.Viora.Platform.Intervention.Interfaces.Rest.Resources;
 
-/// <summary>
-///     Resource DTO for submitting a ServiceProposal (REQ-SP-1).
-/// </summary>
 public record SubmitServiceProposalResource(
     int InterventionRequestId,
     int SpecialistId,

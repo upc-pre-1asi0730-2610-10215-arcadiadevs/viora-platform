@@ -19,11 +19,6 @@ public class SymptomDictionaryItemsController(
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    /// <summary>
-    ///     Gets the available symptom dictionary items.
-    /// </summary>
-    /// <param name="language">The language for symptom translation (e.g., 'en', 'es').</param>
-    /// <returns>200 OK with the list of symptoms, or 400 Bad Request with error details.</returns>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Rest.Resources.SymptomResource>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

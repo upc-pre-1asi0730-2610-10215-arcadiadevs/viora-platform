@@ -7,27 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ArcadiaDevs.Viora.Platform.Surveillance.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     REST controller for the anonymized Community Risk snapshot.
-/// </summary>
 [ApiController]
 [Route("api/v1/community-risk")]
 [Produces(MediaTypeNames.Application.Json)]
 [Authorize]
 public class CommunityRiskController(ICommunityRiskQueryService communityRiskQueryService) : ControllerBase
 {
-    /// <summary>
-    ///     Get community risk around a plot
-    /// </summary>
-    /// <remarks>
-    ///     Returns anonymized nearby risk signals (derived from active alerts on neighbor plots
-    ///     within the radius) plus preventive recommendations.
-    /// </remarks>
-    /// <param name="plotId">The reference plot identifier.</param>
-    /// <param name="radiusKm">The monitoring radius in kilometers (defaults to 10).</param>
-    /// <response code="200">Community risk snapshot retrieved</response>
-    /// <response code="400">Invalid request parameters</response>
-    /// <response code="404">Reference plot not found</response>
     [HttpGet]
     [ProducesResponseType(typeof(CommunityRiskResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(EmptyResource), StatusCodes.Status400BadRequest)]

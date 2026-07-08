@@ -1,4 +1,4 @@
-﻿using System.Net.Mime;
+using System.Net.Mime;
 using ArcadiaDevs.Viora.Platform.Billing.Application.QueryServices;
 using ArcadiaDevs.Viora.Platform.Billing.Domain.Model.Queries;
 using ArcadiaDevs.Viora.Platform.Billing.Interfaces.Rest.Resources;
@@ -11,11 +11,6 @@ using Microsoft.Extensions.Localization;
 
 namespace ArcadiaDevs.Viora.Platform.Billing.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     REST controller for payment methods (REQ-PM-3). List-only — writes
-///     happen exclusively via WU6's internal webhook reconciliation
-///     (REQ-PM-2).
-/// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
@@ -25,12 +20,6 @@ public class PaymentMethodsController(
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    /// <summary>
-    ///     Lists the payment method(s) belonging to a user (REQ-PM-3).
-    /// </summary>
-    /// <param name="userId">The authenticated caller's id, derived from the token.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Payment methods for the user (possibly empty).</response>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<PaymentMethodResource>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]

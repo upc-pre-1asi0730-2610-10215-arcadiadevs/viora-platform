@@ -13,10 +13,6 @@ using Microsoft.Extensions.Localization;
 
 namespace ArcadiaDevs.Viora.Platform.Intervention.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     REST controller for specialist public profile and gated contact
-///     (REQ-SPEC-1, REQ-SPEC-2).
-/// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
@@ -26,13 +22,6 @@ public class SpecialistsController(
     IStringLocalizer<ErrorMessages> errorLocalizer,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    /// <summary>
-    ///     Get a specialist's public profile.
-    /// </summary>
-    /// <param name="id">The specialist's <c>ProfileUserId</c> (not the EF <c>Specialist.Id</c> PK — specialists are resolved as a projection over <c>Profile</c>).</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Public profile returned (no contact fields).</response>
-    /// <response code="404">Specialist not found.</response>
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(SpecialistResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -50,26 +39,6 @@ public class SpecialistsController(
             dto => Ok(SpecialistResourceFromDtoAssembler.ToResourceFromDto(dto)));
     }
 
-    /// <summary>
-    ///     Get a specialist's gated contact info.
-    /// </summary>
-    /// <remarks>
-    ///     Only unlocked if the referenced intervention request is
-    ///     <c>ACCEPTED</c>, matches the requested specialist, AND the
-    ///     authenticated caller owns the request (REQ-SPEC-2, WU1 fix pass
-    ///     item #10) — status+specialist-id matching alone is not
-    ///     sufficient to authorize the caller. The caller id is read from
-    ///     the <c>sid</c>/<c>sub</c> claim populated by
-    ///     <c>RequestAuthorizationMiddleware</c>, same pattern as
-    ///     <c>UsersController.GetMe</c>.
-    /// </remarks>
-    /// <param name="id">The specialist's <c>ProfileUserId</c> (not the EF <c>Specialist.Id</c> PK).</param>
-    /// <param name="requestId">The intervention request id gating access.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Contact info returned.</response>
-    /// <response code="401">Caller identity could not be resolved from the token.</response>
-    /// <response code="403">Contact not unlocked for this request.</response>
-    /// <response code="404">Specialist not found.</response>
     [HttpGet("{id:int}/contact")]
     [ProducesResponseType(typeof(SpecialistContactResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]

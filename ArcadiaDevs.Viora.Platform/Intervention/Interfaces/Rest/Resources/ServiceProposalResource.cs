@@ -1,8 +1,5 @@
 namespace ArcadiaDevs.Viora.Platform.Intervention.Interfaces.Rest.Resources;
 
-/// <summary>
-///     ServiceProposal read resource (REQ-SP-1..4).
-/// </summary>
 public record ServiceProposalResource(
     int Id,
     int InterventionRequestId,
